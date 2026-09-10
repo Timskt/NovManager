@@ -1,0 +1,18 @@
+{
+  "name": "NovManager - AI 辅助小说创作",
+  "short_name": "NovManager",
+  "description": "全流程结构化小说管理与智能体协同创作工作台",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0f19",
+  "theme_color": "#0b0f19",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

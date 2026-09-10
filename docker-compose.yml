@@ -1,0 +1,62 @@
+version: "3.8"
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. 生产级关系数据库：PostgreSQL 16 + pgvector 语义检索扩展
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: novmanager-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: novadmin
+      POSTGRES_PASSWORD: novpassword123
+      POSTGRES_DB: novmanager
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U novadmin -d novmanager"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # 2. NovManager 后端服务 (FastAPI + MCP Server)
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: novmanager-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://novadmin:novpassword123@postgres:5432/novmanager
+      HOST: "0.0.0.0"
+      PORT: "8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend/data:/app/backend/data
+
+  # ----------------------------------------------------------------------------
+  # 3. 前端工作台应用 (Vite + React + Tailwind CSS)
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: novmanager-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+    driver: local

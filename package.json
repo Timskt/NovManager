@@ -1,0 +1,20 @@
+{
+  "name": "nov-manager",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI 辅助小说结构化管理与 Multi-Agent 协同创作平台",
+  "scripts": {
+    "dev": "pnpm --prefix web dev",
+    "build": "pnpm --prefix web build",
+    "preview": "pnpm --prefix web preview"
+  },
+  "keywords": [
+    "novel-management",
+    "agent",
+    "mcp",
+    "langgraph",
+    "writing-assistant"
+  ],
+  "author": "",
+  "license": "MIT"
+}

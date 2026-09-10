@@ -1,0 +1,150 @@
+{
+  "$schema": "https://spec.modelcontextprotocol.io/schema.json",
+  "name": "NovManager MCP Server Specification",
+  "version": "1.0.0",
+  "description": "Standard Model Context Protocol (MCP) server definitions for NovManager. Allows external coding and creative agents (e.g. Claude Desktop, Cursor, OpenHands) to read structured novel context and mutate manuscript drafts, character states, and outlines.",
+  "resources": [
+    {
+      "uri": "novel://{novel_id}/meta",
+      "name": "Novel Metadata & Style Guide",
+      "description": "Returns novel title, genre, target word count, narrative POV, and comprehensive style constraints.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "novel://{novel_id}/world/rules",
+      "name": "World-Building & Lore Index",
+      "description": "Returns all registered world settings, categorized into geography, factions, power systems, items, and fundamental laws.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "novel://{novel_id}/characters",
+      "name": "Character Profiles Directory",
+      "description": "Lists all characters with static profiles (appearance, psychology, voice/tone) and current dynamic states.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "novel://{novel_id}/characters/{char_id}",
+      "name": "Single Character Full Dossier",
+      "description": "Detailed dossier of a specific character including timeline state evolution and relational affinity graph.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "novel://{novel_id}/outlines/tree",
+      "name": "Full Hierarchy Outline Tree",
+      "description": "Complete hierarchical outline tree covering Volumes, Chapters, and Scene Breakdowns.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "novel://{novel_id}/chapters/{chapter_id}/context",
+      "name": "Assembled Context Bundle for Chapter",
+      "description": "Pre-assembled contextual bundle for writing or reviewing a specific chapter (goal, cast, prior recap, related foreshadowing).",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "novel://{novel_id}/foreshadowing/active",
+      "name": "Active Foreshadowing & Clues",
+      "description": "List of all clues planted in previous chapters that are currently unresolved and available for development.",
+      "mimeType": "application/json"
+    }
+  ],
+  "tools": [
+    {
+      "name": "query_lore",
+      "description": "Performs semantic and hybrid search over the novel's world-building rules, magic/combat systems, and historical lore.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "novel_id": { "type": "string", "description": "UUID of the novel" },
+          "query": { "type": "string", "description": "Natural language query about a rule, item, location, or faction" },
+          "category": { 
+            "type": "string", 
+            "enum": ["ALL", "POWER_SYSTEM", "GEOGRAPHY", "FACTION", "ITEM", "RULE"],
+            "description": "Optional category filter" 
+          },
+          "top_k": { "type": "integer", "default": 5, "description": "Maximum number of results to return" }
+        },
+        "required": ["novel_id", "query"]
+      }
+    },
+    {
+      "name": "query_plot_memory",
+      "description": "Retrieves semantic slices and summaries of past chapters to verify continuity and prevent plot holes.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "novel_id": { "type": "string", "description": "UUID of the novel" },
+          "query": { "type": "string", "description": "Question or topic regarding past events" },
+          "before_chapter_index": { "type": "integer", "description": "Only search events strictly preceding this chapter index" }
+        },
+        "required": ["novel_id", "query"]
+      }
+    },
+    {
+      "name": "save_scene_draft",
+      "description": "Saves a generated scene draft into the chapter repository. Creates an auditable version snapshot.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "novel_id": { "type": "string", "description": "UUID of the novel" },
+          "chapter_id": { "type": "string", "description": "UUID of the target chapter" },
+          "scene_index": { "type": "integer", "description": "1-based index of the scene within the chapter" },
+          "content": { "type": "string", "description": "Markdown formatted scene prose" },
+          "agent_notes": { "type": "string", "description": "Agent commentary on plot advancements and subtle clues planted" }
+        },
+        "required": ["novel_id", "chapter_id", "scene_index", "content"]
+      }
+    },
+    {
+      "name": "update_character_state",
+      "description": "Mutates a character's dynamic attributes following narrative events (e.g. injury, rank advancement, relocation).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "character_id": { "type": "string", "description": "UUID of the character" },
+          "chapter_id": { "type": "string", "description": "UUID of the current chapter where the change occurred" },
+          "location": { "type": "string", "description": "Updated physical location" },
+          "combat_power": { "type": "string", "description": "Updated combat tier or cultivation stage" },
+          "status_tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Active status tags like ['Severely Injured', 'Enlightened']"
+          },
+          "state_summary": { "type": "string", "description": "Brief explanation of how and why the state changed" }
+        },
+        "required": ["character_id", "chapter_id", "state_summary"]
+      }
+    },
+    {
+      "name": "record_foreshadowing",
+      "description": "Registers a new foreshadowing clue planted in the current chapter into the tracking radar.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "novel_id": { "type": "string", "description": "UUID of the novel" },
+          "title": { "type": "string", "description": "Concise name of the clue/foreshadowing" },
+          "clue_description": { "type": "string", "description": "Detailed text description of the planted seed" },
+          "planted_chapter_id": { "type": "string", "description": "UUID of the chapter where the clue was written" },
+          "planned_resolve_chapter_id": { "type": "string", "description": "UUID of the projected chapter to resolve this clue" }
+        },
+        "required": ["novel_id", "title", "clue_description", "planted_chapter_id"]
+      }
+    },
+    {
+      "name": "check_setting_consistency",
+      "description": "Audits a piece of prose draft against world lore, character profiles, and narrative constraints for logic violations.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "novel_id": { "type": "string", "description": "UUID of the novel" },
+          "draft_text": { "type": "string", "description": "The prose content to be inspected" },
+          "involved_character_ids": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "IDs of characters featured in this draft"
+          }
+        },
+        "required": ["novel_id", "draft_text"]
+      }
+    }
+  ]
+}

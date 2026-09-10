@@ -1,0 +1,9 @@
+{
+  "appId": "com.novmanager.app",
+  "appName": "NovManager",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
