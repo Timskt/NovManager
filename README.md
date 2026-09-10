@@ -7,7 +7,7 @@
 
 > [!NOTE]
 > - 🦀 **后端正在使用 Rust 重构**，当前 Python/FastAPI 实现仅为过渡版本；
-> - 🌿 **使用 Git 实现小说管理**：以 Git 为版本控制底座与唯一真相源（Source of Truth），由系统后台静默自动提交，支持分支推演、Diff 审阅与安全回滚。
+> - 🌿 **新设计使用 Git 实现小说管理**：rust版本以 Git 为版本控制底座与唯一真相源（Source of Truth），由系统后台静默自动提交，支持分支推演、Diff 审阅与安全回滚。
 
 > **NovManager** 是一套面向长篇网络小说、科幻文学与剧本创作的**全流程结构化管理与 Multi-Agent 协同创作系统**。
 > 本平台将 App 作为唯一的**“状态与真相中枢（Single Source of Truth, SoT）”**，通过 **PostgreSQL 16 + pgvector** 作为关系与向量持久化底座，结合 **Model Context Protocol (MCP)** 和 **LangGraph** 实现了小说世界观、大纲、人物状态机与外部各类型 AI 编程/创作智能体的无缝对接。
