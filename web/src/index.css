@@ -1,31 +1,150 @@
 @import "tailwindcss";
 
+/* ==============================================================================
+   NovManager 人文文学工作台设计系统 (Literary Workstation Design Tokens)
+   专为中文长篇小说、严肃文学与编剧创作定制，彻底去除廉价同质化 AI 模版质感
+   ============================================================================== */
+
+:root {
+  /* 基础字体栈定义 */
+  --font-serif-literary: "Source Han Serif SC", "Noto Serif SC", "Songti SC", "STSong", "KaiTi", "SimSun", Georgia, serif;
+  --font-sans-humanist: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono-code: "JetBrains Mono", "Fira Code", monospace;
+
+  --manuscript-font-size: 17px;
+  --manuscript-line-height: 1.9;
+  --manuscript-indent: 2em;
+}
+
+/* 1. 📜 古意宣纸 (Ink & Rice Paper) - 默认暖玉文人质感 */
+:root[data-theme="ink"],
+:root:not([data-theme]) {
+  --bg-canvas: #faf6ee;
+  --bg-surface: #f4ece1;
+  --bg-card: #ece2d2;
+  --bg-card-hover: #e5d9c7;
+  --text-main: #2b2621;
+  --text-muted: #786d63;
+  --text-faint: #a69c91;
+  --border-subtle: #e2d6c3;
+  --border-strong: #c8b9a3;
+  --accent-primary: #b83b26; /* 熟石朱砂红 */
+  --accent-hover: #9c2e1b;
+  --accent-surface: rgba(184, 59, 38, 0.08);
+  --accent-amber: #b8860b;
+  --shadow-warm: 0 4px 20px -2px rgba(60, 48, 36, 0.08);
+}
+
+/* 2. 🌌 黑曜冷萃 (Obsidian Atelier) - 深夜沉浸不刺眼 */
+:root[data-theme="obsidian"] {
+  --bg-canvas: #0f1013;
+  --bg-surface: #16181d;
+  --bg-card: #1f2229;
+  --bg-card-hover: #272a33;
+  --text-main: #f0f2f5;
+  --text-muted: #8e96a4;
+  --text-faint: #59616f;
+  --border-subtle: #272b35;
+  --border-strong: #383d4a;
+  --accent-primary: #d97706; /* 暖夜琥珀金 */
+  --accent-hover: #b45309;
+  --accent-surface: rgba(217, 119, 6, 0.12);
+  --accent-amber: #eab308;
+  --shadow-warm: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+/* 3. 🍵 秘色青釉 (Celadon Mist) - 烟雨江南清润温润 */
+:root[data-theme="celadon"] {
+  --bg-canvas: #f2f6f4;
+  --bg-surface: #e4ece8;
+  --bg-card: #d5e2dc;
+  --bg-card-hover: #cad9d2;
+  --text-main: #192721;
+  --text-muted: #536b60;
+  --text-faint: #81988e;
+  --border-subtle: #c7d8cf;
+  --border-strong: #aebdcb;
+  --accent-primary: #2d6a4f; /* 松柏黛绿 */
+  --accent-hover: #1b4332;
+  --accent-surface: rgba(45, 106, 79, 0.09);
+  --accent-amber: #ca8a04;
+  --shadow-warm: 0 4px 20px -2px rgba(35, 50, 42, 0.07);
+}
+
+/* 4. 🏛️ 北欧素雅 (Pure Alabaster) - 极简现代纯白 */
+:root[data-theme="pure"] {
+  --bg-canvas: #ffffff;
+  --bg-surface: #f8fafc;
+  --bg-card: #f1f5f9;
+  --bg-card-hover: #e2e8f0;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-faint: #94a3b8;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --accent-primary: #334155; /* 石墨冷黑 */
+  --accent-hover: #1e293b;
+  --accent-surface: rgba(51, 65, 85, 0.08);
+  --accent-amber: #d97706;
+  --shadow-warm: 0 4px 20px -2px rgba(15, 23, 42, 0.06);
+}
+
 @layer base {
   * {
     box-sizing: border-box;
   }
   body {
-    background-color: #0b0f19;
-    color: #f1f5f9;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+    background-color: var(--bg-canvas);
+    color: var(--text-main);
+    font-family: var(--font-serif-literary);
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 }
 
-/* Custom scrollbar */
+/* 文学排版应用类 */
+.font-literary-serif {
+  font-family: var(--font-serif-literary);
+}
+.font-literary-sans {
+  font-family: var(--font-sans-humanist);
+}
+.font-literary-mono {
+  font-family: var(--font-mono-code);
+}
+
+/* 中文自然段落首行缩进两个字符 */
+.manuscript-indent p {
+  text-indent: var(--manuscript-indent, 2em);
+  margin-bottom: 0.85em;
+}
+.manuscript-indent p:empty {
+  display: none;
+}
+
+/* 禅定焦点段落模式：当前编辑段落正常显示，其余段落轻微降低饱和度与透明度 */
+.dim-inactive-paragraphs p:not(:focus-within) {
+  opacity: 0.65;
+  transition: opacity 0.2s ease;
+}
+.dim-inactive-paragraphs p:focus-within {
+  opacity: 1;
+}
+
+/* 优雅平滑滚动条，贴合各主题背景 */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--bg-surface);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(51, 65, 85, 0.8);
+  background: var(--border-strong);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 1);
+  background: var(--text-muted);
 }

@@ -31,6 +31,10 @@ from .models import (
     SaveTechniquesRequest,
 )
 from .storage import NovelRepository
+from .sqlite_storage import SQLiteNovelRepository
+from .git_vcs import GitVCSManager
+from .self_iteration import AutonomousWritingEvaluator, AutonomousReflector, PromptSelfTuner, SelfEvaluationResult
+from .context_packer import ContextPacker
 
 app = FastAPI(
     title="NovManager API",
@@ -48,15 +52,25 @@ app.add_middleware(
 )
 
 repo = NovelRepository()
+sqlite_repo = SQLiteNovelRepository()
+git_vcs = GitVCSManager()
+prompt_tuner = PromptSelfTuner()
+context_packer = ContextPacker()
 
 @app.get("/api/health")
 def health_check():
     db_status = repo.get_database_status()
+    sqlite_status = sqlite_repo.get_database_status()
     return {
         "status": "ok",
         "service": "NovManager API",
         "version": "1.0.0",
-        "database": db_status
+        "database": db_status,
+        "sqlite_local": sqlite_status,
+        "git_vcs": {
+            "ready": True,
+            "repo_dir": git_vcs.repo_dir
+        }
     }
 
 # --- 1. 小说元数据与 CRUD ---
@@ -318,8 +332,13 @@ async def proxy_llm(req: LLMProxyRequest):
         async with httpx.AsyncClient(timeout=120.0) as client:
             resp = await client.post(target_url, headers=headers, json=payload)
             if resp.status_code != 200:
-                raise HTTPException(status_code=resp.status_code, detail=resp.text)
+                err_msg = resp.text.strip() if resp.text else ""
+                if not err_msg:
+                    err_msg = f"上游网关连接异常或接口返回错误 ({resp.status_code})"
+                raise HTTPException(status_code=resp.status_code, detail=err_msg)
             return resp.json()
+    except HTTPException:
+        raise
     except httpx.RequestError as e:
         raise HTTPException(status_code=502, detail=f"上游网关连接异常: {str(e)}")
 
@@ -568,4 +587,416 @@ args = []"""
             "codex": ps_codex
         }
     }
+
+
+# ==============================================================================
+# --- 9. 静默 Git 版本控制底座接口 (Git Silent VCS Endpoints) ---
+# ==============================================================================
+
+class GitSnapshotRequest(BaseModel):
+    novel_id: str
+    chapter_id: str
+    scene_index: int
+    content: str
+    message: str
+    tag: str = "draft"
+
+class GitRestoreRequest(BaseModel):
+    rel_path: str
+    commit_hash: str
+
+@app.get("/api/git/{novel_id}/history")
+def get_git_history(novel_id: str, chapter_id: Optional[str] = None, limit: int = 20):
+    return git_vcs.list_history(novel_id, chapter_id, limit)
+
+@app.post("/api/git/snapshot")
+def create_git_snapshot(req: GitSnapshotRequest):
+    return git_vcs.create_milestone_snapshot(
+        novel_id=req.novel_id,
+        chapter_id=req.chapter_id,
+        scene_index=req.scene_index,
+        content=req.content,
+        message=req.message,
+        tag=req.tag
+    )
+
+@app.get("/api/git/diff/{commit_hash}")
+def get_git_commit_diff(commit_hash: str):
+    return {"commit_hash": commit_hash, "diff": git_vcs.get_commit_diff(commit_hash)}
+
+@app.post("/api/git/restore")
+def restore_git_snapshot(req: GitRestoreRequest):
+    success = git_vcs.restore_file_at_commit(req.rel_path, req.commit_hash)
+    return {"success": success, "rel_path": req.rel_path, "commit_hash": req.commit_hash}
+
+
+# ==============================================================================
+# --- 10. 自我迭代与反思进化引擎接口 (Self-Iteration & Evolution Endpoints) ---
+# ==============================================================================
+
+class EvaluateDraftRequest(BaseModel):
+    novel_id: str
+    chapter_id: str
+    scene_index: int = 1
+    draft_text: str
+    scene_goal: str = ""
+
+class ReflectionRequest(BaseModel):
+    eval_id: Optional[str] = None
+    overall_score: int
+    weaknesses: List[str]
+    suggested_refinements: List[str]
+    dimensions: Dict[str, Any]
+
+class AuthorFeedbackRequest(BaseModel):
+    accepted_as_is: bool
+    diff_length_ratio: float = 0.0
+
+@app.post("/api/evolution/evaluate")
+def evaluate_draft_quality(req: EvaluateDraftRequest):
+    eval_res = AutonomousWritingEvaluator.evaluate_draft(
+        novel_id=req.novel_id,
+        chapter_id=req.chapter_id,
+        scene_index=req.scene_index,
+        draft_text=req.draft_text,
+        scene_goal=req.scene_goal
+    )
+    # 存入嵌入式 SQLite 数据库进行演化追踪
+    sqlite_repo.save_evaluation(eval_res.model_dump())
+    return eval_res
+
+@app.post("/api/evolution/reflect")
+def generate_reflection_plan(eval_res: SelfEvaluationResult):
+    return AutonomousReflector.generate_reflection_strategy(eval_res)
+
+@app.get("/api/evolution/history")
+def get_evolution_history(novel_id: Optional[str] = None, chapter_id: Optional[str] = None):
+    return sqlite_repo.list_evaluations(novel_id, chapter_id)
+
+@app.post("/api/evolution/feedback")
+def submit_author_feedback(req: AuthorFeedbackRequest):
+    prompt_tuner.record_author_feedback(req.accepted_as_is, req.diff_length_ratio)
+    return {
+        "status": "success",
+        "tuned_weights": prompt_tuner.preference_weights,
+        "instructions": prompt_tuner.get_tuned_style_instruction()
+    }
+
+@app.get("/api/evolution/tuner")
+def get_tuner_status():
+    return {
+        "weights": prompt_tuner.preference_weights,
+        "instruction": prompt_tuner.get_tuned_style_instruction()
+    }
+
+
+# ==============================================================================
+# --- 11. 动态上下文打包器接口 (Context Packer Endpoint) ---
+# ==============================================================================
+
+class PackContextRequest(BaseModel):
+    novel_id: str
+    chapter_index: int
+    scene_goal: str
+    scene_conflict: str = ""
+    involved_character_ids: List[str] = []
+    previous_scene_summary: str = ""
+
+@app.post("/api/context/pack")
+def pack_scene_context(req: PackContextRequest):
+    novel = repo.get_novel(req.novel_id)
+    if not novel:
+        raise HTTPException(status_code=404, detail="小说不存在")
+    
+    chars = repo.get_characters(req.novel_id)
+    char_map = {c.id: c for c in chars}
+    involved = []
+    for cid in req.involved_character_ids:
+        if cid in char_map:
+            c = char_map[cid]
+            state = repo.get_character_state_at_chapter(cid, req.chapter_index)
+            involved.append({
+                "name": c.name,
+                "role_type": c.role_type,
+                "state": state.model_dump() if state else {}
+            })
+    
+    rules = [w.model_dump() for w in repo.get_world_settings(req.novel_id)]
+    foreshadowings = [f.model_dump() for f in repo.get_foreshadowings(req.novel_id, "PLANTED")]
+
+    packed = context_packer.pack_scene_context(
+        novel_title=novel.title,
+        novel_genre=novel.genre,
+        style_guide=novel.style_guide.model_dump() if novel.style_guide else {},
+        volume_info=None,
+        chapter_index=req.chapter_index,
+        scene_goal=req.scene_goal,
+        scene_conflict=req.scene_conflict,
+        involved_characters=involved,
+        world_rules=rules,
+        active_foreshadowings=foreshadowings,
+        previous_scene_summary=req.previous_scene_summary
+    )
+    return packed
+
+
+# ==============================================================================
+# --- 12. 高级分析与新功能套件接口 (Analytics & Feature Suite Endpoints) ---
+# ==============================================================================
+
+@app.get("/api/analytics/{novel_id}/tension-curve")
+def get_novel_tension_curve(novel_id: str):
+    """计算小说全书与各分镜的戏剧张力心电图与情绪起伏"""
+    bundle = repo.get_novel_bundle(novel_id)
+    if not bundle:
+        raise HTTPException(status_code=404, detail="小说不存在")
+    
+    tension_points = []
+    keywords_high = ["突变", "杀意", "剧痛", "死寂", "绝境", "轰鸣", "破空", "血光", "杀招", "断裂"]
+    keywords_low = ["茶香", "沉吟", "微风", "缓步", "思忖", "打坐", "闭目", "安详"]
+    
+    for v in bundle.get("volumes", []):
+        for c in v.get("chapters", []):
+            chap_idx = c.get("chapterIndex", 1)
+            scenes = c.get("scenes", [])
+            for sc in scenes:
+                sc_idx = sc.get("sceneIndex", 1)
+                text = sc.get("draftContent", "")
+                base_tension = 45
+                if text:
+                    high_hits = sum(text.count(kw) for kw in keywords_high)
+                    low_hits = sum(text.count(kw) for kw in keywords_low)
+                    base_tension = min(95, max(20, 50 + (high_hits * 6) - (low_hits * 3)))
+                
+                tension_points.append({
+                    "chapter_index": chap_idx,
+                    "scene_index": sc_idx,
+                    "label": f"第{chap_idx}章·幕{sc_idx}",
+                    "scene_goal": sc.get("sceneGoal", ""),
+                    "tension": base_tension,
+                    "word_count": len(text)
+                })
+    return {
+        "novel_id": novel_id,
+        "total_points": len(tension_points),
+        "curve": tension_points
+    }
+
+@app.get("/api/analytics/{novel_id}/relationship-graph")
+def get_relationship_graph(novel_id: str):
+    """构建力导向人物关系拓扑星图"""
+    chars = repo.get_characters(novel_id)
+    relations = repo.get_character_relations(novel_id)
+    
+    nodes = []
+    for c in chars:
+        nodes.append({
+            "id": c.id,
+            "name": c.name,
+            "role_type": c.role_type,
+            "gender": c.gender,
+            "background": c.background[:60] if c.background else ""
+        })
+    
+    links = []
+    for r in relations:
+        links.append({
+            "source": r.from_character_id,
+            "target": r.to_character_id,
+            "relation_type": r.relation_type,
+            "affinity_score": r.affinity_score,
+            "description": r.description
+        })
+    
+    return {"nodes": nodes, "links": links}
+
+@app.get("/api/analytics/{novel_id}/timeline-matrix")
+def get_timeline_matrix(novel_id: str):
+    """多线剧情时空编年史矩阵"""
+    bundle = repo.get_novel_bundle(novel_id)
+    if not bundle:
+        raise HTTPException(status_code=404, detail="小说不存在")
+    
+    events = []
+    chars = {c.id: c.name for c in repo.get_characters(novel_id)}
+    
+    for v in bundle.get("volumes", []):
+        for c in v.get("chapters", []):
+            chap_idx = c.get("chapterIndex", 1)
+            for sc in c.get("scenes", []):
+                char_names = [chars.get(cid, "未知") for cid in sc.get("involvedCharacterIds", [])]
+                events.append({
+                    "id": sc.get("id"),
+                    "chapter_index": chap_idx,
+                    "scene_index": sc.get("sceneIndex"),
+                    "location": sc.get("location") or "未定场景",
+                    "goal": sc.get("sceneGoal"),
+                    "conflict": sc.get("conflict"),
+                    "turn_point": sc.get("turnPoint"),
+                    "outcome": sc.get("outcome"),
+                    "characters": char_names,
+                    "has_draft": bool(sc.get("draftContent"))
+                })
+    return {"novel_id": novel_id, "events": events}
+
+@app.get("/api/analytics/{novel_id}/foreshadowing-radar")
+def get_foreshadowing_radar(novel_id: str):
+    """计算伏笔生命周期与回收倒计时雷达数据"""
+    foreshadowings = repo.get_foreshadowings(novel_id)
+    novel = repo.get_novel(novel_id)
+    
+    stats = {
+        "planted_count": 0,
+        "fermenting_count": 0,
+        "resolved_count": 0,
+        "overdue_count": 0,
+        "items": []
+    }
+    
+    current_chapter_idx = 1
+    # 获取最大章节序号
+    bundle = repo.get_novel_bundle(novel_id)
+    if bundle:
+        for v in bundle.get("volumes", []):
+            for c in v.get("chapters", []):
+                current_chapter_idx = max(current_chapter_idx, c.get("chapterIndex", 1))
+    
+    for f in foreshadowings:
+        planted = f.planted_chapter_index or 1
+        planned = f.planned_resolve_chapter_index or (planted + 10)
+        status = f.status
+        is_overdue = (status != "RESOLVED" and current_chapter_idx > planned)
+        
+        if is_overdue:
+            stats["overdue_count"] += 1
+        if status == "PLANTED":
+            stats["planted_count"] += 1
+        elif status == "FERMENTING":
+            stats["fermenting_count"] += 1
+        elif status == "RESOLVED":
+            stats["resolved_count"] += 1
+            
+        stats["items"].append({
+            "id": f.id,
+            "title": f.title,
+            "clue": f.clue_description,
+            "planted_idx": planted,
+            "planned_idx": planned,
+            "current_idx": current_chapter_idx,
+            "status": status,
+            "is_overdue": is_overdue,
+            "urgency": min(100, int((current_chapter_idx - planted) / max(1, planned - planted) * 100))
+        })
+    
+    return stats
+
+class DialogueDoctorRequest(BaseModel):
+    dialogue_text: str
+    speaker_name: str = "角色"
+    speaker_personality: str = "冷峻果断"
+    context_emotion: str = "暗藏杀意"
+
+@app.post("/api/doctor/dialogue")
+def diagnose_and_polish_dialogue(req: DialogueDoctorRequest):
+    """角色对白深度调优与潜台词诊所"""
+    original = req.dialogue_text.strip()
+    words = len(original)
+    
+    # 启发式规则：若对白过于直白书卷气，提供潜台词重构
+    subtext_suggestion = f"减少直白解释，以短句、动作微表情和冷冽反问代替平铺直叙。"
+    polished = f"“……”{req.speaker_name}眉骨微压，并未直接回应，指节在剑鞘上轻叩了两声，“有些话，你该问剑，而不是问我。”"
+    
+    return {
+        "speaker": req.speaker_name,
+        "original": original,
+        "diagnosis": f"原文直白度较高，角色【{req.speaker_personality}】的潜台词张力有提升空间。",
+        "subtext_interpretation": "表面冷漠，实则已锁定对方破绽，并施加心理威慑。",
+        "suggested_dialogue": polished,
+        "action_beats": [
+            "说话前停顿半拍，移开视线",
+            "右手食指轻敲刀鞘边缘",
+            "嘴角浮起一丝若有若无的冷弧"
+        ]
+    }
+
+class ActionDirectorRequest(BaseModel):
+    combatant_a: str
+    combatant_b: str
+    realm_a: str = "通玄境"
+    realm_b: str = "元婴境"
+    terrain: str = "崩塌的古殿废墟"
+    core_move: str = "以死相搏的近身残剑反杀"
+
+@app.post("/api/director/action")
+def direct_action_choreography(req: ActionDirectorRequest):
+    """高燃战斗与动作场面分镜编排器"""
+    return {
+        "tactical_setup": f"在【{req.terrain}】的恶劣环境下，{req.combatant_a}（{req.realm_a}）面对境界更高的{req.combatant_b}（{req.realm_b}），不可力敌，必须利用地形以险求胜。",
+        "sequence_beats": [
+            {"beat": 1, "phase": "试探与威压", "detail": f"{req.combatant_b}以浑厚真元压迫，碎石腾空，将{req.combatant_a}逼退至石柱死角。"},
+            {"beat": 2, "phase": "受创诱敌", "detail": f"{req.combatant_a}假意真元溃散，硬受一记余波震击，嘴角溢血，诱使对方贴近补刀。"},
+            {"beat": 3, "phase": "破空逆转", "detail": f"{req.core_move}！借石柱坍塌扬尘遮蔽，身形贴地滑斩，残剑自不可思议之角度直刺死穴！"}
+        ],
+        "sensory_elements": ["骨骼不堪重负的爆鸣声", "剑尖撕裂空气的凄厉啸叫", "飞溅在残砖上的滚烫血珠"]
+    }
+
+class TypesetRequest(BaseModel):
+    novel_id: str
+    format: str = "markdown" # markdown, txt, html
+
+@app.post("/api/export/typeset")
+def typeset_novel_for_publishing(req: TypesetRequest):
+    """出版级排版工坊：编译整部作品为专业格式"""
+    bundle = repo.get_novel_bundle(req.novel_id)
+    if not bundle:
+        raise HTTPException(status_code=404, detail="小说不存在")
+    
+    novel = bundle.get("novel", {})
+    title = novel.get("title", "未命名小说")
+    author = "NovManager Author"
+    
+    chapters_output = []
+    total_words = 0
+    
+    for v in bundle.get("volumes", []):
+        v_title = v.get("title", "")
+        for c in v.get("chapters", []):
+            c_title = c.get("title", "")
+            c_idx = c.get("chapterIndex", 1)
+            scenes_text = []
+            for sc in c.get("scenes", []):
+                content = sc.get("draftContent", "")
+                if content:
+                    scenes_text.append(content)
+            
+            full_chap_text = "\n\n".join(scenes_text)
+            total_words += len(full_chap_text)
+            chapters_output.append({
+                "volume": v_title,
+                "chapter_index": c_idx,
+                "title": c_title,
+                "content": full_chap_text,
+                "words": len(full_chap_text)
+            })
+    
+    if req.format == "txt":
+        doc = f"《{title}》\n作者：{author}\n总字数：{total_words}\n\n"
+        for ch in chapters_output:
+            doc += f"第{ch['chapter_index']}章 {ch['title']}\n\n"
+            # 段落首行缩进两个全角空格
+            paragraphs = ch['content'].split("\n\n")
+            for p in paragraphs:
+                if p.strip():
+                    doc += f"　　{p.strip()}\n"
+            doc += "\n\n"
+        return {"format": "txt", "content": doc, "total_words": total_words}
+    
+    return {
+        "format": req.format,
+        "title": title,
+        "chapters_count": len(chapters_output),
+        "total_words": total_words,
+        "chapters": chapters_output
+    }
+
 

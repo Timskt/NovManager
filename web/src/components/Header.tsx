@@ -1,9 +1,11 @@
 // ==============================================================================
-// 顶部全局导航栏 (Header Navigation)
+// 人文文学顶部全局导航栏 (Header Navigation & Typography Hub)
+// 彻底去除同质化 AI 模版科技感，融入古雅文墨印章、多主题色彩切换与排版微调控台
 // ==============================================================================
 
 import React, { useState } from 'react';
 import { useNovel } from '../context/NovelContext';
+import { useTheme, AppTheme, FontFamily, ReaderWidth } from '../context/ThemeContext';
 import {
   BookOpen,
   Sparkles,
@@ -21,6 +23,15 @@ import {
   Library,
   Wand2,
   GitFork,
+  Palette,
+  Sliders,
+  Clock,
+  Activity,
+  Layers,
+  Map,
+  Flame,
+  Award,
+  Type,
 } from 'lucide-react';
 
 export type NavTab =
@@ -30,23 +41,49 @@ export type NavTab =
   | 'OUTLINES'
   | 'CANVAS'
   | 'CHARACTERS'
-  | 'LORE'
+  | 'RELATIONS'
+  | 'TIMELINE'
+  | 'TENSION'
   | 'FORESHADOWING'
+  | 'LORE'
+  | 'MAP'
+  | 'SANDBOX'
+  | 'EVOLUTION'
+  | 'PRODUCTIVITY'
+  | 'CLINIC'
+  | 'PLUGINS'
   | 'MCP';
 
 interface HeaderProps {
   activeTab: NavTab;
   setActiveTab: (tab: NavTab) => void;
   onOpenSettings: () => void;
+  onOpenZen?: () => void;
+  onOpenCommandPalette?: () => void;
+  onOpenExportStudio?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   setActiveTab,
   onOpenSettings,
+  onOpenZen,
+  onOpenCommandPalette,
+  onOpenExportStudio,
 }) => {
-  const { novel, resetToSampleData, exportProjectJson, importProjectJson, syncFromBackend, settings } = useNovel();
+  const { novel, resetToSampleData, exportProjectJson, importProjectJson, syncFromBackend, settings: modelSettings } = useNovel();
+  const {
+    settings: themeSettings,
+    setTheme,
+    setFontFamily,
+    setFontSize,
+    setLineHeight,
+    setParagraphIndent,
+    setReaderWidth,
+  } = useTheme();
+
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showTypographyPopover, setShowTypographyPopover] = useState(false);
   const [importText, setImportText] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -60,10 +97,6 @@ export const Header: React.FC<HeaderProps> = ({
     } else {
       alert('未连接到本地后端 (http://localhost:8000)，保持前端独立运行。');
     }
-  };
-
-  const handleExport = () => {
-    setShowExportModal(true);
   };
 
   const handleCopyJson = () => {
@@ -88,260 +121,391 @@ export const Header: React.FC<HeaderProps> = ({
   );
 
   return (
-    <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40 px-4 py-2.5">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-        {/* 左侧 Logo 与书名信息 */}
+    <header
+      className="border-b sticky top-0 z-40 px-3 sm:px-6 py-2.5 transition-colors"
+      style={{
+        backgroundColor: 'var(--bg-surface)',
+        borderColor: 'var(--border-subtle)',
+        color: 'var(--text-main)',
+      }}
+    >
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+        {/* 左侧：文人印章 Logo 与书名信息 */}
         <div className="flex items-center gap-3">
-          <div 
+          <div
             onClick={() => setActiveTab('LIBRARY')}
-            className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-950/50 cursor-pointer hover:scale-105 transition"
+            className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition transform hover:scale-105 shadow-sm"
+            style={{
+              backgroundColor: 'var(--accent-primary)',
+              color: '#ffffff',
+            }}
             title="点击切换小说或查看作品库"
           >
-            <BookOpen className="w-5 h-5 text-white" />
+            <BookOpen className="w-5 h-5" />
           </div>
+
           <div>
             <div className="flex items-center gap-2">
-              <h1 
+              <h1
                 onClick={() => setActiveTab('LIBRARY')}
-                className="text-base font-bold text-slate-100 tracking-wide cursor-pointer hover:text-indigo-300 transition"
+                className="text-base font-bold tracking-wide cursor-pointer font-literary-serif hover:opacity-80 transition"
               >
                 NovManager
               </h1>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-950/80 border border-indigo-700/50 text-indigo-300 font-medium">
+              <span
+                className="text-xs px-2 py-0.5 rounded-md font-literary-sans font-medium"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  color: 'var(--accent-primary)',
+                }}
+              >
                 {novel.genre}
               </span>
             </div>
-            <p className="text-xs text-slate-400 flex items-center gap-2">
-              <span 
+
+            <p className="text-xs flex items-center gap-2 font-literary-sans" style={{ color: 'var(--text-muted)' }}>
+              <span
                 onClick={() => setActiveTab('LIBRARY')}
-                className="text-slate-300 font-medium cursor-pointer hover:text-indigo-300 hover:underline transition"
-                title="点击进入作品库切换"
+                className="font-medium cursor-pointer hover:underline transition truncate max-w-[120px] sm:max-w-xs"
               >
                 {novel.title}
               </span>
-              <span className="text-slate-600 hidden sm:inline">•</span>
-              <span className="hidden sm:inline">已写 {novel.currentWordCount.toLocaleString()} / 目标 {novel.targetWordCount.toLocaleString()} 字</span>
-              <span className="text-slate-600">•</span>
-              <span className="text-indigo-400">{progressPercent}%</span>
+              <span className="opacity-40 hidden sm:inline">•</span>
+              <span className="hidden sm:inline">
+                {novel.currentWordCount.toLocaleString()} / {novel.targetWordCount.toLocaleString()} 字
+              </span>
+              <span className="opacity-40">•</span>
+              <span style={{ color: 'var(--accent-primary)' }} className="font-semibold font-mono">
+                {progressPercent}%
+              </span>
             </p>
           </div>
         </div>
 
-        {/* 中间主要功能 Tab 切换 (桌面端显示，移动端在底部) */}
-        <nav className="hidden lg:flex items-center bg-slate-950/80 p-1 rounded-xl border border-slate-800/80 text-xs xl:text-sm">
-          <button
-            onClick={() => setActiveTab('LIBRARY')}
-            className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-lg transition-all ${
-              activeTab === 'LIBRARY'
-                ? 'bg-indigo-600 text-white font-medium shadow-md shadow-indigo-600/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-            }`}
-          >
-            <Library className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
-            <span>作品库</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('ARCHITECT')}
-            className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-lg transition-all ${
-              activeTab === 'ARCHITECT'
-                ? 'bg-gradient-to-r from-amber-600 to-indigo-600 text-white font-medium shadow-md shadow-indigo-600/30'
-                : 'text-amber-400/90 hover:text-amber-200 hover:bg-slate-800/60'
-            }`}
-          >
-            <Wand2 className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-amber-300" />
-            <span>AI 创世</span>
-          </button>
-
+        {/* 中间主要功能 Tab 切换 */}
+        <nav
+          className="hidden xl:flex items-center p-1 rounded-xl border text-xs font-literary-sans"
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            borderColor: 'var(--border-subtle)',
+          }}
+        >
           <button
             onClick={() => setActiveTab('STUDIO')}
-            className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition font-medium ${
               activeTab === 'STUDIO'
-                ? 'bg-indigo-600 text-white font-medium shadow-md shadow-indigo-600/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'hover:opacity-80'
             }`}
           >
-            <Feather className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
+            <Feather className="w-3.5 h-3.5" />
             <span>创作台</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('CHARACTERS')}
-            className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-lg transition-all ${
-              activeTab === 'CHARACTERS'
-                ? 'bg-indigo-600 text-white font-medium shadow-md shadow-indigo-600/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            onClick={() => setActiveTab('RELATIONS')}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition font-medium ${
+              activeTab === 'RELATIONS'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'hover:opacity-80'
             }`}
           >
-            <Users className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
-            <span>人物档案</span>
+            <Users className="w-3.5 h-3.5" />
+            <span>人物星图</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('LORE')}
-            className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-lg transition-all ${
-              activeTab === 'LORE'
-                ? 'bg-indigo-600 text-white font-medium shadow-md shadow-indigo-600/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            onClick={() => setActiveTab('TIMELINE')}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition font-medium ${
+              activeTab === 'TIMELINE'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'hover:opacity-80'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
-            <span>世界观</span>
+            <Clock className="w-3.5 h-3.5" />
+            <span>剧情编年</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('TENSION')}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition font-medium ${
+              activeTab === 'TENSION'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'hover:opacity-80'
+            }`}
+          >
+            <Activity className="w-3.5 h-3.5" />
+            <span>张力心电图</span>
           </button>
 
           <button
             onClick={() => setActiveTab('FORESHADOWING')}
-            className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition font-medium ${
               activeTab === 'FORESHADOWING'
-                ? 'bg-indigo-600 text-white font-medium shadow-md shadow-indigo-600/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'hover:opacity-80'
             }`}
           >
-            <Radar className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
+            <Radar className="w-3.5 h-3.5" />
             <span>伏笔雷达</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('MCP')}
-            className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-lg transition-all ${
-              activeTab === 'MCP'
-                ? 'bg-emerald-600 text-white font-medium shadow-md shadow-emerald-600/30'
-                : 'text-emerald-400 hover:text-emerald-200 hover:bg-emerald-950/40'
+            onClick={() => setActiveTab('MAP')}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition font-medium ${
+              activeTab === 'MAP'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'hover:opacity-80'
             }`}
-            title="查看标准 MCP 资源与工具接口"
           >
-            <Cable className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
-            <span>MCP 接口</span>
+            <Compass className="w-3.5 h-3.5" />
+            <span>地理舆图</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('SANDBOX')}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition font-medium ${
+              activeTab === 'SANDBOX'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'hover:opacity-80'
+            }`}
+          >
+            <GitFork className="w-3.5 h-3.5" />
+            <span>平行沙盒</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('EVOLUTION')}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition font-medium ${
+              activeTab === 'EVOLUTION'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'hover:opacity-80'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>自我进化</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('PRODUCTIVITY')}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition font-medium ${
+              activeTab === 'PRODUCTIVITY'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'hover:opacity-80'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5" />
+            <span>能量看板</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('CLINIC')}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition font-medium ${
+              activeTab === 'CLINIC'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'hover:opacity-80'
+            }`}
+          >
+            <Award className="w-3.5 h-3.5" />
+            <span>黄金三章</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('PLUGINS')}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition font-medium ${
+              activeTab === 'PLUGINS'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'hover:opacity-80'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>配方工坊</span>
           </button>
         </nav>
 
         {/* 右侧工具快捷项 */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* 主题选择切换 */}
+          <div className="flex items-center rounded-lg border p-0.5" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}>
+            <button
+              onClick={() => setTheme('ink')}
+              title="古意宣纸 (Ink)"
+              className={`p-1.5 rounded-md transition text-xs ${themeSettings.theme === 'ink' ? 'bg-amber-600 text-white shadow-xs' : 'opacity-60 hover:opacity-100'}`}
+            >
+              📜
+            </button>
+            <button
+              onClick={() => setTheme('obsidian')}
+              title="黑曜冷萃 (Obsidian)"
+              className={`p-1.5 rounded-md transition text-xs ${themeSettings.theme === 'obsidian' ? 'bg-amber-600 text-white shadow-xs' : 'opacity-60 hover:opacity-100'}`}
+            >
+              🌌
+            </button>
+            <button
+              onClick={() => setTheme('celadon')}
+              title="秘色青釉 (Celadon)"
+              className={`p-1.5 rounded-md transition text-xs ${themeSettings.theme === 'celadon' ? 'bg-amber-600 text-white shadow-xs' : 'opacity-60 hover:opacity-100'}`}
+            >
+              🍵
+            </button>
+            <button
+              onClick={() => setTheme('pure')}
+              title="北欧素雅 (Pure Alabaster)"
+              className={`p-1.5 rounded-md transition text-xs ${themeSettings.theme === 'pure' ? 'bg-amber-600 text-white shadow-xs' : 'opacity-60 hover:opacity-100'}`}
+            >
+              🏛️
+            </button>
+          </div>
+
+          {/* 排版微调弹出面板按钮 */}
+          <div className="relative">
+            <button
+              onClick={() => setShowTypographyPopover(!showTypographyPopover)}
+              className="p-2 rounded-lg border hover:opacity-80 transition"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+              title="文学排版与字体调节"
+            >
+              <Type className="w-4 h-4" />
+            </button>
+
+            {showTypographyPopover && (
+              <div
+                className="absolute right-0 top-11 w-64 p-4 rounded-2xl border shadow-xl z-50 space-y-3 font-literary-sans text-xs animate-in fade-in duration-150"
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  borderColor: 'var(--border-strong)',
+                }}
+              >
+                <div className="font-bold flex items-center justify-between pb-2 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+                  <span>正文字体与排版微调</span>
+                  <button onClick={() => setShowTypographyPopover(false)} className="hover:opacity-75">
+                    关闭
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block opacity-75 mb-1 font-semibold">字体家族</label>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => setFontFamily('serif')}
+                      className={`flex-1 py-1 rounded border ${themeSettings.fontFamily === 'serif' ? 'bg-amber-600 text-white' : ''}`}
+                      style={{ borderColor: 'var(--border-subtle)' }}
+                    >
+                      典雅宋体
+                    </button>
+                    <button
+                      onClick={() => setFontFamily('sans')}
+                      className={`flex-1 py-1 rounded border ${themeSettings.fontFamily === 'sans' ? 'bg-amber-600 text-white' : ''}`}
+                      style={{ borderColor: 'var(--border-subtle)' }}
+                    >
+                      人文黑体
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="opacity-75 font-semibold">字号大小</span>
+                    <span className="font-mono">{themeSettings.fontSize}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="14"
+                    max="22"
+                    value={themeSettings.fontSize}
+                    onChange={(e) => setFontSize(Number(e.target.value))}
+                    className="w-full accent-amber-600"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="opacity-75 font-semibold">行高行间距</span>
+                    <span className="font-mono">{themeSettings.lineHeight}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1.6"
+                    max="2.4"
+                    step="0.1"
+                    value={themeSettings.lineHeight}
+                    onChange={(e) => setLineHeight(Number(e.target.value))}
+                    className="w-full accent-amber-600"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="opacity-75 font-semibold">首行缩进两个字符</span>
+                  <input
+                    type="checkbox"
+                    checked={themeSettings.paragraphIndent}
+                    onChange={(e) => setParagraphIndent(e.target.checked)}
+                    className="accent-amber-600 w-4 h-4 cursor-pointer"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 禅定模式 */}
+          {onOpenZen && (
+            <button
+              onClick={onOpenZen}
+              className="p-2 rounded-lg border hover:opacity-80 transition text-amber-500"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+              title="进入作家禅定沉浸模式 (Zen Focus Mode)"
+            >
+              <Sparkles className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* 全局穿梭 (Cmd+K) */}
+          {onOpenCommandPalette && (
+            <button
+              onClick={onOpenCommandPalette}
+              className="px-2.5 py-1.5 rounded-lg border hover:opacity-80 transition text-xs font-literary-sans flex items-center gap-1.5"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+              title="全局穿梭指挥官 (Cmd+K)"
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline font-mono">⌘K</span>
+            </button>
+          )}
+
+          {/* 出版导出工坊 */}
+          {onOpenExportStudio && (
+            <button
+              onClick={onOpenExportStudio}
+              className="p-2 rounded-lg border hover:opacity-80 transition"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+              title="出版级排版导出工坊 (TXT / EPUB / Markdown)"
+            >
+              <Download className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* 同步后端 */}
           <button
             onClick={handleSyncBackend}
             disabled={isSyncing}
-            className="p-2 text-slate-400 hover:text-indigo-300 hover:bg-slate-800 rounded-lg transition"
-            title="从后端同步外部 Agent 最新写入的草稿与状态"
+            className="p-2 rounded-lg border hover:opacity-80 transition"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+            title="从后端同步数据"
           >
-            <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-indigo-400' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
           </button>
 
-          <button
-            onClick={handleExport}
-            className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition"
-            title="导入/导出工程数据"
-          >
-            <Download className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={() => {
-              if (confirm('确定要将数据重置回预置演示小说《太虚纪元》吗？')) {
-                resetToSampleData();
-              }
-            }}
-            className="p-2 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-lg transition"
-            title="重置回初始示范数据"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
-
+          {/* 设置 */}
           <button
             onClick={onOpenSettings}
-            className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 text-xs text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-lg transition"
-            title="配置大模型 API Key 与供应商接口"
+            className="p-2 rounded-lg border hover:opacity-80 transition"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+            title="模型与接口配置"
           >
-            <Settings className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">模型设置</span>
-            {settings.useMock ? (
-              <span className="hidden xl:inline-block text-[10px] px-1.5 py-0.2 rounded bg-slate-900 text-slate-400 border border-slate-800">
-                仿真
-              </span>
-            ) : (
-              <span className="hidden xl:inline-flex items-center gap-1 text-[10px] px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>
-                  {settings.provider === 'deepseek'
-                    ? 'DeepSeek'
-                    : settings.provider === 'opencode'
-                    ? 'OpenCode'
-                    : 'API'}
-                </span>
-              </span>
-            )}
+            <Settings className="w-4 h-4" />
           </button>
         </div>
       </div>
-
-      {/* 导入导出弹窗 */}
-      {showExportModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4">
-            <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-              <Download className="w-5 h-5 text-indigo-400" />
-              <span>小说项目数据备份与导入</span>
-            </h3>
-            <p className="text-xs text-slate-400">
-              包含完整的小说信息、世界观设定、人物卡与历史状态、卷章大纲和伏笔记录。
-            </p>
-
-            <div>
-              <div className="flex justify-between items-center mb-1 text-xs">
-                <span className="text-slate-300">当前项目完整 JSON 数据</span>
-                <button
-                  onClick={handleCopyJson}
-                  className="text-indigo-400 hover:underline flex items-center gap-1"
-                >
-                  {copySuccess ? (
-                    <>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-emerald-400">复制成功！</span>
-                    </>
-                  ) : (
-                    '复制到剪贴板'
-                  )}
-                </button>
-              </div>
-              <textarea
-                readOnly
-                value={exportProjectJson()}
-                rows={6}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs font-mono text-slate-300 focus:outline-none"
-              />
-            </div>
-
-            <div className="pt-2 border-t border-slate-800">
-              <span className="block text-xs font-medium text-slate-300 mb-1">
-                粘贴 JSON 进行还原导入：
-              </span>
-              <textarea
-                placeholder="在此粘贴导出的项目 JSON 字符串..."
-                value={importText}
-                onChange={(e) => setImportText(e.target.value)}
-                rows={3}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                onClick={() => setShowExportModal(false)}
-                className="px-4 py-2 text-xs text-slate-400 hover:text-slate-200 bg-slate-800/80 hover:bg-slate-800 rounded-lg"
-              >
-                关闭
-              </button>
-              <button
-                onClick={handleDoImport}
-                disabled={!importText.trim()}
-                className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-lg flex items-center gap-1.5"
-              >
-                <Upload className="w-3.5 h-3.5" />
-                <span>立即导入并覆盖</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </header>
   );
 };

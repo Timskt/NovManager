@@ -1,20 +1,19 @@
 // ==============================================================================
 // 移动端专用底部原生触控导航栏 (Mobile Bottom Navigation Bar)
-// 适配手机竖屏握持单手大拇指触控，带 safe-area 自动避让
+// 适配手机竖屏握持单手大拇指触控，带 safe-area 自动避让与人文主题自适应
 // ==============================================================================
 
 import React from 'react';
 import { NavTab } from './Header';
 import {
   Library,
-  Wand2,
   Feather,
-  Compass,
   Users,
-  Sparkles,
+  Clock,
+  Activity,
   Radar,
-  Cable,
-  GitFork,
+  Compass,
+  Sparkles,
 } from 'lucide-react';
 
 interface MobileBottomNavProps {
@@ -27,33 +26,46 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   setActiveTab,
 }) => {
   const tabs: { id: NavTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'LIBRARY', label: '书库', icon: <Library className="w-4 h-4" /> },
-    { id: 'ARCHITECT', label: '创世', icon: <Wand2 className="w-4 h-4 text-amber-300" /> },
-    { id: 'STUDIO', label: '创作', icon: <Feather className="w-4 h-4" /> },
-    { id: 'CHARACTERS', label: '人物', icon: <Users className="w-4 h-4" /> },
-    { id: 'LORE', label: '设定', icon: <Sparkles className="w-4 h-4" /> },
-    { id: 'FORESHADOWING', label: '伏笔', icon: <Radar className="w-4 h-4" /> },
-    { id: 'MCP', label: 'MCP', icon: <Cable className="w-4 h-4" /> },
+    { id: 'STUDIO', label: '创作台', icon: <Feather className="w-4 h-4" /> },
+    { id: 'RELATIONS', label: '人物星图', icon: <Users className="w-4 h-4" /> },
+    { id: 'TIMELINE', label: '编年史', icon: <Clock className="w-4 h-4" /> },
+    { id: 'TENSION', label: '心电图', icon: <Activity className="w-4 h-4" /> },
+    { id: 'FORESHADOWING', label: '伏笔雷达', icon: <Radar className="w-4 h-4" /> },
+    { id: 'EVOLUTION', label: '自我进化', icon: <Sparkles className="w-4 h-4" /> },
+    { id: 'LIBRARY', label: '作品库', icon: <Library className="w-4 h-4" /> },
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-lg border-t border-slate-800/90 flex items-center justify-around overflow-x-auto py-1 px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-2xl">
+    <nav
+      className="xl:hidden fixed bottom-0 left-0 right-0 z-40 border-t flex items-center justify-around overflow-x-auto py-1 px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-xl font-literary-sans backdrop-blur-md"
+      style={{
+        backgroundColor: 'var(--bg-surface)',
+        borderColor: 'var(--border-subtle)',
+        color: 'var(--text-main)',
+      }}
+    >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex flex-col items-center justify-center flex-1 min-w-[44px] py-1 transition-all rounded-lg ${
-              isActive
-                ? 'text-indigo-400 font-semibold scale-105'
-                : 'text-slate-500 hover:text-slate-300'
+            className={`flex flex-col items-center justify-center flex-1 min-w-[48px] py-1 transition-all rounded-lg ${
+              isActive ? 'font-bold scale-105' : 'opacity-60 hover:opacity-100'
             }`}
+            style={isActive ? { color: 'var(--accent-primary)' } : undefined}
           >
-            <div className={`relative p-1 rounded-xl transition ${isActive ? 'bg-indigo-950/60 border border-indigo-700/50' : ''}`}>
+            <div
+              className={`p-1 rounded-xl transition ${
+                isActive ? 'shadow-xs' : ''
+              }`}
+              style={isActive ? { backgroundColor: 'var(--bg-card)' } : undefined}
+            >
               {tab.icon}
             </div>
-            <span className="text-[10px] tracking-tight mt-0.5 whitespace-nowrap">{tab.label}</span>
+            <span className="text-[10px] tracking-tight mt-0.5 whitespace-nowrap">
+              {tab.label}
+            </span>
           </button>
         );
       })}
