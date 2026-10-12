@@ -43,6 +43,11 @@ const MultimodalContextStudioView = lazy(() =>
     default: m.MultimodalContextStudioView,
   }))
 );
+const TrendMemeFusionView = lazy(() =>
+  import('./components/trends/TrendMemeFusionView').then((m) => ({
+    default: m.TrendMemeFusionView,
+  }))
+);
 const AutopilotCockpitView = lazy(() =>
   import('./components/autopilot/AutopilotCockpitView').then((m) => ({
     default: m.AutopilotCockpitView,
@@ -185,6 +190,7 @@ function formatTabToHash(tab: NavTab): string {
 // 精简默认固定标签为 5 个高频核心工坊，杜绝横向拥挤
 const DEFAULT_PINNED_TABS: NavTab[] = [
   'STUDIO',
+  'TREND_MEME',
   'AI_COUNCIL',
   'OMNI_CONTEXT',
   'AUTOPILOT',
@@ -387,7 +393,10 @@ const AppContent: React.FC = () => {
     : undefined;
 
   const isThreePaneStudio =
-    activeTab === 'STUDIO' || activeTab === 'OUTLINES' || activeTab === 'CANVAS';
+    activeTab === 'STUDIO' ||
+    activeTab === 'OUTLINES' ||
+    activeTab === 'CANVAS' ||
+    activeTab === 'TREND_MEME';
 
   return (
     <div
@@ -443,6 +452,9 @@ const AppContent: React.FC = () => {
           )}
           {activeTab === 'OMNI_CONTEXT' && (
             <MultimodalContextStudioView onNavigateTab={navigateToTab} />
+          )}
+          {activeTab === 'TREND_MEME' && (
+            <TrendMemeFusionView onNavigateTab={navigateToTab} />
           )}
           {activeTab === 'AUTOPILOT' && <AutopilotCockpitView onNavigateTab={navigateToTab} />}
           {activeTab === 'SPARK_HUB' && <SparkAndReaderHubView onNavigateTab={navigateToTab} />}

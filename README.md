@@ -62,6 +62,12 @@
 - **文风特征提取与融合（Style DNA Studio）**：基于句长方差、对话占比、感官词密度、修辞频率等 6 维指标量化分析样本文风，并生成对应的写作约束指令。
 - **AI 视频分镜脚本工作台（Video Storyboard Studio）**：将小说场景拆解为包含景别、运镜、画面描述、音效与台词的结构化镜头表，支持导出适配 Sora、可灵（Kling）、Runway Gen-3、Midjourney 等平台的提示词格式。
 
+### 2.6 实时热梗与热点新闻融合工坊（Real-Time Trends & Memes Fusion）
+针对创作中需要引入实时流行热梗、社会/科技热点新闻并避免世界观违和的需求，提供 20 项功能（`TF01–TF20`）与 20 项架构（`TA01–TA20`）：
+- **多平台实时热榜与自定义采集**：聚合主流社交与内容平台（抖音、微博、B站、知乎、小红书、科技财经）的高频热梗与突发新闻，支持粘贴外部实时新闻或新梗进行零样本解析入库（`/api/trends/parse-custom`）。
+- **跨世界观防出戏转译（Anachronism Guard）**：内置修仙宗门、现代都市、诡秘克苏鲁、赛博朋克、古风朝堂 5 套本土化词法映射规则，自动将现代网络缩写与热点内核转化为符合目标题材设定的表达。
+- **双模创作与四档浓度控制**：既可将热梗自然缝合进当前小说章节场景、角色吐槽对白或支线细纲，也可围绕实时热点独立生成结构完整的时评文章；支持 1–4 档含梗浓度调节、模拟读者弹幕反馈预演及 Codex Diff 一键合入正文。
+
 ---
 
 ## 3. 系统架构与工程目录
@@ -75,7 +81,8 @@ NovManager/
 │   ├── Dockerfile                # 后端多阶段构建镜像配置
 │   ├── src/
 │   │   ├── main.rs               # HTTP 服务启动入口与路由挂载
-│   │   ├── api.rs                # RESTful API 控制器实现
+│   │   ├── api.rs                # RESTful API 路由注册表
+│   │   ├── handlers/             # 按业务域拆分的控制器模块 (含 trends.rs 实时热点融合引擎)
 │   │   ├── models.rs             # 领域模型与请求/响应数据结构
 │   │   ├── storage.rs            # SQLite (WAL 模式) 持久化仓储层
 │   │   ├── git_vcs.rs            # 本地 Git 快照、历史记录与 Diff 封装
@@ -89,14 +96,16 @@ NovManager/
 │   ├── nginx.conf                # Nginx 静态托管与 /api 反向代理配置
 │   └── src/
 │       ├── App.tsx               # 根容器与视图路由分发
+│       ├── config/navigation.tsx # 全站导航路由单一数据源 (SSOT)
 │       ├── context/              # NovelContext、ThemeContext、BrandContext 状态管理
 │       ├── lib/                  # API 客户端、Myers Diff、倒排搜索、本地 WAL 缓存
 │       └── components/
 │           ├── Header.tsx        # 顶部全域导航与命令入口
 │           ├── common/           # 多标签栏、全局命令面板 (Cmd+K)
 │           ├── studio/           # 三栏创作台 (ContextDrawer / ManuscriptEditor / AgentDock)
+│           ├── trends/           # 实时热梗与热点新闻融合工坊 (TrendMemeFusionView)
 │           ├── multimodal/       # 全模态上下文挂载工坊
-│           ├── council/          # 多 AI 圆桌辩论与拓扑编排画布
+│           ├── swarm/            # 多 AI 圆桌辩论与拓扑编排画布
 │           ├── models/           # 多模型提供商网关与路由配置
 │           ├── memory/           # L1-L4 记忆分层与防冲突监控
 │           ├── style/            # 文风特征提取与合成工坊

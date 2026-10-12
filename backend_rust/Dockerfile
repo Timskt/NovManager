@@ -1,5 +1,5 @@
 # ==============================================================================
-# 墨枢 · InkVerse (By Timskt) — High-Performance Rust 2.0 Backend Dockerfile
+# 墨枢 · InkVerse — High-Performance Rust 2.0 Backend Dockerfile
 # Multi-stage build: Rust 1.85+ (Edition 2024) -> Debian Bookworm Slim Runtime
 # ==============================================================================
 
@@ -8,7 +8,12 @@ FROM rust:1.85-bookworm AS builder
 
 WORKDIR /usr/src/nov-server
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Configure rsproxy sparse index for fast crate downloads
+RUN mkdir -p /usr/local/cargo && \
+    printf '[source.crates-io]\nreplace-with = "rsproxy-sparse"\n[source.rsproxy]\nregistry = "https://rsproxy.cn/crates.io-index"\n[source.rsproxy-sparse]\nregistry = "sparse+https://rsproxy.cn/index/"\n[net]\ngit-fetch-with-cli = true\n' > /usr/local/cargo/config.toml
+
+RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || true && \
+    apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libssl-dev \
     ca-certificates \
@@ -32,7 +37,8 @@ FROM debian:bookworm-slim AS runtime
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || true && \
+    apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     libssl3 \
     git \

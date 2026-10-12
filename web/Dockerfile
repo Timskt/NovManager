@@ -1,15 +1,17 @@
 # ==============================================================================
-# 墨枢 · InkVerse (By Timskt) — Web Workstation Dockerfile
-# Multi-stage build: Node 20 + pnpm -> Nginx Alpine Production Server
+# 墨枢 · InkVerse — Web Workstation Dockerfile
+# Multi-stage build: Node 22 + pnpm -> Nginx Alpine Production Server
 # ==============================================================================
 
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm install -g pnpm --registry=https://registry.npmmirror.com
 
 COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --frozen-lockfile || pnpm install
+RUN pnpm config set registry https://registry.npmmirror.com && \
+    (pnpm install --frozen-lockfile || pnpm install)
 
 COPY . .
 ARG VITE_API_BASE_URL=/api

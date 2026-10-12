@@ -36,6 +36,7 @@ export type NavTab =
   | 'STUDIO'
   | 'AI_COUNCIL'
   | 'OMNI_CONTEXT'
+  | 'TREND_MEME'
   | 'AUTOPILOT'
   | 'SPARK_HUB'
   | 'SKILL_VAULT'
@@ -86,7 +87,7 @@ export const DOMAIN_GROUPS: DomainGroup[] = [
     key: 'STUDIO_DOMAIN',
     title: '创制工坊',
     icon: '✍️',
-    description: '核心文字执笔、多模型圆桌辩论、全模态多源上下文、无人巡航码字、灵光听劝与分镜架构',
+    description: '核心文字执笔、多模型圆桌辩论、全模态多源上下文、实时热梗/热点新闻融合、无人巡航码字与分镜架构',
     items: [
       {
         id: 'STUDIO',
@@ -111,6 +112,14 @@ export const DOMAIN_GROUPS: DomainGroup[] = [
         subtitle: '读取本地文件夹 · 多段链接抓取 · 图片视觉锁定 · 文档切片挂载',
         icon: <FolderOpen className="w-4 h-4 text-amber-400" />,
         badge: '120项全模态',
+      },
+      {
+        id: 'TREND_MEME',
+        title: '实时热梗与热点新闻融合工坊',
+        shortTitle: '实时热梗',
+        subtitle: '全网热梗/突发新闻雷达 · 5大世界观防违和转译 · 嵌入小说或生成爆款时评',
+        icon: <Flame className="w-4 h-4 text-orange-400" />,
+        badge: '40项热梗引擎',
       },
       {
         id: 'AUTOPILOT',

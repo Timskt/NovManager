@@ -1,7 +1,7 @@
 use crate::analytics::AnalyticsCalculator;
 use crate::context_packer::ContextPacker;
 use crate::git_vcs::GitVcsManager;
-use crate::handlers::{memory_guard::*, multimodal::*, studio_tools::*, swarm::*};
+use crate::handlers::{memory_guard::*, multimodal::*, studio_tools::*, swarm::*, trends::*};
 use crate::models::*;
 use crate::self_iteration::{AutonomousReflector, AutonomousWritingEvaluator, PromptSelfTuner};
 use crate::storage::SqliteStorage;
@@ -155,6 +155,11 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/multimodal/analyze-image", post(analyze_image_context_handler))
         .route("/api/multimodal/parse-documents", post(parse_documents_handler))
         .route("/api/multimodal/blueprint-120", get(get_multimodal_blueprint_120_handler))
+        // Real-Time Trends, Viral Memes & Breaking News Fusion Engine (20 Features + 20 Architectures)
+        .route("/api/trends/feed", get(get_realtime_trends_feed_handler))
+        .route("/api/trends/parse-custom", post(parse_custom_trend_handler))
+        .route("/api/trends/fuse", post(fuse_trends_into_creation_handler))
+        .route("/api/trends/blueprint-40", get(get_trends_blueprint_40_handler))
         // LLM Proxy
         .route("/api/llm/test-connection", post(test_llm_connection))
         .route("/api/llm/proxy", post(proxy_llm))

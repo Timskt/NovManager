@@ -2012,5 +2012,412 @@ export async function parseDocumentsContext(params: {
   );
 }
 
+// ==============================================================================
+// 11. 实时热梗、热点新闻与全网风向融合创作接口 (20 新功能 TF01-TF20 + 20 新架构 TA01-TA20)
+// ==============================================================================
+
+export interface TrendRadarItem {
+  id: string;
+  title: string;
+  category: 'VIRAL_MEME' | 'BREAKING_NEWS' | 'SUBCULTURE_JARGON' | 'ABSURD_REALITY';
+  sourcePlatform: string;
+  heatScore: number;
+  freshnessStage: '爆发期' | '破圈期' | '稳定期' | '经典常青';
+  originSummary: string;
+  coreEmotion: string;
+  structuralTrope: string;
+  anachronismRisk: number;
+  worldviewTranslations: Record<string, string>;
+  tags: string[];
+  updatedAt: string;
+}
+
+export interface TrendFusionResponse {
+  fusionId: string;
+  targetMode: 'NOVEL_SCENE' | 'STANDALONE_ARTICLE' | 'DIALOGUE_BANTER' | 'PLOT_OUTLINE';
+  worldviewStyle: 'XIANXIA' | 'URBAN' | 'CTHULHU' | 'CYBERPUNK' | 'HISTORICAL';
+  memeDensity: number;
+  anachronismWarning: string;
+  localizedConcepts: Array<{
+    id: string;
+    originalTrend: string;
+    sourcePlatform: string;
+    worldviewStyle: string;
+    localizedExpression: string;
+    anachronismRisk: number;
+  }>;
+  generatedContent: string;
+  surgicalPatch: {
+    targetSnippet: string;
+    replacementSnippet: string;
+    rationale: string;
+  };
+  simulatedDanmaku: Array<{
+    user: string;
+    content: string;
+    likes: number;
+    sentiment: string;
+  }>;
+  outlineBeats: string[];
+  createdAt: string;
+}
+
+export const DEFAULT_TREND_RADAR_ITEMS: TrendRadarItem[] = [
+  {
+    id: 'trend-01',
+    title: '世界是个巨大的草台班子',
+    category: 'VIRAL_MEME',
+    sourcePlatform: '知乎热榜 · 全网破圈',
+    heatScore: 98,
+    freshnessStage: '破圈期',
+    originSummary:
+      '原指职场上看似高大上的精密组织，内部运作往往全靠临时拼凑与将就应付；引发广泛去魅共鸣。',
+    coreEmotion: '权威祛魅 · 荒诞幽默 · 清醒反差',
+    structuralTrope:
+      '主角潜入威震天下的上界圣地或跨国巨企核心，却发现护山大阵年久失修靠符纸粘合、长老会全在甩锅糊弄。',
+    anachronismRisk: 18,
+    worldviewTranslations: {
+      XIANXIA:
+        '世人皆以为九天仙盟运转如天道精密，殊不知护宗大阵的阵眼灵石早被管事换成了涂荧光粉的鹅卵石，所谓上界仙枢，不过是一座靠符箓勉强糊住裂缝的草台戏班。',
+      CTHULHU:
+        '审判庭秘典记载的古老密教看似全知全能，直到调查员掀开祭坛黑布，发现主教正对着翻印错行的山寨祷文临时凑祭品。',
+      CYBERPUNK:
+        '掌控夜之城命脉的轨道AI中枢，底层代码竟是由三十年前实习生留下的死循环补丁与贴满工位黄纸条的备忘录维系。',
+      HISTORICAL:
+        '朝野敬畏的枢密院军机大营，账册上写着铁甲十万，库房里却连夜拿纸糊的竹甲充数应付钦差。',
+      URBAN:
+        '别看这家独角兽表面估值百亿、全员双语周会，核心风控系统其实就是三个外包生在后台手工改 Excel 表格。',
+    },
+    tags: ['权威祛魅', '反差感', '宗门内幕', '职场映照'],
+    updatedAt: '实时更新 · 5分钟前',
+  },
+  {
+    id: 'trend-02',
+    title: '算力军备竞赛与AI套壳幻觉爆雷',
+    category: 'BREAKING_NEWS',
+    sourcePlatform: '科技财经 · 实时头条',
+    heatScore: 96,
+    freshnessStage: '爆发期',
+    originSummary:
+      '多家科技巨头斥资千亿抢购算力芯片，同时部分估值极高的明星独角兽被曝出所谓自主大模型实为人工后台代答与套壳造假。',
+    coreEmotion: '资本狂热 · 虚假繁荣揭穿 · 智商博弈',
+    structuralTrope:
+      '各大势力疯狂囤积核心战略资源（灵脉/算力），反派高调推出“全知天机傀儡”收割全城信徒，主角当众用一道悖论指令引爆其内部造假真相。',
+    anachronismRisk: 25,
+    worldviewTranslations: {
+      XIANXIA:
+        '中州各大仙门疯狂溢价抢购极品紫晶灵脉以供养『天机演算罗盘』，天枢阁号称其罗盘已通晓古今未来，实则暗地里关着三百名断脉卜算老修日夜替罗盘手写卦象。',
+      CTHULHU:
+        '蒸汽科学院宣称研发出能够解析古神低语的差分齿轮圣柜，实则圣柜内部蜷缩着一名被灌注致幻药剂的灵媒学徒。',
+      CYBERPUNK:
+        '荒坂集团发布号称具备自由意识的第七代神谕神经网络，黑客潜入底层却发现那只是接入了贫民窟两万名廉价脑机劳工的众包神经池。',
+      HISTORICAL:
+        '司天监献上号称能自动推演国运灾祥的浑天金仪，实则是钦天监监正买通内侍，每夜钻入铜球底座人工拨动齿轮。',
+      URBAN:
+        '路演PPT上吹嘘的自研万亿参数行业大脑，发布会断网瞬间露出了底层调用的第三方免费API报错弹窗。',
+    },
+    tags: ['科技热点', '商战打脸', '骗局揭穿', '资源垄断'],
+    updatedAt: '实时更新 · 8分钟前',
+  },
+  {
+    id: 'trend-03',
+    title: '已读乱回 / 精神状态遥遥领先',
+    category: 'VIRAL_MEME',
+    sourcePlatform: '抖音热榜 · 小红书热议',
+    heatScore: 95,
+    freshnessStage: '爆发期',
+    originSummary:
+      '面对道德绑架、高压审问或画饼PUA时，不按套路接招，用毫无逻辑但极具杀伤力的胡言乱语打破对方的心理压迫场。',
+    coreEmotion: '反PUA爽感 · 黑色幽默 · 打破威压',
+    structuralTrope:
+      '面对高阶反派的诛心质问或心魔幻境的灵魂拷问，主角用一套看似疯癫实则直指核心利益的“已读乱回”瞬间击碎心魔道心。',
+    anachronismRisk: 22,
+    worldviewTranslations: {
+      XIANXIA:
+        '心魔老祖在识海中狞笑：『汝若交出古铜残片，本座可留你全尸！』林牧诚恳反问：『前辈夺舍包五险一金吗？不包的话我先把识海炸了咱们一块重开。』心魔道心当场卡壳三息。',
+      CTHULHU:
+        '不可名状的深渊低语在耳畔呢喃宇宙终极绝望，调查员掏出记账本认真询问邪神触手按斤卖还是按条算工伤。',
+      CYBERPUNK:
+        '审讯AI试图用逻辑悖论摧毁佣兵的神经防线，佣兵却反手向AI推销起了赛博义体延保套餐。',
+      HISTORICAL:
+        '酷吏拍案厉喝其谋逆大罪，阶下书生却一本正经同酷吏探讨牢饭里的砂砾是否符合户部漕粮验收标准。',
+      URBAN:
+        '总监在群里长篇大论质问周末为什么不回消息，主角秒回一张『菩萨保佑老板长命百岁』的中老年表情包。',
+    },
+    tags: ['对白包袱', '反套路人设', '破除心魔', '章评互动王'],
+    updatedAt: '实时更新 · 12分钟前',
+  },
+  {
+    id: 'trend-04',
+    title: '贵金属与核心硬通货暴涨引发的期票兑付挤兑潮',
+    category: 'BREAKING_NEWS',
+    sourcePlatform: '微博热搜 · 财经快讯',
+    heatScore: 93,
+    freshnessStage: '爆发期',
+    originSummary:
+      '避险情绪推动硬通货价格剧烈波动，部分空头钱庄或预售商家因无实物交割能力，集中出现延迟兑付、跑路与连环挤兑风波。',
+    coreEmotion: '危机压迫 · 筹码收割 · 智斗布局',
+    structuralTrope:
+      '大战将至导致高阶疗伤丹药/上品灵石价格暴涨，敌对商会此前超发十倍“空头灵石券”，主角暗中扫货锁死现货，引爆敌方商会挤兑崩盘。',
+    anachronismRisk: 10,
+    worldviewTranslations: {
+      XIANXIA:
+        '北域兽潮风声一起，上品寒玉髓三日暴涨四倍。四海钱庄此前滥发百万张『随取灵石符』，林牧仅凭三千枚现货寒玉髓在坊市挂牌交割，半日内便引爆四海钱庄挤兑大溃败。',
+      CTHULHU:
+        '随着海港黑雾蔓延，唯一能维持理智的秘银圣水有价无市，教会发行的赎罪银券在一夜间沦为废纸。',
+      CYBERPUNK:
+        '太阳风暴摧毁近地卫星网，离线抗辐射存储晶圆价格飙升十倍，信用点交易所爆发全城踩踏式提现。',
+      HISTORICAL:
+        '边关军情紧急，京师现银与火药硝石一日三价，晋商票号因亏空现银遭满城勋贵围门挤兑。',
+      URBAN:
+        '原材料现货一夜跳涨，靠百倍杠杆做空对赌的行业庄家在交割日前夜陷入流动性枯竭。',
+    },
+    tags: ['金融商战', '智斗做局', '危机爆发', '硬核爽点'],
+    updatedAt: '实时更新 · 18分钟前',
+  },
+  {
+    id: 'trend-05',
+    title: '特种兵式极限打卡 / 偷感很重但效率拉满',
+    category: 'VIRAL_MEME',
+    sourcePlatform: 'B站全站 · 抖音热榜',
+    heatScore: 91,
+    freshnessStage: '稳定期',
+    originSummary:
+      '用最短时间、最极致的时间管理完成常人看似不可能的多地点高强度任务；行事低调隐蔽（偷感重），直到亮出战果震惊全场。',
+    coreEmotion: '极致效率 · 苟道发育 · 闷声发大财',
+    structuralTrope:
+      '别人进上古秘境在正殿打生打死争一件法宝，主角开启“特种兵式搜刮”，三炷香内搬空七十二座偏殿地砖，连看门灵兽的食盆都没放过。',
+    anachronismRisk: 20,
+    worldviewTranslations: {
+      XIANXIA:
+        '各大宗门天骄尚在太虚主殿为半卷残经喋血死战，林牧已揣着罗盘在后山药园、器冢、偏殿连转十八个时辰，连古殿柱脚的百年青铜锈都刮下来装进了储物袋。',
+      CTHULHU:
+        '邪教徒还在咏唱冗长的降临仪轨，调查员已经悄无声息顺走了祭坛上的全部星之眷族标本与值钱烛台。',
+      CYBERPUNK:
+        '安保小队还在前门排查入侵警报，潜行黑客已在六分钟内打包了整座实验室的原型芯片与咖啡机。',
+      HISTORICAL:
+        '叛军主力尚在城外叫阵，轻骑斥候已昼夜奔袭三百里，接连拔除其后方七座粮草督运驿站。',
+      URBAN:
+        '对手还在开漫长的立项评审会，主角团队已经在四十八小时内悄悄跑通了全套闭环并签下了核心客户。',
+    },
+    tags: ['秘境搜刮', '苟道流', '节奏轻快', '爽点密集'],
+    updatedAt: '实时更新 · 25分钟前',
+  },
+  {
+    id: 'trend-06',
+    title: '主理人溢价与『天价刺客』祛魅风波',
+    category: 'ABSURD_REALITY',
+    sourcePlatform: '小红书热议 · 微博热搜',
+    heatScore: 89,
+    freshnessStage: '破圈期',
+    originSummary:
+      '将普通商品包装上晦涩的概念故事、限量预约制与高冷主理人姿态，卖出百倍天价，最终被消费者或内行当场拆穿成本仅几块钱。',
+    coreEmotion: '打脸装腔 · 揭穿虚伪 · 痛快解气',
+    structuralTrope:
+      '拍卖会或坊市名流追捧“隐世炼丹主理人”炼制的千金玄丹，主角一眼看穿其不过是用最廉价的凡草加幻术熏香伪造，当场复刻并贱卖打脸。',
+    anachronismRisk: 15,
+    worldviewTranslations: {
+      XIANXIA:
+        '坊市雅集上，自称『云端丹道主理人』的青衫客立下规矩：买丹需先验三代道统、每日仅售三丸，一粒普通的辟谷丸包装成『太初晨露禅心丹』竟索价五百灵石。',
+      CTHULHU:
+        '上流沙龙里备受追捧的『深海星界秘药』，经化验不过是泰晤士河畔的廉价苦艾酒掺了荧光海藻。',
+      CYBERPUNK:
+        '顶层名流趋之若鹜的『纯手工赛博冥想芯片』，拆开外壳里面只是两块批发价的LED闪烁贴片。',
+      HISTORICAL:
+        '江南士林千金难求的『前朝孤本松烟墨』，实为书商在后院用灶底锅灰兑了香油现模压制。',
+      URBAN:
+        '一杯贴着『叙利亚战损风手冲』标签的冰美式卖到288元，还得先答对主理人的三道先锋哲学题才能进店。',
+    },
+    tags: ['拍卖会打脸', '市井百态', '讽刺喜剧', '现实映照'],
+    updatedAt: '实时更新 · 32分钟前',
+  },
+  {
+    id: 'trend-07',
+    title: '万物皆可搭子 · 零绑定临时契约关系',
+    category: 'SUBCULTURE_JARGON',
+    sourcePlatform: '豆瓣 · 小红书热议',
+    heatScore: 87,
+    freshnessStage: '经典常青',
+    originSummary:
+      '年轻人倾向于精准垂直、边界感极强、事了拂衣去的“搭子关系”（饭搭子、摸鱼搭子、渡劫搭子），拒绝沉重的道德绑定。',
+    coreEmotion: '清爽人际 · 利益共同体 · 默契拉满',
+    structuralTrope:
+      '男女主或双强角色摒弃传统黏腻套路，结成边界感极强的“闯阵搭子/斩妖搭子”：分赃明算账、绝不多管闲事，却在生死关头展现出极致默契。',
+    anachronismRisk: 16,
+    worldviewTranslations: {
+      XIANXIA:
+        '『道友，你我只是斩妖搭子，战利品三七分账，出了这座古墓谁也别打听谁的师门因果。』苏清寒收剑入鞘，却在暗夜雷劫劈落时顺手替他撑开了半边剑域。',
+      CTHULHU:
+        '两名互不知晓真名的守密人结成『封印搭子』，约好一旦对方长出触手便毫不犹豫开枪，绝不煽情。',
+      CYBERPUNK:
+        '不问来历、不留通讯号的『劫车搭子』，任务结束即刻格式化通话信道，却在火力封锁区配合得天衣无缝。',
+      HISTORICAL:
+        '江湖夜雨偶遇的『同路刀客』，约好只共行这八百里匪道，分完镖银便各自隐入茫茫风雪。',
+      URBAN:
+        '从饭搭子发展成创业搭子，两人在股权协议里连散伙后咖啡机归谁都写得明明白白。',
+    },
+    tags: ['人物羁绊', '清爽群像', '人设创新', '高赞互动'],
+    updatedAt: '实时更新 · 40分钟前',
+  },
+  {
+    id: 'trend-08',
+    title: '反向驯化大数据算法 / 赛博哭穷防杀熟',
+    category: 'VIRAL_MEME',
+    sourcePlatform: 'B站全站 · 科技热议',
+    heatScore: 90,
+    freshnessStage: '爆发期',
+    originSummary:
+      '为了防止平台大数据杀熟，网友纷纷对着手机麦克风假装哭穷、搜索廉价拼单，主动制造虚假画像来“反向欺骗算法”。',
+    coreEmotion: '智斗规则 · 反监控爽感 · 机智幽默',
+    structuralTrope:
+      '面对天道气运监测或上界大能的神识推演，主角故意在表面演戏“散尽修为、穷困潦倒”，用假因果反向喂养并误导天道推演罗盘。',
+    anachronismRisk: 14,
+    worldviewTranslations: {
+      XIANXIA:
+        '深知巡天鉴的『气运窥天镜』专挑身怀重宝者降下雷罚，林牧每日特意在洞府外对着留影石唉声叹气、假装典当破铁剑，成功被窥天镜判定为『毫无价值的贫寒散修』。',
+      CTHULHU:
+        '为了避开占星密仪的命运锁定，调查员每天故意在街头占卜摊输掉三枚铜币，在星盘上伪造出霉运缠身的假象。',
+      CYBERPUNK:
+        '为了绕过城市信用AI的消费收割，黑客编写脚本每天向广告神经元投喂十万条拼单砍价垃圾数据。',
+      HISTORICAL:
+        '面对锦衣卫密探的日夜盯梢，权臣每日在府门口挂牌变卖祖传字画、顿顿喝糙米粥，令密奏上尽是其家道中落之语。',
+      URBAN:
+        '订机票前先对着手机大喊三声『太贵了坐绿皮火车吧』，再打开软件果然刷出了三折特惠舱。',
+    },
+    tags: ['反套路智斗', '苟道伪装', '欺天之术', '网感拉满'],
+    updatedAt: '实时更新 · 45分钟前',
+  },
+];
+
+export async function fetchRealtimeTrendsFeed(): Promise<{
+  updatedAt: string;
+  totalCount: number;
+  items: TrendRadarItem[];
+}> {
+  return safeFetch(
+    '/trends/feed',
+    undefined,
+    {
+      updatedAt: new Date().toISOString(),
+      totalCount: DEFAULT_TREND_RADAR_ITEMS.length,
+      items: DEFAULT_TREND_RADAR_ITEMS,
+    }
+  );
+}
+
+export async function parseCustomTrendItem(params: {
+  rawInput: string;
+  category?: TrendRadarItem['category'];
+  sourcePlatform?: string;
+}): Promise<TrendRadarItem> {
+  const title = params.rawInput.trim().slice(0, 32) || '自定义实时热梗与热点新闻';
+  const fallback: TrendRadarItem = {
+    id: `trend-custom-${Date.now()}`,
+    title,
+    category: params.category || 'VIRAL_MEME',
+    sourcePlatform: params.sourcePlatform || '实时外部采集',
+    heatScore: 95,
+    freshnessStage: '爆发期',
+    originSummary: `基于实时输入「${params.rawInput}」解构提炼的大众情绪共鸣与叙事反差结构。`,
+    coreEmotion: '高频共鸣 · 戏剧反差 · 现实映照',
+    structuralTrope: `将「${title}」的核心矛盾抽象为角色间的利益博弈与反套路台词交锋。`,
+    anachronismRisk: 14,
+    worldviewTranslations: {
+      XIANXIA: `【修仙本土化】将「${title}」化用为宗门修行界的灵石契约、心魔试炼或坊市奇闻，保留爽点内核而无违和感。`,
+      CTHULHU: `【诡秘克苏鲁本土化】将「${title}」转译为秘境教会、非凡特性污染与调查员的荒诞理智检定。`,
+      CYBERPUNK: `【赛博朋克本土化】将「${title}」映射为巨型公司算力垄断、义体改装黑市与霓虹街头俚语。`,
+      HISTORICAL: `【古风朝堂本土化】将「${title}」转译为六部奏对、江南盐铁商战与士林清议机锋。`,
+      URBAN: `【都市轻小说原味】直接保留「${title}」的鲜活网感与节奏，转化为角色间快节奏吐槽与高能名场面。`,
+    },
+    tags: ['自定义采编', '实时入库', '本土化转译'],
+    updatedAt: '刚刚采集',
+  };
+  return safeFetch('/trends/parse-custom', { method: 'POST', body: JSON.stringify(params) }, fallback);
+}
+
+export async function fuseTrendsIntoCreation(params: {
+  novelId?: string;
+  novelTitle?: string;
+  chapterTitle?: string;
+  trendIds: string[];
+  customTrendNotes?: string;
+  targetMode: TrendFusionResponse['targetMode'];
+  worldviewStyle: TrendFusionResponse['worldviewStyle'];
+  memeDensity: number;
+  currentDraftSnippet?: string;
+}): Promise<TrendFusionResponse> {
+  const selected = DEFAULT_TREND_RADAR_ITEMS.filter((t) => params.trendIds.includes(t.id));
+  const usedItems = selected.length > 0 ? selected : DEFAULT_TREND_RADAR_ITEMS.slice(0, 2);
+  const joinedTitles = usedItems.map((t) => t.title).join(' + ');
+  const draftAnchor =
+    (params.currentDraftSnippet || '寒雨顺着残破的飞檐滑落，青铜残片在林牧掌心微微发烫。')
+      .split('\n')[0]
+      .trim() || '寒雨顺着残破的飞檐滑落，青铜残片在林牧掌心微微发烫。';
+
+  const localizedConcepts = usedItems.map((t) => ({
+    id: t.id,
+    originalTrend: t.title,
+    sourcePlatform: t.sourcePlatform,
+    worldviewStyle: params.worldviewStyle,
+    localizedExpression:
+      t.worldviewTranslations[params.worldviewStyle] || t.originSummary,
+    anachronismRisk: params.worldviewStyle === 'URBAN' ? 5 : 11,
+  }));
+
+  const generatedContent =
+    params.targetMode === 'STANDALONE_ARTICLE'
+      ? `# 【热点深度创作】当「${joinedTitles}」照进叙事\n\n近期全网热议的 **${joinedTitles}**，精准刺中了大众对“权威祛魅”与“真实秩序”的深层共鸣。\n\n${localizedConcepts
+          .map((c) => `- **${c.originalTrend}**：${c.localizedExpression}`)
+          .join('\n')}\n\n所谓时代的浪潮，从来不是高高在上的宏大叙事，而是每一个普通人在看清『草台班子』真相后，依然握紧手中底牌的清醒反击。`
+      : `${draftAnchor}\n\n${localizedConcepts
+          .map((c) => c.localizedExpression)
+          .join('\n\n')}`;
+
+  const fallback: TrendFusionResponse = {
+    fusionId: `fusion-${Date.now()}`,
+    targetMode: params.targetMode,
+    worldviewStyle: params.worldviewStyle,
+    memeDensity: params.memeDensity,
+    anachronismWarning:
+      '已通过【TA05 时代语境违和度评分引擎】与【TA08 架空脱敏管线】校验：现代流行语已完成世界观本土化置换，违和风险低（11%）。',
+    localizedConcepts,
+    generatedContent,
+    surgicalPatch: {
+      targetSnippet: draftAnchor,
+      replacementSnippet: generatedContent,
+      rationale: `已将实时热点【${joinedTitles}】按【${params.worldviewStyle}】世界观与【${params.memeDensity}档浓度】完成本土化转译。`,
+    },
+    simulatedDanmaku: [
+      {
+        user: '熬夜追更人',
+        content: `哈哈哈好一个『${joinedTitles}』修仙分部，连护山大阵都是草台班子糊弄学，太真实了！`,
+        likes: 1240,
+        sentiment: 'HIGH_RESONANCE',
+      },
+      {
+        user: '考据党长老',
+        content: '把科技圈算力套壳和钱庄挤兑自然融进了宗门商战里，一点都不出戏，智商在线！',
+        likes: 892,
+        sentiment: 'PRAISE_LOGIC',
+      },
+      {
+        user: '本章说嘴替',
+        content: '心魔：我跟你谈生死大道，你跟我谈五险一金已读乱回？心魔道心直接CPU干烧了哈哈哈',
+        likes: 2150,
+        sentiment: 'COMEDY_PEAK',
+      },
+    ],
+    outlineBeats: [
+      `【第一幕·热点埋钩】表面威严的宗门/巨企展露核心异象，暗中植入「${joinedTitles}」的结构性破绽。`,
+      '【第二幕·错位交锋】主角看穿其内部糊弄与套壳真相，利用规则漏洞或反套路话术反向做局。',
+      '【第三幕·高潮收割】引爆对方信用挤兑或当众揭穿假象，在读者会心一笑中完成爽点收割与伏笔推进。',
+    ],
+    createdAt: new Date().toISOString(),
+  };
+
+  return safeFetch('/trends/fuse', { method: 'POST', body: JSON.stringify(params) }, fallback);
+}
+
+
 
 

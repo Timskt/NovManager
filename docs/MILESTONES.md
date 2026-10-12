@@ -37,3 +37,12 @@
   - 锁定视口高度，实现左栏（章节与上下文）、中栏（正文编辑器）、右栏（全模态参谋舱）顶底固定、中部鼠标悬停独立滚动（`overscroll-contain`）。
 - **OrbStack / Docker Compose 全栈容器化交付**：
   - 提供多阶段构建的 `backend_rust/Dockerfile` 与 `web/Dockerfile`（含 Nginx `/api` 反向代理），支持通过 `docker compose up -d --build` 在 OrbStack 环境中一键启动。
+
+---
+
+## 阶段四：实时热梗、热点新闻与跨世界观融合引擎 (M13)
+
+- **实时热梗与热点新闻融合系统 (`TrendMemeFusionView` & `backend_rust/src/handlers/trends.rs`)**：
+  - **20 项新功能 (`TF01–TF20`)**：涵盖多平台实时热榜雷达（抖音、微博、B站、知乎、小红书、科技财经）、外部新闻/新梗一键解析入库、5 大世界观（修仙、都市、克苏鲁、赛博朋克、古风）防违和本土化转译、小说内嵌与独立时评文章双模生成、1–4 档含梗浓度控制、读者“本章说”弹幕预演及 Codex 手术刀补丁合入。
+  - **20 项新架构 (`TA01–TA20`)**：涵盖 Rust 异步热榜聚合管道、热梗四元组语义表征、世界观词法映射张量、时间衰减评分算子、零时代穿帮语法树重写（Anachronism Guard）与离线/在线双模容灾缓存。
+

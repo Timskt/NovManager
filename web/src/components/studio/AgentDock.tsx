@@ -606,10 +606,40 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile, onNavigateTab })
       prompt:
         '/workbuddy-flow 请综合已挂载的网页考据资料与高赞读者期待，为当前章节设计3个层层递进的爽点转折与章末断章钩子。',
     },
+    {
+      cmd: '/trend-meme',
+      paradigm: 'WORKBUDDY' as AgentParadigmId,
+      label: '🔥 /trend-meme 实时热梗与热点新闻融合',
+      desc: '将最新流行热梗（如草台班子、偷感很重）与突发科技/社会新闻防违和转译进当前章节',
+      prompt:
+        '/trend-meme 请将实时热梗「世界是个巨大的草台班子」与「偷感很重」按当前作品的修仙世界观进行零违和本土化转译，嵌入当前章节人物对话与章末反转中。',
+    },
   ];
 
   // @ 上下文引用快捷菜单项
   const atMentionItems = [
+    {
+      label: '🔥 @注入全网实时热梗与热点新闻 (5大世界观零违和转译)',
+      action: () => {
+        setShowAtMenu(false);
+        setAttachments((prev) => [
+          ...prev,
+          {
+            id: `att-trend-${Date.now()}`,
+            kind: 'WEB_URL',
+            title: '实时热梗雷达：草台班子 + 偷感很重 + 算力幻觉',
+            uriOrPath: 'trends://realtime-radar/top3',
+            summary:
+              '已转译为当前世界观表达：「上界仙盟亦是草台班子，护山大阵全靠两名杂役贴符勉强维持」「此子渡劫偷感极重，趁雷部正神打盹偷偷凝结元婴」',
+            extractedText:
+              '1. 草台班子 -> 上界仙盟护宗大阵全靠两名杂役用浆糊贴符纸维持；2. 偷感很重 -> 主角趁天劫雷神打盹偷偷渡劫凝婴；3. 算力幻觉 -> 天枢阁所谓全知罗盘实为三百名老修在暗室手写卦象。',
+            tokenCount: 195,
+            enabled: true,
+            badge: '🔥 实时热梗',
+          },
+        ]);
+      },
+    },
     {
       label: '📁 @挂载本地设定集文件夹 (Claude Code 递归读取)',
       action: () => {
@@ -1513,6 +1543,41 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile, onNavigateTab })
                 >
                   <Scissors className="w-3 h-3" />
                   <span>行内Diff</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setAttachments((prev) => [
+                      ...prev,
+                      {
+                        id: `att-trend-${Date.now()}`,
+                        kind: 'WEB_URL',
+                        title: '实时热梗：草台班子 + 偷感很重 + 算力幻觉',
+                        uriOrPath: 'trends://realtime-radar/top3',
+                        summary:
+                          '已转译为修仙/架空原教旨表达，可直接融合进人物对话或生成独立文章',
+                        extractedText:
+                          '草台班子（九天仙盟阵眼竟是涂荧光粉的鹅卵石）、已读乱回（质问心魔老祖夺舍包不包五险一金）、算力幻觉（天机阁罗盘底座藏着三百卜算散修）。',
+                        tokenCount: 180,
+                        enabled: true,
+                        badge: '🔥 实时热梗',
+                      },
+                    ]);
+                    setInputVal((prev) =>
+                      prev
+                        ? `${prev} 请把刚挂载的实时热梗自然转译并融入当前场景对话中。`
+                        : '请把刚挂载的实时热梗（草台班子、偷感很重）按当前作品世界观零违和转译，并融入当前场景人物对话与结尾钩子中。'
+                    );
+                  }}
+                  className="px-1.5 py-0.5 rounded border flex items-center gap-1 transition cursor-pointer hover:opacity-90"
+                  style={{
+                    backgroundColor: 'color-mix(in srgb, #f97316 14%, var(--bg-surface))',
+                    borderColor: '#f97316',
+                    color: '#fb923c',
+                  }}
+                  title="一键挂载全网实时热梗与热点新闻（含防违和世界观转译）"
+                >
+                  <span>🔥热梗</span>
                 </button>
 
                 <button
