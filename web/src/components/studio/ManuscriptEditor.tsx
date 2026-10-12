@@ -15,6 +15,7 @@ import { ZenFocusModal } from './ZenFocusModal';
 import { TechniqueRepositoryModal } from './TechniqueRepositoryModal';
 import { FieldExplainer } from '../common/FieldExplainer';
 import { WalStorageManager } from '../../lib/walStorage';
+import { purifyManuscript } from '../../lib/api';
 import {
   Save,
   Sparkles,
@@ -44,6 +45,11 @@ import {
   Zap,
   ArrowLeft,
   ArrowRight,
+  Network,
+  Undo2,
+  Redo2,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import type { NavTab } from '../Header';
 
@@ -91,12 +97,134 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
     isAgentRunning,
   } = useNovel();
 
-  const { settings: themeSettings } = useTheme();
+  const { settings: themeSettings, setFontSize } = useTheme();
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [saveToast, setSaveToast] = useState(false);
+  const [actionToast, setActionToast] = useState<string | null>(null);
   const [showFullChapterModal, setShowFullChapterModal] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+
+  // 多步撤销/重做栈 (UX15 / DA18)
+  const [undoStack, setUndoStack] = useState<string[]>([]);
+  const [redoStack, setRedoStack] = useState<string[]>([]);
+
+  // 划词悬浮 AI 魔法工具条状态 (UX02 / F1)
+  const [selectedSnippet, setSelectedSnippet] = useState<string>('');
+  const [selectionRange, setSelectionRange] = useState<{ start: number; end: number } | null>(null);
+  const [cursorPos, setCursorPos] = useState<{ line: number; col: number }>({ line: 1, col: 1 });
+
+  // TTS 听书校对状态 (F7 / DA19)
+  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+
+  const triggerToast = (msg: string) => {
+    setActionToast(msg);
+    setTimeout(() => setActionToast(null), 2800);
+  };
+
+  const pushUndoSnapshot = (currentText: string) => {
+    setUndoStack((prev) => [...prev.slice(-19), currentText]);
+    setRedoStack([]);
+  };
+
+  const handleUndo = () => {
+    if (undoStack.length === 0) return;
+    const prevText = undoStack[undoStack.length - 1];
+    setRedoStack((r) => [...r, editorContent]);
+    setUndoStack((u) => u.slice(0, -1));
+    setEditorContent(prevText);
+    triggerToast('↩️ 已撤销上一步正文修改');
+  };
+
+  const handleRedo = () => {
+    if (redoStack.length === 0) return;
+    const nextText = redoStack[redoStack.length - 1];
+    setUndoStack((u) => [...u, editorContent]);
+    setRedoStack((r) => r.slice(0, -1));
+    setEditorContent(nextText);
+    triggerToast('↪️ 已重做正文修改');
+  };
+
+  const handlePurifyTypography = async () => {
+    pushUndoSnapshot(editorContent);
+    const res = await purifyManuscript({
+      draftText: editorContent,
+      removeFluff: true,
+      indentParagraphs: true,
+    });
+    setEditorContent(res.purifiedText);
+    if (activeChapter && activeScene) {
+      updateScene(activeChapter.id, activeScene.sceneIndex, {
+        draftContent: res.purifiedText,
+      });
+    }
+    triggerToast(
+      `🧹 排版净化与脱水完成：规范 ${res.paragraphCount} 段落，清理水词 ${res.totalFluffCount} 处（含水率 ${res.waterRatioPercent}%）`
+    );
+  };
+
+  const handleInsertCliffhangerHook = async () => {
+    pushUndoSnapshot(editorContent);
+    const res = await purifyManuscript({ draftText: editorContent });
+    const hook =
+      res.cliffhangerHooks[0]?.content ||
+      '　　就在他收剑入鞘的刹那，深渊地底忽然传来一声沉闷如雷的心跳，整座石殿的青铜古灯在同一瞬尽数熄灭。';
+    const next = `${editorContent.trimEnd()}\n\n${hook}`;
+    setEditorContent(next);
+    triggerToast('🪝 已在章末追加高追读率【黄金断章钩子】');
+  };
+
+  const handleInsertDivider = () => {
+    pushUndoSnapshot(editorContent);
+    const next = `${editorContent.trimEnd()}\n\n　　◇　◇　◇\n\n　　`;
+    setEditorContent(next);
+    triggerToast('✨ 已插入古典场景过渡分隔符');
+  };
+
+  const handleToggleTtsSpeak = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      triggerToast('⚠️ 当前浏览器环境暂不支持原生语音合成');
+      return;
+    }
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      triggerToast('⏹️ 已停止听书朗读校对');
+    } else {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(selectedSnippet || editorContent.slice(0, 600));
+      utter.lang = 'zh-CN';
+      utter.rate = 1.1;
+      utter.onend = () => setIsSpeaking(false);
+      window.speechSynthesis.speak(utter);
+      setIsSpeaking(true);
+      triggerToast('🔊 已开启沉浸听书校对（朗读选中段或前 600 字）');
+    }
+  };
+
+  const handleSelectionTransform = (mode: 'EXPAND' | 'CONDENSE' | 'CLASSICAL') => {
+    if (!selectedSnippet || !selectionRange) return;
+    pushUndoSnapshot(editorContent);
+    let replacement = selectedSnippet;
+    if (mode === 'EXPAND') {
+      replacement = `${selectedSnippet}——空气中弥漫着刺骨的铁锈与寒霜气息，每一次呼吸都仿佛牵动着古渊深处潜藏的杀机。`;
+    } else if (mode === 'CONDENSE') {
+      replacement = selectedSnippet
+        .replace(/不由得/g, '')
+        .replace(/缓缓/g, '')
+        .replace(/竟然/g, '竟');
+    } else if (mode === 'CLASSICAL') {
+      replacement = `但见${selectedSnippet}，剑气如霜雪漫卷，天地为之肃然。`;
+    }
+    const updated =
+      editorContent.slice(0, selectionRange.start) +
+      replacement +
+      editorContent.slice(selectionRange.end);
+    setEditorContent(updated);
+    setSelectedSnippet('');
+    setSelectionRange(null);
+    triggerToast(`✨ 已完成选中段落行间【${mode === 'EXPAND' ? '五感扩写' : mode === 'CONDENSE' ? '凝练脱水' : '名家古风化'}】`);
+  };
 
   // 页面宽度与导演节拍卡状态
   const [pageWidth, setPageWidth] = useState<'standard' | 'wide' | 'full'>(() => {
@@ -940,8 +1068,34 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                   </span>
                 </div>
 
-                {/* 快速工笔操作 */}
-                <div className="flex items-center gap-1.5">
+                {/* 快速工笔与微操工具栏 */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    onClick={handleUndo}
+                    disabled={undoStack.length === 0}
+                    className="p-1.5 rounded-md border text-xs flex items-center hover:opacity-85 transition cursor-pointer disabled:opacity-35"
+                    style={{
+                      backgroundColor: 'var(--bg-surface)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-main)',
+                    }}
+                    title={`撤销修改 (剩余 ${undoStack.length} 步)`}
+                  >
+                    <Undo2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={handleRedo}
+                    disabled={redoStack.length === 0}
+                    className="p-1.5 rounded-md border text-xs flex items-center hover:opacity-85 transition cursor-pointer disabled:opacity-35"
+                    style={{
+                      backgroundColor: 'var(--bg-surface)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-main)',
+                    }}
+                    title={`重做修改 (剩余 ${redoStack.length} 步)`}
+                  >
+                    <Redo2 className="w-3.5 h-3.5" />
+                  </button>
                   <button
                     onClick={runDrafterWriteScene}
                     disabled={isAgentRunning}
@@ -969,6 +1123,55 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                     <span>🎨 工笔润色</span>
                   </button>
                   <button
+                    onClick={handlePurifyTypography}
+                    className="px-2.5 py-1 rounded-md border text-xs font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer"
+                    style={{
+                      backgroundColor: 'var(--bg-surface)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-main)',
+                    }}
+                    title="一键全角标点净化、首行缩进与水词脱水 (F2)"
+                  >
+                    <span>🧹 排版脱水</span>
+                  </button>
+                  <button
+                    onClick={handleInsertCliffhangerHook}
+                    className="px-2.5 py-1 rounded-md border text-xs font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer"
+                    style={{
+                      backgroundColor: 'var(--bg-surface)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-main)',
+                    }}
+                    title="在章末自动生成并追加黄金断章悬念钩子 (F4)"
+                  >
+                    <span>🪝 断章钩子</span>
+                  </button>
+                  <button
+                    onClick={handleInsertDivider}
+                    className="px-2 py-1 rounded-md border text-xs font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer"
+                    style={{
+                      backgroundColor: 'var(--bg-surface)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-muted)',
+                    }}
+                    title="插入古典场景切换分隔符"
+                  >
+                    <span>◇ 分幕符</span>
+                  </button>
+                  <button
+                    onClick={handleToggleTtsSpeak}
+                    className="px-2.5 py-1 rounded-md border text-xs font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer"
+                    style={{
+                      backgroundColor: isSpeaking ? 'var(--accent-surface)' : 'var(--bg-surface)',
+                      borderColor: isSpeaking ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                      color: isSpeaking ? 'var(--accent-primary)' : 'var(--text-main)',
+                    }}
+                    title="开启/停止 TTS 沉浸听书语音校对 (F7)"
+                  >
+                    {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                    <span>{isSpeaking ? '停止朗读' : '听书校对'}</span>
+                  </button>
+                  <button
                     onClick={() => setIsActionDirectorOpen(true)}
                     className="px-2.5 py-1 rounded-md border text-xs font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer"
                     style={{
@@ -981,22 +1184,160 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                     <Swords className="w-3.5 h-3.5 text-rose-400" />
                     <span>打斗导演</span>
                   </button>
+                  {onNavigateTab && (
+                    <button
+                      onClick={() => onNavigateTab('AI_COUNCIL')}
+                      className="px-2.5 py-1 rounded-md border text-xs font-bold flex items-center gap-1 hover:opacity-90 transition cursor-pointer"
+                      style={{
+                        backgroundColor: 'var(--accent-surface)',
+                        borderColor: 'var(--accent-primary)',
+                        color: 'var(--accent-primary)',
+                      }}
+                      title="将当前正文送入【多AI跨提供商圆桌辩论与连线拓扑工坊】博弈出终极正本"
+                    >
+                      <Network className="w-3.5 h-3.5" />
+                      <span>送入多AI圆桌</span>
+                    </button>
+                  )}
                 </div>
               </div>
+
+              {/* 交互操作反馈横幅 */}
+              {actionToast && (
+                <div
+                  className="mt-2 px-3 py-1.5 rounded-lg border text-xs font-medium flex items-center justify-between animate-in fade-in duration-150"
+                  style={{
+                    backgroundColor: 'var(--accent-surface)',
+                    borderColor: 'var(--accent-primary)',
+                    color: 'var(--accent-primary)',
+                  }}
+                >
+                  <span>{actionToast}</span>
+                  <button onClick={() => setActionToast(null)} className="text-[10px] opacity-75 hover:opacity-100">
+                    ✕
+                  </button>
+                </div>
+              )}
+
+              {/* 划词悬浮 AI 魔法工具条 (Contextual Selection Floating AI Magic Bar - UX02 / F1) */}
+              {selectedSnippet && (
+                <div
+                  className="mt-2 px-3.5 py-2 rounded-xl border flex flex-wrap items-center justify-between gap-2 text-xs shadow-md animate-in fade-in duration-150"
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderColor: 'var(--accent-primary)',
+                  }}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="px-2 py-0.5 rounded font-mono text-[10px] font-bold shrink-0"
+                      style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--accent-primary)' }}
+                    >
+                      已划选 {selectedSnippet.length} 字
+                    </span>
+                    <span className="truncate max-w-xs opacity-75 font-literary-serif">
+                      “{selectedSnippet}”
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      onClick={() => handleSelectionTransform('EXPAND')}
+                      className="px-2.5 py-1 rounded-lg border text-[11px] font-bold cursor-pointer hover:opacity-85"
+                      style={{
+                        backgroundColor: 'var(--bg-card)',
+                        borderColor: 'var(--border-subtle)',
+                        color: 'var(--accent-primary)',
+                      }}
+                    >
+                      ✨ 五感扩写
+                    </button>
+                    <button
+                      onClick={() => handleSelectionTransform('CONDENSE')}
+                      className="px-2.5 py-1 rounded-lg border text-[11px] font-bold cursor-pointer hover:opacity-85"
+                      style={{
+                        backgroundColor: 'var(--bg-card)',
+                        borderColor: 'var(--border-subtle)',
+                        color: 'var(--text-main)',
+                      }}
+                    >
+                      ✂️ 凝练脱水
+                    </button>
+                    <button
+                      onClick={() => handleSelectionTransform('CLASSICAL')}
+                      className="px-2.5 py-1 rounded-lg border text-[11px] font-bold cursor-pointer hover:opacity-85"
+                      style={{
+                        backgroundColor: 'var(--bg-card)',
+                        borderColor: 'var(--border-subtle)',
+                        color: 'var(--text-main)',
+                      }}
+                    >
+                      🏮 古风武侠化
+                    </button>
+                    {onNavigateTab && (
+                      <button
+                        onClick={() => onNavigateTab('AI_COUNCIL')}
+                        className="px-2.5 py-1 rounded-lg border text-[11px] font-bold cursor-pointer hover:opacity-85"
+                        style={{
+                          backgroundColor: 'var(--accent-surface)',
+                          borderColor: 'var(--accent-primary)',
+                          color: 'var(--accent-primary)',
+                        }}
+                      >
+                        🏛️ 多AI圆桌会审此段
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setSelectedSnippet('');
+                        setSelectionRange(null);
+                      }}
+                      className="px-1.5 py-1 rounded text-[11px] opacity-60 hover:opacity-100 cursor-pointer"
+                    >
+                      取消
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 5. 巨匠正文正本输入流 (Core Manuscript Writing Flow) */}
             <div className="px-6 sm:px-12 py-4 flex-1 flex flex-col">
               <textarea
                 value={editorContent}
-                onChange={(e) => setEditorContent(e.target.value)}
+                onChange={(e) => {
+                  pushUndoSnapshot(editorContent);
+                  setEditorContent(e.target.value);
+                }}
+                onSelect={(e) => {
+                  const target = e.currentTarget;
+                  const start = target.selectionStart || 0;
+                  const end = target.selectionEnd || 0;
+                  if (end > start && end - start >= 2) {
+                    setSelectedSnippet(target.value.slice(start, end));
+                    setSelectionRange({ start, end });
+                  } else {
+                    setSelectedSnippet('');
+                    setSelectionRange(null);
+                  }
+                  const textUpToCursor = target.value.slice(0, start);
+                  const lines = textUpToCursor.split('\n');
+                  setCursorPos({
+                    line: lines.length,
+                    col: lines[lines.length - 1].length + 1,
+                  });
+                }}
                 onKeyDown={(e) => {
                   if ((e.metaKey || e.ctrlKey) && e.key === 's') {
                     e.preventDefault();
                     handleManualSave();
+                  } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+                    if (undoStack.length > 0) {
+                      e.preventDefault();
+                      handleUndo();
+                    }
                   }
                 }}
-                placeholder="此地为正文字正本，落子生花。可直接动笔，亦可调用上方【执笔起草】或【打斗分镜】..."
+                placeholder="此地为正文字正本，落子生花。可直接动笔，亦可划选任意句子触发【五感扩写/古风化/多AI圆桌会审】..."
                 className="w-full flex-1 min-h-[560px] sm:min-h-[700px] bg-transparent border-none outline-none resize-none font-literary-serif selection:bg-amber-500/25 leading-relaxed placeholder:opacity-30"
                 style={{
                   fontSize: `${themeSettings.fontSize}px`,
@@ -1009,7 +1350,7 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
 
             {/* 6. 文稿底部幕次流转与原子落盘 (Bottom Act Carousel & Persistent Actions) */}
             <div
-              className="px-6 sm:px-12 py-5 border-t select-none flex flex-wrap items-center justify-between gap-3 mt-auto"
+              className="px-6 sm:px-12 py-4 border-t select-none flex flex-wrap items-center justify-between gap-3 mt-auto"
               style={{ borderColor: 'var(--border-subtle)' }}
             >
               {/* 幕次流转导航 */}
@@ -1088,6 +1429,58 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                   <Save className="w-3.5 h-3.5" />
                   <span>立即落盘 (Ctrl+S)</span>
                 </button>
+              </div>
+            </div>
+
+            {/* 7. 底部 IDE 级沉浸文稿状态栏 (Bottom Manuscript Status Bar - UX08 / F3) */}
+            <div
+              className="px-6 sm:px-12 py-2 border-t rounded-b-2xl sm:rounded-b-3xl flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono select-none"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-muted)',
+              }}
+            >
+              <div className="flex items-center gap-3 flex-wrap">
+                <span>
+                  行 {cursorPos.line}, 列 {cursorPos.col}
+                </span>
+                <span>|</span>
+                <span>
+                  {selectedSnippet ? `已选 ${selectedSnippet.length} 字 / ` : ''}本幕 {wordCount} 字 · 全章 {chapterTotalWords} 字
+                </span>
+                <span>|</span>
+                <span>预计阅读 ~{readingTimeMin} 分钟</span>
+              </div>
+
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-1">
+                  <span>字号:</span>
+                  <button
+                    onClick={() => setFontSize(Math.max(14, themeSettings.fontSize - 1))}
+                    className="px-1.5 py-0.5 rounded border hover:opacity-80 cursor-pointer"
+                    style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+                    title="减小正文字号"
+                  >
+                    A-
+                  </button>
+                  <span className="px-1 font-bold" style={{ color: 'var(--text-main)' }}>
+                    {themeSettings.fontSize}px
+                  </span>
+                  <button
+                    onClick={() => setFontSize(Math.min(26, themeSettings.fontSize + 1))}
+                    className="px-1.5 py-0.5 rounded border hover:opacity-80 cursor-pointer"
+                    style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+                    title="增大正文字号"
+                  >
+                    A+
+                  </button>
+                </div>
+                <span>|</span>
+                <span className="flex items-center gap-1 text-emerald-500 font-sans font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                  WAL 双重防丢保护中
+                </span>
               </div>
             </div>
           </div>

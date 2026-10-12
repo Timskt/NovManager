@@ -42,12 +42,15 @@ import {
   Rocket,
   MessageSquare,
   ShieldCheck,
+  Network,
+  Keyboard,
 } from 'lucide-react';
 
 export type NavTab =
   | 'LIBRARY'
   | 'ARCHITECT'
   | 'STUDIO'
+  | 'AI_COUNCIL'
   | 'AUTOPILOT'
   | 'SPARK_HUB'
   | 'SKILL_VAULT'
@@ -97,7 +100,7 @@ export const DOMAIN_GROUPS: DomainGroup[] = [
     key: 'STUDIO_DOMAIN',
     title: '创制工坊',
     icon: '✍️',
-    description: '核心文字执笔、无人巡航码字、灵光听劝与分镜架构',
+    description: '核心文字执笔、多模型圆桌辩论、无人巡航码字、灵光听劝与分镜架构',
     items: [
       {
         id: 'STUDIO',
@@ -105,6 +108,13 @@ export const DOMAIN_GROUPS: DomainGroup[] = [
         subtitle: '沉浸正文撰写 · 分镜节拍 · 战力微调',
         icon: <Feather className="w-4 h-4 text-amber-500" />,
         badge: '核心',
+      },
+      {
+        id: 'AI_COUNCIL',
+        title: '多模型圆桌辩论与连线拓扑',
+        subtitle: '跨提供商AI节点增删改 · 自由连线交锋 · 终稿/提示词合成',
+        icon: <Network className="w-4 h-4 text-indigo-400" />,
+        badge: '多AI圆桌',
       },
       {
         id: 'AUTOPILOT',
@@ -332,6 +342,7 @@ interface HeaderProps {
   onOpenExportStudio?: () => void;
   onOpenGodsEye?: () => void;
   onOpenInScene?: () => void;
+  onOpenFriendlyHub?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -343,6 +354,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenExportStudio,
   onOpenGodsEye,
   onOpenInScene,
+  onOpenFriendlyHub,
 }) => {
   const {
     novel,
@@ -689,11 +701,28 @@ export const Header: React.FC<HeaderProps> = ({
             })}
           </nav>
 
-          {/* 全局穿透 HUD 快捷触发器：上帝视角 + 登场人物 */}
+          {/* 全局穿透 HUD 快捷触发器：多AI圆桌 + 上帝视角 + 登场人物 */}
           <div
             className="flex items-center gap-1.5 border-l pl-2"
             style={{ borderColor: 'var(--border-subtle)' }}
           >
+            <button
+              onClick={() => setActiveTab('AI_COUNCIL')}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs transition cursor-pointer ${
+                activeTab === 'AI_COUNCIL'
+                  ? 'border-indigo-500 bg-indigo-500/15 font-bold text-indigo-400'
+                  : 'hover:border-indigo-500/50 hover:bg-indigo-500/10'
+              }`}
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: activeTab === 'AI_COUNCIL' ? undefined : 'var(--border-subtle)',
+              }}
+              title="多模型圆桌辩论与自由连线拓扑中枢 (30功能×30架构)"
+            >
+              <Network className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="font-medium hidden xl:inline">多AI圆桌</span>
+            </button>
+
             {onOpenGodsEye && (
               <button
                 onClick={onOpenGodsEye}
@@ -776,9 +805,25 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* ====================================================================
-            4. 右侧：全局搜索、典雅主题切换器与聚合工程中枢
+            4. 右侧：全局搜索、友好交互/取名、典雅主题切换器与聚合工程中枢
         ==================================================================== */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* 友好交互、快捷键速查与东方取名中枢 (?) */}
+          {onOpenFriendlyHub && (
+            <button
+              onClick={onOpenFriendlyHub}
+              className="px-2.5 py-1.5 rounded-lg border hover:opacity-85 transition text-xs font-literary-sans flex items-center gap-1.5 cursor-pointer"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-subtle)',
+              }}
+              title="快捷键速查 / 东方玄幻取名矩阵 / 全书体检 (? 或 Cmd+/)"
+            >
+              <Keyboard className="w-3.5 h-3.5 text-amber-500" />
+              <span className="hidden xl:inline font-medium">取名·快捷键</span>
+            </button>
+          )}
+
           {/* 全局穿梭指挥官 (Cmd+K) */}
           {onOpenCommandPalette && (
             <button

@@ -1658,6 +1658,128 @@ async fn test_memory_token_anti_hallucination_and_navigation_30x30() {
     assert_eq!(bp_val["items"].as_array().unwrap().len(), 30);
 }
 
+#[tokio::test]
+async fn test_swarm_multi_ai_debate_and_friendly_ux_endpoints() {
+    let app = setup_test_app();
 
+    // 1. GET /api/swarm/topologies
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/api/swarm/topologies")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let topo_val: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert!(topo_val["presets"].as_array().unwrap().len() >= 4);
 
+    // 2. POST /api/swarm/execute-debate
+    let debate_req = json!({
+        "sourceType": "MANUSCRIPT",
+        "seedContent": "林越握紧断剑，在风雪中缓步走向祭坛。",
+        "humanDecree": "强化五感细节并在结尾埋下悬念钩子",
+        "rounds": 2,
+        "nodes": [
+            {
+                "id": "n1",
+                "name": "主笔初稿师",
+                "role": "DRAFTER",
+                "providerId": "prov-deepseek",
+                "providerName": "DeepSeek Official",
+                "model": "deepseek-chat",
+                "weight": 90,
+                "temperature": 0.7
+            },
+            {
+                "id": "n2",
+                "name": "毒舌主编",
+                "role": "CRITIC",
+                "providerId": "prov-claude",
+                "providerName": "Anthropic Claude",
+                "model": "claude-3-7-sonnet-20250219",
+                "weight": 95,
+                "temperature": 0.5
+            }
+        ],
+        "edges": [
+            {
+                "id": "e1",
+                "from": "n1",
+                "to": "n2",
+                "relationType": "CRITIQUE",
+                "label": "毒舌挑刺"
+            }
+        ]
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/swarm/execute-debate")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&debate_req).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let debate_val: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert!(!debate_val["synthesizedManuscript"].as_str().unwrap().is_empty());
+    assert!(!debate_val["distilledMasterPrompt"].as_str().unwrap().is_empty());
+    assert!(!debate_val["debateTurns"].as_array().unwrap().is_empty());
 
+    // 3. POST /api/naming/generate
+    let naming_req = json!({
+        "category": "TECHNIQUE",
+        "element": "冰",
+        "style": "古典清冷"
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/naming/generate")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&naming_req).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let naming_val: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert!(naming_val["items"].as_array().unwrap().len() >= 3);
+
+    // 4. POST /api/studio/purify
+    let purify_req = json!({
+        "draftText": "林越不由得倒吸一口凉气,缓缓说道:\"这不可能!\"",
+        "removeFluff": true,
+        "indentParagraphs": true
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/studio/purify")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&purify_req).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let purify_val: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert!(!purify_val["purifiedText"].as_str().unwrap().is_empty());
+    assert!(!purify_val["cliffhangerHooks"].as_array().unwrap().is_empty());
+}

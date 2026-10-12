@@ -47,9 +47,11 @@ import { SparkAndReaderHubView } from './components/sparks/SparkAndReaderHubView
 import { CentralSkillVaultView } from './components/skills/CentralSkillVaultView';
 import { FloatingSparkCapsule } from './components/sparks/FloatingSparkCapsule';
 import { MemoryTokenAntiHallucinationView } from './components/memory/MemoryTokenAntiHallucinationView';
+import { MultiAgentDebateStudioView } from './components/swarm/MultiAgentDebateStudioView';
+import { FriendlyInteractionHubModal } from './components/common/FriendlyInteractionHub';
 
 const ALL_VALID_TABS: Set<string> = new Set(
-  DOMAIN_GROUPS.flatMap((g) => g.items.map((i) => i.id)).concat(['OUTLINES'])
+  DOMAIN_GROUPS.flatMap((g) => g.items.map((i) => i.id)).concat(['OUTLINES', 'AI_COUNCIL'])
 );
 
 function parseTabFromHash(): NavTab {
@@ -67,6 +69,7 @@ function formatTabToHash(tab: NavTab): string {
 
 const DEFAULT_PINNED_TABS: NavTab[] = [
   'STUDIO',
+  'AI_COUNCIL',
   'AUTOPILOT',
   'SPARK_HUB',
   'SKILL_VAULT',
@@ -98,6 +101,7 @@ const AppContent: React.FC = () => {
   const [isExportStudioOpen, setIsExportStudioOpen] = useState(false);
   const [isGodsEyeOpen, setIsGodsEyeOpen] = useState(false);
   const [isInSceneOpen, setIsInSceneOpen] = useState(false);
+  const [isFriendlyHubOpen, setIsFriendlyHubOpen] = useState(false);
 
   // Unified navigation handler with history stack + open tab dock + URL hash sync + teleport payload
   const navigateToTab = useCallback(
@@ -216,12 +220,18 @@ const AppContent: React.FC = () => {
     };
   }, [activeTab, navigateToTab]);
 
-  // Global keyboard shortcuts: Cmd+K (Command Palette), Alt+Left (Back), Alt+Right (Forward), Alt+1..9 (Tab Quick-Dial)
+  // Global keyboard shortcuts: Cmd+K (Command Palette), Cmd+/ or ? (Friendly Hub), Alt+Left (Back), Alt+Right (Forward), Alt+1..9 (Tab Quick-Dial)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const targetTag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      const isEditing = targetTag === 'input' || targetTag === 'textarea' || (e.target as HTMLElement)?.isContentEditable;
+
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
+      } else if (((e.metaKey || e.ctrlKey) && e.key === '/') || (!isEditing && e.key === '?')) {
+        e.preventDefault();
+        setIsFriendlyHubOpen((prev) => !prev);
       } else if (e.altKey && e.key === 'ArrowLeft') {
         e.preventDefault();
         handleGoBack();
@@ -264,6 +274,7 @@ const AppContent: React.FC = () => {
         onOpenExportStudio={() => setIsExportStudioOpen(true)}
         onOpenGodsEye={() => setIsGodsEyeOpen(true)}
         onOpenInScene={() => setIsInSceneOpen(true)}
+        onOpenFriendlyHub={() => setIsFriendlyHubOpen(true)}
       />
 
       {/* 多标签工作区导航栏 + 历史后退/前进 + 跨视图章节切换面包屑 + 实时记忆防幻觉胶囊 */}
@@ -289,6 +300,9 @@ const AppContent: React.FC = () => {
         {activeTab === 'LIBRARY' && <LibraryView onNavigateTab={navigateToTab} />}
         {activeTab === 'ARCHITECT' && <ArchitectView onNavigateTab={navigateToTab} />}
         {activeTab === 'STUDIO' && <StudioView onNavigateTab={navigateToTab} />}
+        {activeTab === 'AI_COUNCIL' && (
+          <MultiAgentDebateStudioView onNavigateTab={navigateToTab} />
+        )}
         {activeTab === 'AUTOPILOT' && <AutopilotCockpitView onNavigateTab={navigateToTab} />}
         {activeTab === 'SPARK_HUB' && <SparkAndReaderHubView onNavigateTab={navigateToTab} />}
         {activeTab === 'SKILL_VAULT' && <CentralSkillVaultView onNavigateTab={navigateToTab} />}
@@ -372,6 +386,13 @@ const AppContent: React.FC = () => {
       <InSceneCharactersDrawer
         isOpen={isInSceneOpen}
         onClose={() => setIsInSceneOpen(false)}
+      />
+
+      {/* 全局友好交互与东方命名/快捷键/全书体检中枢 (? 或 Cmd+/) */}
+      <FriendlyInteractionHubModal
+        isOpen={isFriendlyHubOpen}
+        onClose={() => setIsFriendlyHubOpen(false)}
+        onNavigateTab={navigateToTab}
       />
     </div>
   );

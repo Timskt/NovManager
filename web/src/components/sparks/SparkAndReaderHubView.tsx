@@ -906,14 +906,24 @@ export const SparkAndReaderHubView: React.FC<SparkAndReaderHubViewProps> = ({ on
                             <span>AI 提炼抓手：{disc.extractedHook}</span>
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             {/* G20: 一键转化为 150 字听劝修补正文并织入 */}
                             <button
                               onClick={() => handleSynthesizeCommentProsePatch(disc)}
-                              className="px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-colors"
+                              className="px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-colors cursor-pointer"
                             >
                               🪡 G20 转150字正文补丁织入
                             </button>
+
+                            {onNavigateTab && (
+                              <button
+                                onClick={() => onNavigateTab('AI_COUNCIL')}
+                                className="px-3 py-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition-colors cursor-pointer"
+                                title="将该读者书评送入【多AI跨提供商圆桌辩论与连线拓扑工坊】多Agent交锋推演"
+                              >
+                                🏛️ 送入多AI圆桌会审
+                              </button>
+                            )}
 
                             {disc.convertedSparkId ? (
                               <span className="text-xs text-emerald-400 font-medium shrink-0">
@@ -922,7 +932,7 @@ export const SparkAndReaderHubView: React.FC<SparkAndReaderHubViewProps> = ({ on
                             ) : (
                               <button
                                 onClick={() => handleConvertCommentToSpark(disc)}
-                                className="px-3 py-1.5 rounded-lg bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border border-teal-500/30 text-xs font-medium shrink-0 transition-colors"
+                                className="px-3 py-1.5 rounded-lg bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border border-teal-500/30 text-xs font-medium shrink-0 transition-colors cursor-pointer"
                               >
                                 ✨ 收入灵光金库
                               </button>
