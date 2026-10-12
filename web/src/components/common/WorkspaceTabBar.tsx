@@ -189,7 +189,7 @@ export const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({
   return (
     <>
       <div
-        className="h-9 border-b flex items-center justify-between px-3 gap-2 select-none shrink-0 z-30 transition-colors"
+        className="h-10 border-b flex items-center justify-between px-3.5 gap-2.5 select-none shrink-0 z-30 transition-colors"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-subtle)',
@@ -245,7 +245,7 @@ export const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({
               title="一键返回发起跨页跳转的源页面与焦点上下文"
             >
               <CornerUpLeft className="w-3 h-3" />
-              <span>返回：{teleportContext.sourceTitle || teleportContext.sourceTab}</span>
+              <span className="truncate max-w-[110px]">返回：{teleportContext.sourceTitle || teleportContext.sourceTab}</span>
             </button>
           )}
 
@@ -258,8 +258,8 @@ export const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({
               title="点击展开 28 模块全站瞬移矩阵"
             >
               <span>{activeDomain?.icon || '🧭'}</span>
-              <span className="hidden sm:inline">{activeDomain?.title || '工作区'}</span>
-              <ChevronRight className="w-3 h-3 opacity-50" />
+              <span className="hidden xl:inline">{activeDomain?.title || '工作区'}</span>
+              <ChevronRight className="w-3 h-3 opacity-50 hidden xl:inline" />
               <span className="font-bold flex items-center gap-1" style={{ color: 'var(--text-main)' }}>
                 {activeItem?.icon}
                 <span>{activeItem?.title || activeTab}</span>
@@ -334,7 +334,7 @@ export const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({
 
           {/* Active Chapter & Scene Quick Switcher + PiP Companion Trigger */}
           {activeChapter && (
-            <div className="relative hidden md:block" ref={chapterRef}>
+            <div className="relative hidden lg:block" ref={chapterRef}>
               <div className="flex items-center gap-1">
                 <ChevronRight className="w-3 h-3 opacity-40" style={{ color: 'var(--text-muted)' }} />
                 <button
@@ -344,14 +344,14 @@ export const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({
                   title="跨视图快速切换当前焦点章节与分镜，无需先回创作台"
                 >
                   <BookOpen className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                  <span className="truncate max-w-[140px] font-medium">
+                  <span className="truncate max-w-[120px] font-medium">
                     {activeChapter.title}
                   </span>
                   <ChevronDown className="w-3 h-3 opacity-60" />
                 </button>
 
                 {activeTab !== 'STUDIO' && (
-                  <>
+                  <div className="hidden 2xl:flex items-center gap-1">
                     <button
                       onClick={() => setPipManuscriptOpen((prev) => !prev)}
                       className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-colors flex items-center gap-1 border ${
@@ -362,17 +362,9 @@ export const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({
                       title="在不离开当前页面的情况下打开【悬浮正文伴侣抽屉】对照或修改手稿 (F23/A23)"
                     >
                       <BookOpen className="w-3 h-3" />
-                      <span>正文伴侣</span>
+                      <span>伴侣</span>
                     </button>
-                    <button
-                      onClick={() => onSelectTab('STUDIO')}
-                      className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-500/15 text-indigo-400 hover:bg-indigo-500/25 transition-colors flex items-center gap-1"
-                      title="立即返回创作台编辑当前焦点章节"
-                    >
-                      <Feather className="w-3 h-3" />
-                      <span>执笔</span>
-                    </button>
-                  </>
+                  </div>
                 )}
               </div>
 

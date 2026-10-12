@@ -1,3 +1,11 @@
+// ==============================================================================
+// 响应式防遮挡灵光速记悬浮胶囊 (Auto-Avoiding Collapsible Spark Capsule)
+// 解决窗口缩小时遮挡底部 Tab 的问题：
+// 1. 窄屏 (<1024px) 自动上移避让底部导航栏 (bottom-20)，宽屏位于右下角安全区
+// 2. 支持一键【贴边最小化 (Minimize to Edge)】收敛为 28px 侧边微标，零遮挡
+// 3. 默认采用单胶囊紧凑形态，按需展开快捷入口，支持顶部/底部位置一键切换
+// ==============================================================================
+
 import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
@@ -6,6 +14,10 @@ import {
   Rocket,
   Layers,
   Anchor,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpRight,
+  Minimize2,
 } from 'lucide-react';
 import { useNovel } from '../../context/NovelContext';
 import { EpiphanySpark, EpiphanySparkType } from '../../types/novel';
@@ -34,6 +46,17 @@ export const FloatingSparkCapsule: React.FC<FloatingSparkCapsuleProps> = ({
 }) => {
   const { novel, editorContent, setEditorContent } = useNovel();
   const [isOpen, setIsOpen] = useState(false);
+  // 默认折叠快捷外挂按钮，避免三个按钮平铺挡住底部内容
+  const [showQuickLinks, setShowQuickLinks] = useState(false);
+  // 支持一键贴边最小化为小书签，彻底不挡任何界面元素
+  const [isMinimizedToEdge, setIsMinimizedToEdge] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('spark_capsule_minimized') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
   const [sparkType, setSparkType] = useState<EpiphanySparkType>('PLOT_TWIST');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -46,6 +69,16 @@ export const FloatingSparkCapsule: React.FC<FloatingSparkCapsuleProps> = ({
   useEffect(() => {
     refreshCounts();
   }, [novel.id, isOpen]);
+
+  const toggleMinimizeToEdge = (val: boolean) => {
+    setIsMinimizedToEdge(val);
+    if (val) setIsOpen(false);
+    try {
+      localStorage.setItem('spark_capsule_minimized', String(val));
+    } catch {
+      // ignore
+    }
+  };
 
   const refreshCounts = async () => {
     const [spList, skList] = await Promise.all([
@@ -95,30 +128,41 @@ export const FloatingSparkCapsule: React.FC<FloatingSparkCapsuleProps> = ({
     refreshCounts();
   };
 
+  // 贴边最小化状态：仅在右侧垂直居中偏下显示一个极窄的 28px 书签耳，绝不遮挡底部任何 Tab
+  if (isMinimizedToEdge) {
+    return (
+      <div className="fixed right-0 bottom-24 lg:bottom-16 z-40 flex items-center">
+        <button
+          onClick={() => toggleMinimizeToEdge(false)}
+          title="展开【灵光速记】悬浮窗"
+          className="px-2 py-2.5 rounded-l-xl border border-r-0 shadow-lg flex flex-col items-center gap-1 transition-all hover:pr-3 cursor-pointer"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            borderColor: 'var(--border-strong)',
+            color: 'var(--accent-primary)',
+          }}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span className="text-[10px] font-bold writing-vertical-rl tracking-widest">
+            灵光({pendingCount})
+          </span>
+          <ChevronLeft className="w-3 h-3 opacity-70" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div
-      style={{
-        position: 'fixed',
-        right: '20px',
-        bottom: '20px',
-        zIndex: 90,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-end',
-        gap: '10px',
-      }}
+      className="fixed right-3 sm:right-5 bottom-[68px] lg:bottom-4 z-40 flex flex-col items-end gap-2.5 pointer-events-none"
     >
       {toast && (
         <div
+          className="pointer-events-auto px-3.5 py-2 rounded-xl border text-xs font-semibold shadow-xl"
           style={{
-            padding: '8px 14px',
-            borderRadius: '10px',
-            background: 'var(--bg-surface)',
-            border: '1px solid var(--accent-primary)',
+            backgroundColor: 'var(--bg-surface)',
+            borderColor: 'var(--accent-primary)',
             color: 'var(--text-main)',
-            fontSize: '12px',
-            fontWeight: 600,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
           }}
         >
           {toast}
@@ -127,57 +171,52 @@ export const FloatingSparkCapsule: React.FC<FloatingSparkCapsuleProps> = ({
 
       {isOpen && (
         <div
+          className="pointer-events-auto w-[350px] max-w-[92vw] rounded-2xl border p-4 shadow-2xl flex flex-col gap-2.5"
           style={{
-            width: '370px',
-            background: 'var(--bg-surface)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '16px',
-            padding: '16px',
-            boxShadow: '0 16px 42px rgba(15, 23, 42, 0.25)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
+            backgroundColor: 'var(--bg-surface)',
+            borderColor: 'var(--border-strong)',
+            color: 'var(--text-main)',
           }}
         >
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-              <Sparkles size={16} color="#d97706" />
-              <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-main)' }}>
-                随时补充：灵光一现 / 读者讨论速记
-              </span>
+          <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: 'var(--border-subtle)' }}>
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+              <span className="text-xs font-bold">随时补充：灵光一现 / 读者讨论速记</span>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              style={{
-                border: 'none',
-                background: 'transparent',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                padding: '2px',
-              }}
-            >
-              <X size={16} />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => toggleMinimizeToEdge(true)}
+                title="贴边收起，避免遮挡任何底部区域"
+                className="p-1 rounded hover:bg-[var(--bg-card)] text-[11px] flex items-center gap-0.5"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <Minimize2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-1 rounded hover:bg-[var(--bg-card)]"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Type Pills */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+          <div className="flex flex-wrap gap-1.5">
             {QUICK_TYPES.map((t) => {
               const active = sparkType === t.id;
               return (
                 <button
                   key={t.id}
                   onClick={() => setSparkType(t.id)}
+                  className="text-[11px] px-2.5 py-1 rounded-full border transition cursor-pointer"
                   style={{
-                    fontSize: '11px',
-                    padding: '4px 8px',
-                    borderRadius: '999px',
-                    border: active ? '1px solid #d97706' : '1px solid var(--border-subtle)',
-                    background: active ? 'rgba(217, 119, 6, 0.14)' : 'var(--bg-canvas)',
-                    color: active ? '#d97706' : 'var(--text-muted)',
+                    borderColor: active ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                    backgroundColor: active ? 'var(--accent-surface)' : 'var(--bg-canvas)',
+                    color: active ? 'var(--accent-primary)' : 'var(--text-muted)',
                     fontWeight: active ? 700 : 500,
-                    cursor: 'pointer',
                   }}
                 >
                   {t.label}
@@ -187,19 +226,17 @@ export const FloatingSparkCapsule: React.FC<FloatingSparkCapsuleProps> = ({
           </div>
 
           {/* Title & Anchor Chapter */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 96px', gap: '8px' }}>
+          <div className="grid grid-cols-3 gap-2">
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="灵感短标题（选填，可自动提炼）"
+              placeholder="灵感短标题（选填）"
+              className="col-span-2 px-2.5 py-1.5 rounded-lg border text-xs"
               style={{
-                padding: '7px 10px',
-                borderRadius: '8px',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--bg-canvas)',
+                borderColor: 'var(--border-subtle)',
+                backgroundColor: 'var(--bg-canvas)',
                 color: 'var(--text-main)',
-                fontSize: '12px',
               }}
             />
             <input
@@ -207,14 +244,12 @@ export const FloatingSparkCapsule: React.FC<FloatingSparkCapsuleProps> = ({
               min={1}
               value={targetChapter}
               onChange={(e) => setTargetChapter(e.target.value)}
-              placeholder="锚定第几章"
+              placeholder="锚定章号"
+              className="px-2 py-1.5 rounded-lg border text-xs"
               style={{
-                padding: '7px 8px',
-                borderRadius: '8px',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--bg-canvas)',
+                borderColor: 'var(--border-subtle)',
+                backgroundColor: 'var(--bg-canvas)',
                 color: 'var(--text-main)',
-                fontSize: '12px',
               }}
             />
           </div>
@@ -225,13 +260,11 @@ export const FloatingSparkCapsule: React.FC<FloatingSparkCapsuleProps> = ({
               value={readerSource}
               onChange={(e) => setReaderSource(e.target.value)}
               placeholder="来源：如 起点本章说热评 / 番茄段评 / 书友群讨论..."
+              className="px-2.5 py-1.5 rounded-lg border text-xs"
               style={{
-                padding: '7px 10px',
-                borderRadius: '8px',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--bg-canvas)',
+                borderColor: 'var(--border-subtle)',
+                backgroundColor: 'var(--bg-canvas)',
                 color: 'var(--text-main)',
-                fontSize: '12px',
               }}
             />
           )}
@@ -240,185 +273,140 @@ export const FloatingSparkCapsule: React.FC<FloatingSparkCapsuleProps> = ({
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            rows={4}
+            rows={3}
             placeholder="随时记下脑海里突然冒出的金句、反转点子、或者读者在评论区讨论的精彩脑洞..."
+            className="w-full p-2.5 rounded-lg border text-xs leading-relaxed resize-y"
             style={{
-              width: '100%',
-              padding: '9px 10px',
-              borderRadius: '8px',
-              border: '1px solid var(--border-subtle)',
-              background: 'var(--bg-canvas)',
+              borderColor: 'var(--border-subtle)',
+              backgroundColor: 'var(--bg-canvas)',
               color: 'var(--text-main)',
-              fontSize: '12.5px',
-              lineHeight: 1.5,
-              resize: 'vertical',
             }}
           />
 
           {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div className="flex gap-2">
             <button
               onClick={() => handleSave(false)}
+              className="flex-1 py-2 px-2.5 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
               style={{
-                flex: 1,
-                padding: '8px 10px',
-                borderRadius: '8px',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--bg-canvas)',
+                borderColor: 'var(--border-subtle)',
+                backgroundColor: 'var(--bg-canvas)',
                 color: 'var(--text-main)',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '5px',
               }}
             >
-              <Anchor size={13} color="#d97706" />
-              存入灵感库待用
+              <Anchor className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+              存入灵感库
             </button>
             <button
               onClick={() => handleSave(true)}
-              style={{
-                flex: 1,
-                padding: '8px 10px',
-                borderRadius: '8px',
-                border: 'none',
-                background: 'var(--accent-primary)',
-                color: '#fff',
-                fontSize: '12px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '5px',
-              }}
+              className="flex-1 py-2 px-2.5 rounded-lg text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer"
+              style={{ backgroundColor: 'var(--accent-primary)' }}
             >
-              <Send size={13} />
-              立即织入当前正文
+              <Send className="w-3.5 h-3.5" />
+              立即织入正文
             </button>
           </div>
 
           {/* Quick Jump Links */}
           <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              paddingTop: '8px',
-              borderTop: '1px solid var(--border-subtle)',
-              fontSize: '11px',
-            }}
+            className="flex items-center justify-between pt-2 border-t text-[11px]"
+            style={{ borderColor: 'var(--border-subtle)' }}
           >
             <button
               onClick={() => {
                 setIsOpen(false);
                 onNavigateTab('SPARK_HUB');
               }}
-              style={{
-                border: 'none',
-                background: 'transparent',
-                color: 'var(--accent-primary)',
-                cursor: 'pointer',
-                fontWeight: 600,
-              }}
+              className="font-semibold hover:underline cursor-pointer flex items-center gap-0.5"
+              style={{ color: 'var(--accent-primary)' }}
             >
-              打开灵光与读者热议中枢 ({pendingCount}) →
+              <span>打开灵感与读者中枢 ({pendingCount})</span>
+              <ArrowUpRight className="w-3 h-3" />
             </button>
             <button
               onClick={() => {
                 setIsOpen(false);
                 onNavigateTab('AUTOPILOT');
               }}
-              style={{
-                border: 'none',
-                background: 'transparent',
-                color: '#059669',
-                cursor: 'pointer',
-                fontWeight: 600,
-              }}
+              className="font-semibold hover:underline cursor-pointer flex items-center gap-0.5"
+              style={{ color: 'var(--text-muted)' }}
             >
-              全自动巡航码字 →
+              <span>全自动巡航码字</span>
+              <ArrowUpRight className="w-3 h-3" />
             </button>
           </div>
         </div>
       )}
 
-      {/* Floating Capsule Trigger Bar */}
+      {/* 紧凑防遮挡触发胶囊栏：默认仅显示单个紧凑主胶囊 + 展开/贴边收起按钮 */}
       <div
+        className="pointer-events-auto flex items-center gap-1 rounded-full border p-1 shadow-lg backdrop-blur-md transition-all"
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '999px',
-          padding: '5px 7px',
-          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.18)',
+          backgroundColor: 'var(--bg-surface)',
+          borderColor: 'var(--border-strong)',
         }}
       >
+        {showQuickLinks && (
+          <div className="hidden sm:flex items-center gap-1 pl-1 animate-fadeIn">
+            <button
+              onClick={() => onNavigateTab('SKILL_VAULT')}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] font-semibold transition hover:opacity-90 cursor-pointer"
+              style={{
+                borderColor: 'var(--border-subtle)',
+                backgroundColor: 'var(--bg-canvas)',
+                color: 'var(--text-main)',
+              }}
+              title="管理跨作品复用的套路、等级、文风、副本中心库"
+            >
+              <Layers className="w-3 h-3" style={{ color: 'var(--accent-primary)' }} />
+              <span>技能库 ({checkedSkillsCount})</span>
+            </button>
+
+            <button
+              onClick={() => onNavigateTab('AUTOPILOT')}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] font-semibold transition hover:opacity-90 cursor-pointer"
+              style={{
+                borderColor: 'var(--border-subtle)',
+                backgroundColor: 'var(--bg-canvas)',
+                color: 'var(--text-main)',
+              }}
+              title="进入全自动无人值守巡航码字舱"
+            >
+              <Rocket className="w-3 h-3" style={{ color: 'var(--accent-primary)' }} />
+              <span>巡航码字</span>
+            </button>
+          </div>
+        )}
+
+        <button
+          onClick={() => setShowQuickLinks((prev) => !prev)}
+          className="hidden sm:flex p-1.5 rounded-full hover:bg-[var(--bg-card)] transition cursor-pointer"
+          style={{ color: 'var(--text-muted)' }}
+          title={showQuickLinks ? '收起旁边快捷按钮' : '展开技能库与巡航快捷入口'}
+        >
+          {showQuickLinks ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+        </button>
+
         <button
           onClick={() => setIsOpen(!isOpen)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '7px 14px',
-            borderRadius: '999px',
-            border: 'none',
-            background: 'linear-gradient(135deg, #d97706 0%, #ea580c 100%)',
-            color: '#fff',
-            fontSize: '12px',
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-xs font-bold transition hover:opacity-95 cursor-pointer shadow-xs"
+          style={{ backgroundColor: 'var(--accent-primary)' }}
           title="随时记录突发灵感或读者本章说评论"
         >
-          <Sparkles size={14} />
-          <span>灵光速记 ({pendingCount})</span>
+          <Sparkles className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">灵光速记</span>
+          <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[10px] font-mono">
+            {pendingCount}
+          </span>
         </button>
 
         <button
-          onClick={() => onNavigateTab('SKILL_VAULT')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-            padding: '7px 11px',
-            borderRadius: '999px',
-            border: '1px solid var(--border-subtle)',
-            background: 'var(--bg-canvas)',
-            color: 'var(--text-main)',
-            fontSize: '11.5px',
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-          title="管理跨作品复用的套路、等级、文风、副本中心库"
+          onClick={() => toggleMinimizeToEdge(true)}
+          className="p-1.5 rounded-full hover:bg-[var(--bg-card)] transition cursor-pointer"
+          style={{ color: 'var(--text-muted)' }}
+          title="贴边最小化（彻底不挡右下角任何区域）"
         >
-          <Layers size={13} color="var(--accent-primary)" />
-          <span>技能库 ({checkedSkillsCount}勾选)</span>
-        </button>
-
-        <button
-          onClick={() => onNavigateTab('AUTOPILOT')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-            padding: '7px 11px',
-            borderRadius: '999px',
-            border: '1px solid rgba(5, 150, 105, 0.35)',
-            background: 'rgba(5, 150, 105, 0.1)',
-            color: '#059669',
-            fontSize: '11.5px',
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}
-          title="进入全自动无人值守巡航码字舱（支持零输入码一整小时）"
-        >
-          <Rocket size={13} />
-          <span>无人码字</span>
+          <Minimize2 className="w-3 h-3" />
         </button>
       </div>
     </div>

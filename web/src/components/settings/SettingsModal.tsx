@@ -3,10 +3,11 @@
 // 支持 DeepSeek 官方接口、OpenCode-Go 接口、OpenAPI / OpenAI 兼容接口直连配置与连通性测试
 // ==============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNovel } from '../../context/NovelContext';
 import { LLM_PRESETS, testLLMConnection, normalizeEndpoint, ConnectionTestResult } from '../../lib/aiPresets';
-import { LLMProviderType } from '../../types/novel';
+import { LLMProviderType, ModelProvider } from '../../types/novel';
+import { fetchModelProviders, saveModelProvider, deleteModelProvider } from '../../lib/api';
 import {
   Settings,
   X,
@@ -15,7 +16,6 @@ import {
   Globe,
   CheckCircle2,
   AlertCircle,
-  RefreshCw,
   Eye,
   EyeOff,
   ExternalLink,
@@ -25,6 +25,8 @@ import {
   ChevronUp,
   Server,
   Sparkles,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 
 interface SettingsModalProps {
@@ -46,6 +48,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const [showApiKey, setShowApiKey] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  // 多自定义渠道簿状态 (与多模型中枢共享持久化池)
+  const [savedProviders, setSavedProviders] = useState<ModelProvider[]>([]);
+  const [activeProfileId, setActiveProfileId] = useState<string>('');
+  const [customProfileName, setCustomProfileName] = useState<string>('');
+  const [profileBanner, setProfileBanner] = useState<string | null>(null);
+
   // 连通性测试状态
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null);
@@ -56,6 +64,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     novel.styleGuide.forbiddenPhrases.join('、')
   );
 
+  useEffect(() => {
+    if (isOpen) {
+      fetchModelProviders().then((list) => setSavedProviders(list));
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   // 切换供应商预设
@@ -65,6 +79,55 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     setEndpoint(preset.endpoint);
     setModel(preset.defaultModel);
     setTestResult(null);
+  };
+
+  // 从已保存的多自定义渠道簿一键加载
+  const handleSelectSavedProfile = (prov: ModelProvider) => {
+    setActiveProfileId(prov.id);
+    setCustomProfileName(prov.name);
+    setProvider(prov.providerType === 'DEEPSEEK' ? 'deepseek' : prov.providerType === 'OLLAMA' ? 'ollama_local' : 'openai_custom');
+    const normalized = prov.baseUrl.endsWith('/chat/completions')
+      ? prov.baseUrl
+      : `${prov.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+    setEndpoint(normalized);
+    setApiKey(prov.apiKeys[prov.activeKeyIndex] || prov.apiKeys[0] || '');
+    setModel(prov.supportedModels[0] || 'deepseek-chat');
+    setTestResult(null);
+    setProfileBanner(`⚡ 已切换至自定义渠道「${prov.name}」`);
+    setTimeout(() => setProfileBanner(null), 3000);
+  };
+
+  // 将当前填写的 Endpoint + Key + Model 另存为新的自定义提供商
+  const handleSaveAsNewCustomProvider = async () => {
+    const nameToSave =
+      customProfileName.trim() || `自定义中转渠道 #${savedProviders.length + 1}`;
+    const cleanBaseUrl = endpoint.replace(/\/chat\/completions\/?$/, '');
+    const newProv: ModelProvider = {
+      id: `prov-custom-${Date.now()}`,
+      name: nameToSave,
+      providerType: 'CUSTOM',
+      baseUrl: cleanBaseUrl || endpoint,
+      apiKeys: [apiKey.trim() || 'sk-custom-key'],
+      activeKeyIndex: 0,
+      supportedModels: [model.trim() || 'deepseek-r1'],
+      rpmLimit: 240,
+      tpmLimit: 400000,
+      isEnabled: true,
+      healthStatus: 'HEALTHY',
+      latencyMs: 95,
+      lastCheckedAt: new Date().toISOString(),
+    };
+    await saveModelProvider(newProv);
+    setSavedProviders((prev) => [newProv, ...prev]);
+    setActiveProfileId(newProv.id);
+    setProfileBanner(`🎉 已将「${newProv.name}」存入多自定义渠道簿，随时可一键切换！`);
+    setTimeout(() => setProfileBanner(null), 3500);
+  };
+
+  const handleRemoveSavedProfile = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await deleteModelProvider(id);
+    setSavedProviders((prev) => prev.filter((p) => p.id !== id));
   };
 
   // 测试 API 连接
@@ -122,7 +185,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--border-subtle)' }}>
           <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
             <Settings className="w-5 h-5 text-indigo-400" />
-            <span>AI 大模型直连与协同配置</span>
+            <span>AI 大模型直连与多自定义渠道配置</span>
           </h3>
           <button
             type="button"
@@ -147,13 +210,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 onClick={() => setUseMock(true)}
                 className={`p-3 rounded-xl border text-left transition cursor-pointer ${
                   useMock
-                    ? 'bg-indigo-950/60 border-indigo-500 text-indigo-200 ring-1 ring-indigo-500/30'
+                    ? 'border-indigo-500 ring-1 ring-indigo-500/30'
                     : 'hover:border-indigo-500/40'
                 }`}
                 style={
-                  !useMock
-                    ? { backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
-                    : undefined
+                  useMock
+                    ? { backgroundColor: 'var(--bg-canvas)', color: 'var(--text-main)' }
+                    : { backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
                 }
               >
                 <div className="font-bold flex items-center gap-1.5 text-xs">
@@ -170,21 +233,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 onClick={() => setUseMock(false)}
                 className={`p-3 rounded-xl border text-left transition cursor-pointer ${
                   !useMock
-                    ? 'bg-gradient-to-tr from-amber-950/40 to-indigo-950/60 border-amber-500/80 text-amber-200 ring-1 ring-amber-500/30'
+                    ? 'border-amber-500/80 ring-1 ring-amber-500/30'
                     : 'hover:border-indigo-500/40'
                 }`}
                 style={
-                  useMock
-                    ? { backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
-                    : undefined
+                  !useMock
+                    ? { backgroundColor: 'var(--bg-canvas)', color: 'var(--text-main)' }
+                    : { backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
                 }
               >
-                <div className="font-bold flex items-center gap-1.5 text-xs text-amber-300">
-                  <Globe className="w-4 h-4 text-amber-400" />
-                  <span>真实大模型 API 直连</span>
+                <div className="font-bold flex items-center gap-1.5 text-xs text-amber-500">
+                  <Globe className="w-4 h-4 text-amber-500" />
+                  <span>真实大模型 API 直连（支持多自定义提供商）</span>
                 </div>
                 <p className="text-[11px] mt-1 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                  直连 DeepSeek / OpenCode-Go / OpenAI 兼容接口，真机推理
+                  直连多个自定义 OneAPI/NewAPI 中转站、DeepSeek、OpenRouter 等
                 </p>
               </button>
             </div>
@@ -196,10 +259,86 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               className="border rounded-xl p-4 space-y-4 animate-in fade-in"
               style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
             >
+              {/* 已保存的多自定义提供商渠道簿 (一键切换不丢 Key) */}
+              <div
+                className="p-3 rounded-xl border space-y-2.5"
+                style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-bold flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
+                    <Server className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>我的多自定义提供商渠道簿 ({savedProviders.length}) — 点击秒级切换，自动记忆各自 Key</span>
+                  </span>
+                </div>
+
+                {profileBanner && (
+                  <div className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[11px] font-medium">
+                    {profileBanner}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
+                  {savedProviders.map((sp) => {
+                    const isCurrent = activeProfileId === sp.id || endpoint.includes(sp.baseUrl);
+                    return (
+                      <div
+                        key={sp.id}
+                        onClick={() => handleSelectSavedProfile(sp)}
+                        className={`group px-2.5 py-1.5 rounded-lg border text-[11px] flex items-center gap-1.5 cursor-pointer transition-all ${
+                          isCurrent
+                            ? 'border-indigo-500 bg-indigo-500/10 font-semibold'
+                            : 'hover:border-indigo-500/40'
+                        }`}
+                        style={{
+                          color: 'var(--text-main)',
+                          borderColor: isCurrent ? undefined : 'var(--border-subtle)',
+                          backgroundColor: isCurrent ? undefined : 'var(--bg-surface)',
+                        }}
+                      >
+                        <span className="truncate max-w-[150px]">{sp.name}</span>
+                        <span className="text-[9px] px-1 py-0.2 rounded opacity-70 font-mono" style={{ backgroundColor: 'var(--bg-card)' }}>
+                          {sp.supportedModels[0]?.slice(0, 14) || sp.providerType}
+                        </span>
+                        {sp.id.startsWith('prov-custom') && (
+                          <button
+                            type="button"
+                            onClick={(e) => handleRemoveSavedProfile(sp.id, e)}
+                            className="opacity-50 hover:opacity-100 text-rose-400 ml-0.5"
+                            title="删除此自定义渠道"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* 将当前下方配置另存为新的自定义提供商 */}
+                <div className="flex items-center gap-2 pt-1 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+                  <input
+                    type="text"
+                    value={customProfileName}
+                    onChange={(e) => setCustomProfileName(e.target.value)}
+                    placeholder="给当前自定义提供商起个名字（如：主力NewAPI二号站）..."
+                    className="flex-1 px-2.5 py-1.5 rounded-lg border text-[11px]"
+                    style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveAsNewCustomProvider}
+                    className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[11px] flex items-center gap-1 shrink-0 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>另存为新渠道</span>
+                  </button>
+                </div>
+              </div>
+
               {/* 供应商预设平铺选择 */}
               <div>
-                <label className="block text-slate-300 font-semibold mb-2">
-                  选择接口服务商预设 (一键自动填入地址与模型)
+                <label className="block font-semibold mb-2" style={{ color: 'var(--text-main)' }}>
+                  或选择标准协议模板 (一键自动填入默认地址与模型)
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {(Object.keys(LLM_PRESETS) as LLMProviderType[]).map((pid) => {

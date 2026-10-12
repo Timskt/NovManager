@@ -11,7 +11,7 @@
 // G06: 跨流派爆款缝合怪创世预设矩阵
 // ==============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNovel } from '../../context/NovelContext';
 import {
   IdeaGenesisInput,
@@ -185,6 +185,10 @@ export const GenesisView: React.FC<GenesisViewProps> = ({ onNavigateTab }) => {
       setIsGenerating(false);
     }
   };
+
+  useEffect(() => {
+    handleGenerate();
+  }, []);
 
   // G02: 一键排雷黄金三章毒点并强化爽点
   const handleSanitizeGoldenThreePoison = () => {

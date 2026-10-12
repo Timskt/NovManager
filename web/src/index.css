@@ -214,3 +214,144 @@
 .bg-accent-primary { background-color: var(--accent-primary); }
 .bg-accent-surface { background-color: var(--accent-surface); }
 
+/* ==============================================================================
+   全局跨主题色彩和谐自适应引擎 (Global Cross-Theme Color Harmonization Engine)
+   解决浅色文学主题 (古意宣纸 ink / 秘色青釉 celadon / 北欧素雅 pure) 下浅粉彩文字对比度不足、
+   深色黑块突兀，以及暗色主题下刺眼霓虹紫粉渐变不协调的问题
+   ============================================================================== */
+
+/* 1. 浅色文学主题 (ink / celadon / pure) 高对比度典雅墨色重映射 */
+:root[data-theme="ink"] .text-indigo-200,
+:root[data-theme="ink"] .text-indigo-300,
+:root[data-theme="ink"] .text-indigo-400,
+:root[data-theme="celadon"] .text-indigo-200,
+:root[data-theme="celadon"] .text-indigo-300,
+:root[data-theme="celadon"] .text-indigo-400,
+:root[data-theme="pure"] .text-indigo-200,
+:root[data-theme="pure"] .text-indigo-300,
+:root[data-theme="pure"] .text-indigo-400 {
+  color: #3730a3 !important; /* 典雅深靛青 */
+}
+
+:root[data-theme="ink"] .text-amber-200,
+:root[data-theme="ink"] .text-amber-300,
+:root[data-theme="ink"] .text-amber-400,
+:root[data-theme="celadon"] .text-amber-200,
+:root[data-theme="celadon"] .text-amber-300,
+:root[data-theme="celadon"] .text-amber-400,
+:root[data-theme="pure"] .text-amber-200,
+:root[data-theme="pure"] .text-amber-300,
+:root[data-theme="pure"] .text-amber-400 {
+  color: #b45309 !important; /* 沉稳鎏金赭石 */
+}
+
+:root[data-theme="ink"] .text-emerald-200,
+:root[data-theme="ink"] .text-emerald-300,
+:root[data-theme="ink"] .text-emerald-400,
+:root[data-theme="celadon"] .text-emerald-200,
+:root[data-theme="celadon"] .text-emerald-300,
+:root[data-theme="celadon"] .text-emerald-400,
+:root[data-theme="pure"] .text-emerald-200,
+:root[data-theme="pure"] .text-emerald-300,
+:root[data-theme="pure"] .text-emerald-400 {
+  color: #047857 !important; /* 松柏深翠绿 */
+}
+
+:root[data-theme="ink"] .text-rose-200,
+:root[data-theme="ink"] .text-rose-300,
+:root[data-theme="ink"] .text-rose-400,
+:root[data-theme="celadon"] .text-rose-200,
+:root[data-theme="celadon"] .text-rose-300,
+:root[data-theme="celadon"] .text-rose-400,
+:root[data-theme="pure"] .text-rose-200,
+:root[data-theme="pure"] .text-rose-300,
+:root[data-theme="pure"] .text-rose-400 {
+  color: #be123c !important; /* 印泥朱砂红 */
+}
+
+:root[data-theme="ink"] .text-purple-200,
+:root[data-theme="ink"] .text-purple-300,
+:root[data-theme="ink"] .text-purple-400,
+:root[data-theme="ink"] .text-violet-300,
+:root[data-theme="ink"] .text-violet-400,
+:root[data-theme="celadon"] .text-purple-200,
+:root[data-theme="celadon"] .text-purple-300,
+:root[data-theme="celadon"] .text-purple-400,
+:root[data-theme="celadon"] .text-violet-300,
+:root[data-theme="celadon"] .text-violet-400,
+:root[data-theme="pure"] .text-purple-200,
+:root[data-theme="pure"] .text-purple-300,
+:root[data-theme="pure"] .text-purple-400,
+:root[data-theme="pure"] .text-violet-300,
+:root[data-theme="pure"] .text-violet-400 {
+  color: #5b21b6 !important; /* 暮山紫 */
+}
+
+:root[data-theme="ink"] .text-cyan-200,
+:root[data-theme="ink"] .text-cyan-300,
+:root[data-theme="ink"] .text-cyan-400,
+:root[data-theme="celadon"] .text-cyan-200,
+:root[data-theme="celadon"] .text-cyan-300,
+:root[data-theme="celadon"] .text-cyan-400,
+:root[data-theme="pure"] .text-cyan-200,
+:root[data-theme="pure"] .text-cyan-300,
+:root[data-theme="pure"] .text-cyan-400 {
+  color: #0e7490 !important; /* 霁青色 */
+}
+
+:root[data-theme="ink"] .text-slate-100,
+:root[data-theme="ink"] .text-slate-200,
+:root[data-theme="ink"] .text-slate-300,
+:root[data-theme="celadon"] .text-slate-100,
+:root[data-theme="celadon"] .text-slate-200,
+:root[data-theme="celadon"] .text-slate-300,
+:root[data-theme="pure"] .text-slate-100,
+:root[data-theme="pure"] .text-slate-200,
+:root[data-theme="pure"] .text-slate-300 {
+  color: var(--text-main) !important;
+}
+
+:root[data-theme="ink"] .text-slate-400,
+:root[data-theme="ink"] .text-slate-500,
+:root[data-theme="celadon"] .text-slate-400,
+:root[data-theme="celadon"] .text-slate-500,
+:root[data-theme="pure"] .text-slate-400,
+:root[data-theme="pure"] .text-slate-500 {
+  color: var(--text-muted) !important;
+}
+
+/* 2. 浅色主题下消除突兀的半透明黑底与深色卡片底色 */
+:root[data-theme="ink"] .bg-black\/20,
+:root[data-theme="ink"] .bg-black\/30,
+:root[data-theme="ink"] .bg-black\/40,
+:root[data-theme="celadon"] .bg-black\/20,
+:root[data-theme="celadon"] .bg-black\/30,
+:root[data-theme="celadon"] .bg-black\/40,
+:root[data-theme="pure"] .bg-black\/20,
+:root[data-theme="pure"] .bg-black\/30,
+:root[data-theme="pure"] .bg-black\/40 {
+  background-color: var(--bg-card) !important;
+}
+
+:root[data-theme="ink"] .bg-indigo-950\/60,
+:root[data-theme="ink"] .bg-emerald-950\/60,
+:root[data-theme="ink"] .bg-rose-950\/60,
+:root[data-theme="ink"] .bg-amber-950\/40,
+:root[data-theme="celadon"] .bg-indigo-950\/60,
+:root[data-theme="celadon"] .bg-emerald-950\/60,
+:root[data-theme="celadon"] .bg-rose-950\/60,
+:root[data-theme="celadon"] .bg-amber-950\/40,
+:root[data-theme="pure"] .bg-indigo-950\/60,
+:root[data-theme="pure"] .bg-emerald-950\/60,
+:root[data-theme="pure"] .bg-rose-950\/60,
+:root[data-theme="pure"] .bg-amber-950\/40 {
+  background-color: var(--bg-card) !important;
+}
+
+/* 3. 全局消除刺眼廉价的紫粉霓虹渐变，统一为东方人文墨韵靛青渐变 */
+.from-indigo-600.via-purple-600.to-pink-600,
+.from-purple-600.to-pink-600 {
+  background-image: linear-gradient(135deg, #4f46e5 0%, #3730a3 60%, #b45309 100%) !important;
+}
+
+

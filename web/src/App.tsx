@@ -285,7 +285,7 @@ const AppContent: React.FC = () => {
         onGoForward={handleGoForward}
       />
 
-      <div className="flex-1 flex overflow-hidden pb-16 md:pb-0">
+      <div className="flex-1 flex overflow-hidden pb-16 lg:pb-0">
         {activeTab === 'LIBRARY' && <LibraryView onNavigateTab={navigateToTab} />}
         {activeTab === 'ARCHITECT' && <ArchitectView onNavigateTab={navigateToTab} />}
         {activeTab === 'STUDIO' && <StudioView onNavigateTab={navigateToTab} />}

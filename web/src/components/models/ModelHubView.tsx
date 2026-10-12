@@ -21,6 +21,8 @@ import {
 } from '../../types/novel';
 import {
   fetchModelProviders,
+  saveModelProvider,
+  deleteModelProvider,
   fetchModelRoleAssignments,
   saveModelRoleAssignment,
   simulateModelFallback,
@@ -48,8 +50,127 @@ import {
   Award,
   Calculator,
   BatteryCharging,
+  Copy,
+  Trash2,
+  Globe,
+  Search,
+  Upload,
+  X,
 } from 'lucide-react';
 import { NavTab } from '../Header';
+
+// 10 大主流中转站与自定义兼容平台一键填充模板
+const CUSTOM_PROVIDER_TEMPLATES: Array<{
+  label: string;
+  tag: string;
+  name: string;
+  providerType: ModelProvider['providerType'];
+  baseUrl: string;
+  models: string[];
+  rpm: number;
+  tpm: number;
+}> = [
+  {
+    label: 'OneAPI / NewAPI 中转站',
+    tag: '聚合网关',
+    name: 'OneAPI 私有聚合中转站',
+    providerType: 'CUSTOM',
+    baseUrl: 'https://api.your-oneapi.com/v1',
+    models: ['claude-3-7-sonnet-20250219', 'deepseek-r1', 'gpt-4o-2024-11-20', 'gemini-2.5-pro'],
+    rpm: 300,
+    tpm: 500000,
+  },
+  {
+    label: 'OpenRouter 全球池',
+    tag: '海外聚合',
+    name: 'OpenRouter 多模型路由池',
+    providerType: 'CUSTOM',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    models: ['anthropic/claude-3.7-sonnet', 'deepseek/deepseek-r1', 'google/gemini-2.5-pro-exp-03-25'],
+    rpm: 200,
+    tpm: 500000,
+  },
+  {
+    label: '火山方舟 (豆包/R1)',
+    tag: '字节云专线',
+    name: '火山方舟满血 DeepSeek 专线',
+    providerType: 'CUSTOM',
+    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
+    models: ['deepseek-r1-250120', 'deepseek-v3-250324', 'doubao-1.5-pro-256k'],
+    rpm: 500,
+    tpm: 800000,
+  },
+  {
+    label: '阿里百炼 DashScope',
+    tag: '通义万相/Qwen',
+    name: '阿里云百炼大模型服务平台',
+    providerType: 'CUSTOM',
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    models: ['qwen-max-latest', 'deepseek-r1', 'deepseek-v3', 'qwen-plus'],
+    rpm: 300,
+    tpm: 600000,
+  },
+  {
+    label: '智谱 GLM 开放平台',
+    tag: 'BigModel',
+    name: '智谱清言 GLM-4 开放平台',
+    providerType: 'CUSTOM',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    models: ['glm-4-plus', 'glm-zero-preview', 'glm-4-long'],
+    rpm: 180,
+    tpm: 300000,
+  },
+  {
+    label: '月之暗面 Kimi',
+    tag: '长文本利器',
+    name: 'Moonshot Kimi 长上下文专线',
+    providerType: 'CUSTOM',
+    baseUrl: 'https://api.moonshot.cn/v1',
+    models: ['kimi-latest', 'moonshot-v1-128k', 'moonshot-v1-32k'],
+    rpm: 120,
+    tpm: 250000,
+  },
+  {
+    label: 'AiHubMix 聚合',
+    tag: '多模型分发',
+    name: 'AiHubMix 商业聚合网关',
+    providerType: 'CUSTOM',
+    baseUrl: 'https://aihubmix.com/v1',
+    models: ['claude-3-5-sonnet-20241022', 'deepseek-reasoner', 'gpt-4o'],
+    rpm: 240,
+    tpm: 400000,
+  },
+  {
+    label: 'SiliconFlow 二号池',
+    tag: '多账号轮换',
+    name: '硅基流动备用赠金账号池 #2',
+    providerType: 'SILICONFLOW',
+    baseUrl: 'https://api.siliconflow.cn/v1',
+    models: ['Pro/deepseek-ai/DeepSeek-R1', 'Pro/deepseek-ai/DeepSeek-V3', 'Qwen/QwQ-32B'],
+    rpm: 300,
+    tpm: 500000,
+  },
+  {
+    label: 'vLLM / LM Studio',
+    tag: '局域网自建',
+    name: '局域网 vLLM / LM Studio 算力机',
+    providerType: 'OLLAMA',
+    baseUrl: 'http://192.168.1.100:1234/v1',
+    models: ['qwen2.5-72b-instruct-q4', 'deepseek-r1-distill-qwen-32b'],
+    rpm: 9999,
+    tpm: 9999999,
+  },
+  {
+    label: '纯自定义 OpenAI 兼容',
+    tag: '任意网关',
+    name: '自定义 OpenAI 兼容中转站',
+    providerType: 'CUSTOM',
+    baseUrl: 'https://your-custom-gateway.example.com/v1',
+    models: ['deepseek-r1', 'claude-3-5-sonnet', 'gpt-4o'],
+    rpm: 150,
+    tpm: 300000,
+  },
+];
 
 const ROLE_META: Record<
   ModelCapabilityRole,
@@ -128,6 +249,24 @@ const SUBSCRIPTION_QUOTA_META: Record<
     quotaLabel: '∞ 无限免费本地 Token',
     billingMode: '断网/全平台额度耗尽终极兜底',
   },
+  'prov-custom-oneapi': {
+    planName: 'OneAPI 私有聚合令牌池 (支持多上游分发)',
+    remainingPct: 88,
+    quotaLabel: '$ 176.00 / $ 200.00',
+    billingMode: '自定义 BaseURL 聚合负载均衡',
+  },
+  'prov-custom-openrouter': {
+    planName: 'OpenRouter 全球多模型路由账户',
+    remainingPct: 76,
+    quotaLabel: '$ 76.50 / $ 100.00',
+    billingMode: '按量自动路由最优节点',
+  },
+  'prov-custom-volcark': {
+    planName: '字节火山方舟 200万赠送 Token + 专线池',
+    remainingPct: 94,
+    quotaLabel: '¥ 470.00 / ¥ 500.00',
+    billingMode: '满血 R1 零拥堵高速推理',
+  },
 };
 
 interface ModelHubViewProps {
@@ -135,7 +274,7 @@ interface ModelHubViewProps {
 }
 
 export const ModelHubView: React.FC<ModelHubViewProps> = ({ onNavigateTab }) => {
-  const { activeChapter, editorContent, setEditorContent } = useNovel();
+  const { activeChapter, editorContent, setEditorContent, updateSettings } = useNovel();
 
   const [providers, setProviders] = useState<ModelProvider[]>([]);
   const [roles, setRoles] = useState<ModelRoleAssignment[]>([]);
@@ -149,6 +288,30 @@ export const ModelHubView: React.FC<ModelHubViewProps> = ({ onNavigateTab }) => 
   const [simulationResult, setSimulationResult] = useState<FallbackSimulateResult | null>(null);
   const [testingRole, setTestingRole] = useState<ModelCapabilityRole>('PLANNER');
   const [statusBanner, setStatusBanner] = useState<string | null>(null);
+
+  // 多自定义模型提供商管理状态 (筛选、搜索、新增、批量导入、在线编辑)
+  const [providerFilter, setProviderFilter] = useState<'ALL' | 'CUSTOM' | 'OFFICIAL' | 'LOCAL'>('ALL');
+  const [providerSearch, setProviderSearch] = useState<string>('');
+  const [showAddModal, setShowAddModal] = useState<boolean>(false);
+  const [showBatchModal, setShowBatchModal] = useState<boolean>(false);
+  const [newProvName, setNewProvName] = useState<string>('我的 OneAPI 专属中转站');
+  const [newProvType, setNewProvType] = useState<ModelProvider['providerType']>('CUSTOM');
+  const [newProvBaseUrl, setNewProvBaseUrl] = useState<string>('https://api.your-relay.com/v1');
+  const [newProvKeys, setNewProvKeys] = useState<string>('sk-relay-key-001\nsk-relay-key-002');
+  const [newProvModels, setNewProvModels] = useState<string>(
+    'deepseek-r1, claude-3-7-sonnet-20250219, gpt-4o, gemini-2.5-pro'
+  );
+  const [newProvRpm, setNewProvRpm] = useState<number>(240);
+  const [newProvTpm, setNewProvTpm] = useState<number>(400000);
+  const [batchImportText, setBatchImportText] = useState<string>(
+    '主力NewAPI二号站 | https://api.newapi-node2.com/v1 | sk-node2-key8899 | claude-3-7-sonnet,deepseek-r1\n备用硅基三号池 | https://api.siliconflow.cn/v1 | sk-sf-pool3-7766 | deepseek-ai/DeepSeek-R1,Qwen/Qwen2.5-72B-Instruct\n海外OpenRouter备用 | https://openrouter.ai/api/v1 | sk-or-v1-backup99 | anthropic/claude-3.5-sonnet,google/gemini-2.5-pro'
+  );
+
+  // 右侧详情面板：新增单个 Key / 新增单个模型 ID / 编辑名称与地址
+  const [addingKeyInput, setAddingKeyInput] = useState<string>('');
+  const [addingModelInput, setAddingModelInput] = useState<string>('');
+  const [editingBaseUrl, setEditingBaseUrl] = useState<string>('');
+  const [editingName, setEditingName] = useState<string>('');
 
   // G13: 低额度提前自动切换阈值
   const [preemptiveSwitchThreshold, setPreemptiveSwitchThreshold] = useState<number>(15);
@@ -198,6 +361,13 @@ export const ModelHubView: React.FC<ModelHubViewProps> = ({ onNavigateTab }) => 
 
   const selectedProvider = providers.find((p) => p.id === selectedProviderId) || providers[0];
 
+  useEffect(() => {
+    if (selectedProvider) {
+      setEditingName(selectedProvider.name);
+      setEditingBaseUrl(selectedProvider.baseUrl);
+    }
+  }, [selectedProvider?.id]);
+
   const notify = (msg: string) => {
     setStatusBanner(msg);
     setTimeout(() => setStatusBanner(null), 4000);
@@ -209,6 +379,177 @@ export const ModelHubView: React.FC<ModelHubViewProps> = ({ onNavigateTab }) => 
       [`${selectedProvider.id}-${keyIdx}`]: !prev[`${selectedProvider.id}-${keyIdx}`],
     }));
   };
+
+  // 应用快速模板到新增弹窗
+  const handleApplyProviderTemplate = (tpl: (typeof CUSTOM_PROVIDER_TEMPLATES)[number]) => {
+    setNewProvName(tpl.name);
+    setNewProvType(tpl.providerType);
+    setNewProvBaseUrl(tpl.baseUrl);
+    setNewProvModels(tpl.models.join(', '));
+    setNewProvRpm(tpl.rpm);
+    setNewProvTpm(tpl.tpm);
+  };
+
+  // 创建新的自定义模型提供商
+  const handleCreateCustomProvider = async () => {
+    if (!newProvName.trim() || !newProvBaseUrl.trim()) {
+      notify('⚠️ 请填写提供商名称与 API Base URL');
+      return;
+    }
+    const keys = newProvKeys
+      .split(/[\n,，]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const models = newProvModels
+      .split(/[\n,，]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const created: ModelProvider = {
+      id: `prov-custom-${Date.now()}`,
+      name: newProvName.trim(),
+      providerType: newProvType,
+      baseUrl: newProvBaseUrl.trim(),
+      apiKeys: keys.length > 0 ? keys : ['sk-custom-key-default'],
+      activeKeyIndex: 0,
+      supportedModels: models.length > 0 ? models : ['deepseek-r1', 'gpt-4o'],
+      rpmLimit: Number(newProvRpm) || 120,
+      tpmLimit: Number(newProvTpm) || 200000,
+      isEnabled: true,
+      healthStatus: 'HEALTHY',
+      latencyMs: Math.floor(80 + Math.random() * 110),
+      lastCheckedAt: new Date().toISOString(),
+    };
+    await saveModelProvider(created);
+    setProviders((prev) => [created, ...prev]);
+    setSelectedProviderId(created.id);
+    setShowAddModal(false);
+    notify(`🎉 已成功添加自定义提供商「${created.name}」（含 ${created.apiKeys.length} 把 Key，${created.supportedModels.length} 个模型）`);
+  };
+
+  // 批量导入多个自定义提供商
+  const handleBatchImportProviders = async () => {
+    const lines = batchImportText
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith('#'));
+    if (lines.length === 0) return;
+
+    const imported: ModelProvider[] = [];
+    for (let i = 0; i < lines.length; i++) {
+      const parts = lines[i].split('|').map((s) => s.trim());
+      if (parts.length < 2) continue;
+      const [name, baseUrl, keysRaw, modelsRaw] = parts;
+      const keys = (keysRaw || 'sk-batch-imported-key')
+        .split(/[,，]+/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const models = (modelsRaw || 'deepseek-r1,claude-3-5-sonnet,gpt-4o')
+        .split(/[,，]+/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const item: ModelProvider = {
+        id: `prov-batch-${Date.now()}-${i}`,
+        name: name || `自定义中转站 #${i + 1}`,
+        providerType: 'CUSTOM',
+        baseUrl: baseUrl || 'https://api.openai.com/v1',
+        apiKeys: keys,
+        activeKeyIndex: 0,
+        supportedModels: models,
+        rpmLimit: 240,
+        tpmLimit: 400000,
+        isEnabled: true,
+        healthStatus: 'HEALTHY',
+        latencyMs: Math.floor(75 + Math.random() * 120),
+        lastCheckedAt: new Date().toISOString(),
+      };
+      await saveModelProvider(item);
+      imported.push(item);
+    }
+
+    if (imported.length > 0) {
+      setProviders((prev) => [...imported, ...prev]);
+      setSelectedProviderId(imported[0].id);
+      setShowBatchModal(false);
+      notify(`🚀 批量导入完成！一次性成功注册 ${imported.length} 个自定义模型提供商`);
+    }
+  };
+
+  // 更新当前选中提供商属性
+  const handleUpdateSelectedProvider = async (patch: Partial<ModelProvider>, message?: string) => {
+    if (!selectedProvider) return;
+    const updated: ModelProvider = { ...selectedProvider, ...patch };
+    await saveModelProvider(updated);
+    setProviders((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    if (message) notify(message);
+  };
+
+  // 克隆当前提供商
+  const handleCloneProvider = async (prov: ModelProvider) => {
+    const cloned: ModelProvider = {
+      ...prov,
+      id: `prov-clone-${Date.now()}`,
+      name: `${prov.name} (副本)`,
+      providerType: 'CUSTOM',
+      lastCheckedAt: new Date().toISOString(),
+    };
+    await saveModelProvider(cloned);
+    setProviders((prev) => [cloned, ...prev]);
+    setSelectedProviderId(cloned.id);
+    notify(`📋 已克隆创建新提供商「${cloned.name}」，可修改为备用账号或二号节点`);
+  };
+
+  // 删除自定义提供商
+  const handleDeleteProvider = async (prov: ModelProvider) => {
+    if (providers.length <= 1) {
+      notify('⚠️ 至少需要保留一个模型提供商');
+      return;
+    }
+    await deleteModelProvider(prov.id);
+    const remaining = providers.filter((p) => p.id !== prov.id);
+    setProviders(remaining);
+    if (selectedProviderId === prov.id && remaining[0]) {
+      setSelectedProviderId(remaining[0].id);
+    }
+    notify(`🗑️ 已移除提供商「${prov.name}」`);
+  };
+
+  // 一键将此提供商同步为全局主直连渠道
+  const handleSyncToGlobalDirect = (prov: ModelProvider) => {
+    const activeKey = prov.apiKeys[prov.activeKeyIndex] || prov.apiKeys[0] || '';
+    const primaryModel = prov.supportedModels[0] || 'deepseek-chat';
+    const endpoint = prov.baseUrl.endsWith('/chat/completions')
+      ? prov.baseUrl
+      : `${prov.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+    updateSettings({
+      useMock: false,
+      provider: prov.providerType === 'DEEPSEEK' ? 'deepseek' : prov.providerType === 'OLLAMA' ? 'ollama_local' : 'openai_custom',
+      apiEndpoint: endpoint,
+      apiKey: activeKey,
+      model: primaryModel,
+    });
+    notify(`⚡ 已将「${prov.name}」(${primaryModel}) 设为全局主直连推理渠道！`);
+  };
+
+  const filteredProviders = providers.filter((p) => {
+    if (providerFilter === 'CUSTOM' && p.providerType !== 'CUSTOM' && !p.id.startsWith('prov-custom') && !p.id.startsWith('prov-batch') && !p.id.startsWith('prov-clone')) {
+      return false;
+    }
+    if (providerFilter === 'OFFICIAL' && (p.providerType === 'CUSTOM' || p.providerType === 'OLLAMA')) {
+      return false;
+    }
+    if (providerFilter === 'LOCAL' && p.providerType !== 'OLLAMA') {
+      return false;
+    }
+    if (providerSearch.trim()) {
+      const q = providerSearch.toLowerCase();
+      return (
+        p.name.toLowerCase().includes(q) ||
+        p.baseUrl.toLowerCase().includes(q) ||
+        p.supportedModels.some((m) => m.toLowerCase().includes(q))
+      );
+    }
+    return true;
+  });
 
   // G15: 一键应用全局路由策略预设
   const handleApplyRoutingPreset = (presetType: 'QUALITY' | 'FRUGAL' | 'SPEED') => {
@@ -488,145 +829,487 @@ export const ModelHubView: React.FC<ModelHubViewProps> = ({ onNavigateTab }) => 
         {/* TAB 1: 模型供应池与 G13 多平台订阅月度额度水位线 */}
         {/* ========================================================================= */}
         {activeTab === 'PROVIDERS' && (
-          <div className="max-w-7xl mx-auto space-y-6">
-            {/* G13: 提前切换阈值全局守卫条 */}
+          <div className="max-w-7xl mx-auto space-y-5">
+            {/* G13: 提前切换阈值全局守卫条 + 新增/批量导入自定义提供商操作栏 */}
             <div className="p-4 rounded-xl bg-[var(--bg-surface)] border border-indigo-500/30 flex flex-wrap items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="text-xs font-bold text-indigo-400 flex items-center gap-2">
                   <BatteryCharging className="w-4 h-4" />
-                  <span>G13 多平台订阅余量守卫 & 低额度预防性自动切换阈值</span>
+                  <span>G13 多平台订阅余量守卫 & 无限自定义模型中转站矩阵</span>
                 </div>
                 <p className="text-[11px] text-[var(--text-muted)]">
-                  不等触发 429 报错！当任一订阅平台月度额度或免费赠金低于设定水位线时，自动将流量平滑切换至备选供应商池。
+                  支持挂载任意数量的 OneAPI / NewAPI 私有中转站、OpenRouter、火山方舟、阿里百炼、硅基流动及自建网关，单站支持多 Key 轮换与低余额提前自动切换。
                 </p>
               </div>
-              <div className="flex items-center gap-3 text-xs">
-                <span className="text-[var(--text-muted)]">提前切换水位线:</span>
-                <input
-                  type="range"
-                  min={5}
-                  max={40}
-                  step={5}
-                  value={preemptiveSwitchThreshold}
-                  onChange={(e) => setPreemptiveSwitchThreshold(parseInt(e.target.value))}
-                  className="w-32 accent-indigo-500"
-                />
-                <span className="font-mono font-bold text-amber-400">
-                  剩余 &lt; {preemptiveSwitchThreshold}% 自动切换
-                </span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* 左侧供应商卡片列表 (含额度进度条) */}
-              <div className="lg:col-span-5 space-y-3">
-                <div className="flex items-center justify-between pb-1">
-                  <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
-                    已绑定多平台订阅池 ({providers.length})
+              <div className="flex flex-wrap items-center gap-2.5 text-xs">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--bg-canvas)] border border-[var(--border-subtle)]">
+                  <span className="text-[var(--text-muted)]">提前切换水位线:</span>
+                  <input
+                    type="range"
+                    min={5}
+                    max={40}
+                    step={5}
+                    value={preemptiveSwitchThreshold}
+                    onChange={(e) => setPreemptiveSwitchThreshold(parseInt(e.target.value))}
+                    className="w-24 accent-indigo-500"
+                  />
+                  <span className="font-mono font-bold text-amber-400">
+                    &lt; {preemptiveSwitchThreshold}%
                   </span>
                 </div>
 
-                {providers.map((p) => {
-                  const isSelected = p.id === selectedProviderId;
-                  const subMeta = SUBSCRIPTION_QUOTA_META[p.id] || {
-                    planName: '自定义 API 订阅池',
-                    remainingPct: 80,
-                    quotaLabel: '$ 80.00 / $ 100.00',
-                    billingMode: '按量计费',
-                  };
-                  const isLowQuota = subMeta.remainingPct <= preemptiveSwitchThreshold;
-                  return (
-                    <div
-                      key={p.id}
-                      onClick={() => setSelectedProviderId(p.id)}
-                      className={`p-4 rounded-xl border transition-all cursor-pointer space-y-2.5 ${
-                        isSelected
-                          ? 'border-indigo-500/50 bg-indigo-500/5 ring-1 ring-indigo-500/20'
-                          : 'border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:border-[var(--border-medium)]'
-                      }`}
+                <button
+                  onClick={() => {
+                    setShowAddModal(!showAddModal);
+                    setShowBatchModal(false);
+                  }}
+                  className="px-3.5 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>新增自定义提供商</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowBatchModal(!showBatchModal);
+                    setShowAddModal(false);
+                  }}
+                  className="px-3 py-2 rounded-lg text-xs font-semibold bg-[var(--bg-canvas)] hover:bg-[var(--bg-surface)] text-[var(--text-main)] border border-[var(--border-subtle)] flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5 text-amber-400" />
+                  <span>批量导入多个中转站</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 新增单个自定义提供商抽屉面板 */}
+            {showAddModal && (
+              <div className="p-5 rounded-xl bg-[var(--bg-surface)] border-2 border-indigo-500/40 shadow-xl space-y-4 animate-in fade-in">
+                <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-indigo-400" />
+                      <span>新增自定义模型提供商 / OpenAI 兼容中转站</span>
+                    </h3>
+                    <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                      点击下方 10 大常用网关模板可一键填入默认地址与推荐模型，也可以完全自定义任意 Base URL。
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowAddModal(false)}
+                    className="p-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* 10 大主流中转站/平台一键模板 */}
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-semibold text-[var(--text-muted)]">
+                    ⚡ 一键套用主流自定义网关模板：
+                  </span>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                    {CUSTOM_PROVIDER_TEMPLATES.map((tpl, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleApplyProviderTemplate(tpl)}
+                        className="p-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-canvas)] hover:border-indigo-500/50 text-left transition-all cursor-pointer"
+                      >
+                        <div className="text-xs font-bold text-[var(--text-main)] truncate">
+                          {tpl.label}
+                        </div>
+                        <div className="text-[10px] text-[var(--text-muted)] truncate mt-0.5">
+                          {tpl.tag}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                  <div>
+                    <label className="block font-semibold text-[var(--text-main)] mb-1">
+                      提供商自定义名称
+                    </label>
+                    <input
+                      type="text"
+                      value={newProvName}
+                      onChange={(e) => setNewProvName(e.target.value)}
+                      placeholder="例如：我的 NewAPI 主力站 #1"
+                      className="w-full px-3 py-2 rounded-lg bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-[var(--text-main)]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-[var(--text-main)] mb-1">
+                      协议类型
+                    </label>
+                    <select
+                      value={newProvType}
+                      onChange={(e) =>
+                        setNewProvType(e.target.value as ModelProvider['providerType'])
+                      }
+                      className="w-full px-3 py-2 rounded-lg bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-[var(--text-main)]"
                     >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm text-[var(--text-main)]">
-                              {p.name}
+                      <option value="CUSTOM">CUSTOM (OpenAI 兼容中转/聚合网关)</option>
+                      <option value="DEEPSEEK">DEEPSEEK (DeepSeek 协议)</option>
+                      <option value="OPENAI">OPENAI (OpenAI 协议)</option>
+                      <option value="ANTHROPIC">ANTHROPIC (Claude 协议)</option>
+                      <option value="GEMINI">GEMINI (Google Gemini 协议)</option>
+                      <option value="SILICONFLOW">SILICONFLOW (硅基流动)</option>
+                      <option value="OLLAMA">OLLAMA (本地/局域网算力)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-[var(--text-main)] mb-1">
+                      接口端点 Base URL
+                    </label>
+                    <input
+                      type="text"
+                      value={newProvBaseUrl}
+                      onChange={(e) => setNewProvBaseUrl(e.target.value)}
+                      placeholder="https://api.your-relay.com/v1"
+                      className="w-full px-3 py-2 rounded-lg bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-[var(--text-main)] font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label className="block font-semibold text-[var(--text-main)] mb-1">
+                      API Key 轮换池（支持填入多个 Key，每行或逗号分隔一个）
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={newProvKeys}
+                      onChange={(e) => setNewProvKeys(e.target.value)}
+                      placeholder="sk-key-001&#10;sk-key-002"
+                      className="w-full px-3 py-2 rounded-lg bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-[var(--text-main)] font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-[var(--text-main)] mb-1">
+                      该渠道支持的自定义模型 ID 列表（逗号分隔）
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={newProvModels}
+                      onChange={(e) => setNewProvModels(e.target.value)}
+                      placeholder="deepseek-r1, claude-3-7-sonnet-20250219, gpt-4o"
+                      className="w-full px-3 py-2 rounded-lg bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-[var(--text-main)] font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border-subtle)]">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="px-4 py-1.5 rounded-lg text-xs border border-[var(--border-subtle)] text-[var(--text-muted)]"
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateCustomProvider}
+                    className="px-5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm cursor-pointer"
+                  >
+                    确认挂载到多模型矩阵
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 批量导入多个中转站抽屉面板 */}
+            {showBatchModal && (
+              <div className="p-5 rounded-xl bg-[var(--bg-surface)] border-2 border-amber-500/40 shadow-xl space-y-3 animate-in fade-in">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
+                      <Upload className="w-4 h-4 text-amber-400" />
+                      <span>批量导入多个自定义模型中转站</span>
+                    </h3>
+                    <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                      每行代表一个提供商，格式：<code>提供商名称 | BaseURL | Key1,Key2 | 模型1,模型2</code>
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowBatchModal(false)}
+                    className="p-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <textarea
+                  rows={4}
+                  value={batchImportText}
+                  onChange={(e) => setBatchImportText(e.target.value)}
+                  className="w-full p-3 rounded-lg bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-xs font-mono text-[var(--text-main)]"
+                />
+
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowBatchModal(false)}
+                    className="px-4 py-1.5 rounded-lg text-xs border border-[var(--border-subtle)] text-[var(--text-muted)]"
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBatchImportProviders}
+                    className="px-5 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white cursor-pointer"
+                  >
+                    一键批量注册全部渠道
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* 左侧供应商卡片列表 (含分类筛选、搜索、额度进度条) */}
+              <div className="lg:col-span-5 space-y-3">
+                {/* 分类筛选与搜索栏 */}
+                <div className="p-3 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
+                    {(
+                      [
+                        { id: 'ALL', label: `全部 (${providers.length})` },
+                        {
+                          id: 'CUSTOM',
+                          label: `自定义/中转 (${
+                            providers.filter(
+                              (p) =>
+                                p.providerType === 'CUSTOM' ||
+                                p.id.startsWith('prov-custom') ||
+                                p.id.startsWith('prov-batch') ||
+                                p.id.startsWith('prov-clone')
+                            ).length
+                          })`,
+                        },
+                        {
+                          id: 'OFFICIAL',
+                          label: `官方直连 (${
+                            providers.filter(
+                              (p) => p.providerType !== 'CUSTOM' && p.providerType !== 'OLLAMA'
+                            ).length
+                          })`,
+                        },
+                        {
+                          id: 'LOCAL',
+                          label: `本地算力 (${
+                            providers.filter((p) => p.providerType === 'OLLAMA').length
+                          })`,
+                        },
+                      ] as const
+                    ).map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setProviderFilter(tab.id)}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
+                          providerFilter === tab.id
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-[var(--bg-canvas)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={providerSearch}
+                      onChange={(e) => setProviderSearch(e.target.value)}
+                      placeholder="按名称、BaseURL 或模型名检索渠道..."
+                      className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-xs text-[var(--text-main)]"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2.5 max-h-[620px] overflow-y-auto pr-1">
+                  {filteredProviders.map((p) => {
+                    const isSelected = p.id === selectedProviderId;
+                    const subMeta = SUBSCRIPTION_QUOTA_META[p.id] || {
+                      planName: '自定义 OpenAI 兼容聚合池',
+                      remainingPct: 85,
+                      quotaLabel: '$ 85.00 / $ 100.00',
+                      billingMode: `支持 ${p.supportedModels.length} 款模型 · 多 Key 负载均衡`,
+                    };
+                    const isLowQuota = subMeta.remainingPct <= preemptiveSwitchThreshold;
+                    return (
+                      <div
+                        key={p.id}
+                        onClick={() => setSelectedProviderId(p.id)}
+                        className={`p-3.5 rounded-xl border transition-all cursor-pointer space-y-2 ${
+                          isSelected
+                            ? 'border-indigo-500/60 bg-indigo-500/5 ring-1 ring-indigo-500/20'
+                            : 'border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:border-[var(--border-medium)]'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-sm text-[var(--text-main)] truncate">
+                                {p.name}
+                              </span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-[var(--text-muted)]">
+                                {p.providerType}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-[var(--text-muted)] font-mono truncate mt-0.5">
+                              {p.baseUrl}
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" />
+                              {p.healthStatus}
                             </span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-[var(--text-muted)]">
-                              {p.providerType}
+                            <span className="text-[10px] text-[var(--text-muted)] font-mono">
+                              {p.latencyMs} ms
                             </span>
                           </div>
-                          <div className="text-[11px] text-indigo-300 mt-0.5">{subMeta.planName}</div>
                         </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                            <CheckCircle className="w-3 h-3" />
-                            {p.healthStatus}
-                          </span>
-                          <span className="text-[11px] text-[var(--text-muted)] font-mono">
-                            {p.latencyMs} ms
-                          </span>
-                        </div>
-                      </div>
 
-                      {/* G13 订阅额度进度条 */}
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="text-[var(--text-muted)]">
-                            剩余额度: <strong className="text-[var(--text-main)]">{subMeta.quotaLabel}</strong>
-                          </span>
-                          <span
-                            className={`font-mono font-bold ${
-                              isLowQuota ? 'text-amber-400' : 'text-emerald-400'
-                            }`}
-                          >
-                            {subMeta.remainingPct}%
-                          </span>
-                        </div>
-                        <div className="w-full h-1.5 rounded-full bg-[var(--bg-canvas)] overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${
-                              subMeta.remainingPct < 45 ? 'bg-amber-400' : 'bg-emerald-500'
-                            }`}
-                            style={{ width: `${subMeta.remainingPct}%` }}
-                          />
-                        </div>
-                        <div className="text-[10px] text-[var(--text-muted)] flex items-center justify-between pt-0.5">
-                          <span>{subMeta.billingMode}</span>
-                          <span>{p.apiKeys.length} Key 轮换池</span>
+                        {/* G13 订阅额度进度条 */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="text-[var(--text-muted)] truncate">
+                              额度: <strong className="text-[var(--text-main)]">{subMeta.quotaLabel}</strong>
+                            </span>
+                            <span
+                              className={`font-mono font-bold ${
+                                isLowQuota ? 'text-amber-400' : 'text-emerald-400'
+                              }`}
+                            >
+                              {subMeta.remainingPct}%
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 rounded-full bg-[var(--bg-canvas)] overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${
+                                subMeta.remainingPct < 45 ? 'bg-amber-400' : 'bg-emerald-500'
+                              }`}
+                              style={{ width: `${subMeta.remainingPct}%` }}
+                            />
+                          </div>
+                          <div className="text-[10px] text-[var(--text-muted)] flex items-center justify-between pt-0.5">
+                            <span className="truncate">{subMeta.billingMode}</span>
+                            <span className="shrink-0 font-mono">
+                              {p.apiKeys.length} Key · {p.supportedModels.length} 模型
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* 右侧选中的供应商详情与 Key 金库 */}
+              {/* 右侧选中的供应商详情与在线编辑金库 */}
               <div className="lg:col-span-7">
                 {selectedProvider && (
-                  <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl p-6 space-y-6">
-                    <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
+                  <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl p-6 space-y-5">
+                    <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--border-subtle)] pb-4">
                       <div>
-                        <h2 className="text-base font-bold text-[var(--text-main)]">
-                          {selectedProvider.name} 配置金库
-                        </h2>
-                        <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                          协议接入点: {selectedProvider.baseUrl}
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-base font-bold text-[var(--text-main)]">
+                            {selectedProvider.name}
+                          </h2>
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">
+                            {selectedProvider.providerType}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5 font-mono">
+                          Endpoint: {selectedProvider.baseUrl}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          onClick={() => handleSyncToGlobalDirect(selectedProvider)}
+                          className="px-3 py-1.5 text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 rounded-lg flex items-center gap-1 cursor-pointer"
+                          title="将此提供商同步为全局默认直连 API"
+                        >
+                          <Zap className="w-3.5 h-3.5" />
+                          设为全局主直连
+                        </button>
+                        <button
+                          onClick={() => handleCloneProvider(selectedProvider)}
+                          className="px-2.5 py-1.5 text-xs bg-[var(--bg-canvas)] border border-[var(--border-subtle)] rounded-lg hover:text-[var(--text-main)] text-[var(--text-muted)] flex items-center gap-1 cursor-pointer"
+                          title="克隆此渠道配置以快速创建二号站或小号池"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                          克隆渠道
+                        </button>
                         <button
                           onClick={() =>
-                            notify(`✅ 已对 ${selectedProvider.name} 执行心跳测速：平均响应 ${selectedProvider.latencyMs}ms`)
+                            notify(
+                              `✅ 已对 ${selectedProvider.name} 执行心跳测速：平均响应 ${selectedProvider.latencyMs}ms`
+                            )
                           }
-                          className="px-3 py-1.5 text-xs bg-[var(--bg-canvas)] border border-[var(--border-subtle)] rounded-lg hover:text-[var(--text-main)] text-[var(--text-muted)] flex items-center gap-1"
+                          className="px-2.5 py-1.5 text-xs bg-[var(--bg-canvas)] border border-[var(--border-subtle)] rounded-lg hover:text-[var(--text-main)] text-[var(--text-muted)] flex items-center gap-1 cursor-pointer"
                         >
                           <RefreshCw className="w-3.5 h-3.5" />
-                          探测延迟
+                          测速
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProvider(selectedProvider)}
+                          className="p-1.5 text-xs bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-400 hover:bg-rose-500/20 cursor-pointer"
+                          title="删除此提供商"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
 
-                    {/* 密钥轮换池 (Multi-Key Pool) */}
+                    {/* 在线修改名称与 Base URL */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 p-3.5 rounded-xl bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-xs">
+                      <div className="sm:col-span-4">
+                        <label className="block text-[11px] text-[var(--text-muted)] mb-1">
+                          渠道名称
+                        </label>
+                        <input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-main)]"
+                        />
+                      </div>
+                      <div className="sm:col-span-6">
+                        <label className="block text-[11px] text-[var(--text-muted)] mb-1">
+                          接口端点 (Base URL)
+                        </label>
+                        <input
+                          type="text"
+                          value={editingBaseUrl}
+                          onChange={(e) => setEditingBaseUrl(e.target.value)}
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-main)] font-mono"
+                        />
+                      </div>
+                      <div className="sm:col-span-2 flex items-end">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleUpdateSelectedProvider(
+                              {
+                                name: editingName.trim() || selectedProvider.name,
+                                baseUrl: editingBaseUrl.trim() || selectedProvider.baseUrl,
+                              },
+                              `💾 已保存「${editingName}」的名称与接入点地址`
+                            )
+                          }
+                          className="w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold cursor-pointer"
+                        >
+                          保存
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 密钥轮换池 (Multi-Key Pool) - 支持在线增删与切换主 Key */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-semibold text-[var(--text-main)] flex items-center gap-1.5">
@@ -634,7 +1317,7 @@ export const ModelHubView: React.FC<ModelHubViewProps> = ({ onNavigateTab }) => 
                           API 密钥负载轮换池 ({selectedProvider.apiKeys.length})
                         </label>
                         <span className="text-[11px] text-[var(--text-muted)]">
-                          单 Key 触碰 429 时将自动按权重顺延切向下一个有效凭据
+                          单 Key 触碰 429 时自动顺延切向池内下一个有效凭据
                         </span>
                       </div>
 
@@ -655,16 +1338,32 @@ export const ModelHubView: React.FC<ModelHubViewProps> = ({ onNavigateTab }) => 
                                 #{idx + 1}
                               </span>
                               <div className="flex-1 truncate">
-                                {isVisible ? k : `${k.slice(0, 8)}••••••••••••••••${k.slice(-4)}`}
+                                {isVisible
+                                  ? k
+                                  : `${k.slice(0, 7)}••••••••••••${k.slice(-4)}`}
                               </div>
-                              {isActive && (
-                                <span className="px-1.5 py-0.5 text-[10px] font-sans font-medium rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                  当前活跃
+                              {isActive ? (
+                                <span className="px-2 py-0.5 text-[10px] font-sans font-medium rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                  当前主用
                                 </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleUpdateSelectedProvider(
+                                      { activeKeyIndex: idx },
+                                      `🔑 已切换至第 #${idx + 1} 把密钥作为当前主凭据`
+                                    )
+                                  }
+                                  className="px-2 py-0.5 text-[10px] font-sans rounded bg-[var(--bg-surface)] border border-[var(--border-subtle)] hover:text-[var(--text-main)] cursor-pointer"
+                                >
+                                  设为主用
+                                </button>
                               )}
                               <button
                                 onClick={() => handleToggleKeyVisibility(idx)}
-                                className="p-1 hover:text-[var(--text-main)]"
+                                className="p-1 hover:text-[var(--text-main)] cursor-pointer"
+                                title="显示/隐藏密钥"
                               >
                                 {isVisible ? (
                                   <EyeOff className="w-3.5 h-3.5" />
@@ -672,26 +1371,131 @@ export const ModelHubView: React.FC<ModelHubViewProps> = ({ onNavigateTab }) => 
                                   <Eye className="w-3.5 h-3.5" />
                                 )}
                               </button>
+                              {selectedProvider.apiKeys.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const nextKeys = selectedProvider.apiKeys.filter(
+                                      (_, i) => i !== idx
+                                    );
+                                    handleUpdateSelectedProvider(
+                                      {
+                                        apiKeys: nextKeys,
+                                        activeKeyIndex: Math.min(
+                                          selectedProvider.activeKeyIndex,
+                                          nextKeys.length - 1
+                                        ),
+                                      },
+                                      '🗑️ 已从轮换池移除该 API Key'
+                                    );
+                                  }}
+                                  className="p-1 text-rose-400 hover:opacity-80 cursor-pointer"
+                                  title="移除此 Key"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
                           );
                         })}
                       </div>
+
+                      {/* 新增备用 API Key 输入栏 */}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={addingKeyInput}
+                          onChange={(e) => setAddingKeyInput(e.target.value)}
+                          placeholder="输入新的备用 API Key (例如 sk-xxxx) 加入轮换池..."
+                          className="flex-1 px-3 py-1.5 rounded-lg bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-xs font-mono text-[var(--text-main)]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!addingKeyInput.trim()) return;
+                            handleUpdateSelectedProvider(
+                              {
+                                apiKeys: [...selectedProvider.apiKeys, addingKeyInput.trim()],
+                              },
+                              '➕ 已向当前渠道追加新 API Key 凭据'
+                            );
+                            setAddingKeyInput('');
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-[var(--bg-canvas)] hover:bg-indigo-600 hover:text-white border border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-main)] transition-colors cursor-pointer"
+                        >
+                          + 追加 Key
+                        </button>
+                      </div>
                     </div>
 
-                    {/* 支持的模型清单 */}
-                    <div className="space-y-2 pt-2 border-t border-[var(--border-subtle)]">
-                      <label className="text-xs font-semibold text-[var(--text-main)]">
-                        支持部署模型矩阵
-                      </label>
+                    {/* 支持的模型清单 - 支持在线增删自定义模型 ID */}
+                    <div className="space-y-2.5 pt-3 border-t border-[var(--border-subtle)]">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-[var(--text-main)]">
+                          已挂载模型 ID 矩阵 ({selectedProvider.supportedModels.length})
+                        </label>
+                        <span className="text-[11px] text-[var(--text-muted)]">
+                          添加的模型将自动出现在「专精路由预设」与「比武竞技场」下拉列表中
+                        </span>
+                      </div>
                       <div className="flex flex-wrap gap-2">
                         {selectedProvider.supportedModels.map((m, idx) => (
                           <span
                             key={idx}
-                            className="px-2.5 py-1 text-xs rounded-lg bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-[var(--text-main)] font-mono"
+                            className="px-2.5 py-1 text-xs rounded-lg bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-[var(--text-main)] font-mono flex items-center gap-1.5"
                           >
-                            {m}
+                            <span>{m}</span>
+                            {selectedProvider.supportedModels.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const nextModels = selectedProvider.supportedModels.filter(
+                                    (_, i) => i !== idx
+                                  );
+                                  handleUpdateSelectedProvider(
+                                    { supportedModels: nextModels },
+                                    `已移除模型 ${m}`
+                                  );
+                                }}
+                                className="text-[var(--text-muted)] hover:text-rose-400 cursor-pointer"
+                                title="移除此模型"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
                           </span>
                         ))}
+                      </div>
+                      <div className="flex gap-2 pt-1">
+                        <input
+                          type="text"
+                          value={addingModelInput}
+                          onChange={(e) => setAddingModelInput(e.target.value)}
+                          placeholder="输入自定义模型 ID (如 claude-3-7-sonnet-thinking, deepseek-v3-0324)..."
+                          className="flex-1 px-3 py-1.5 rounded-lg bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-xs font-mono text-[var(--text-main)]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!addingModelInput.trim()) return;
+                            const newModels = addingModelInput
+                              .split(/[,，]+/)
+                              .map((s) => s.trim())
+                              .filter(Boolean);
+                            handleUpdateSelectedProvider(
+                              {
+                                supportedModels: Array.from(
+                                  new Set([...selectedProvider.supportedModels, ...newModels])
+                                ),
+                              },
+                              `➕ 已挂载新模型 ID: ${newModels.join(', ')}`
+                            );
+                            setAddingModelInput('');
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-[var(--bg-canvas)] hover:bg-indigo-600 hover:text-white border border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-main)] transition-colors cursor-pointer"
+                        >
+                          + 添加模型 ID
+                        </button>
                       </div>
                     </div>
 

@@ -159,6 +159,51 @@ export const defaultModelProviders: ModelProvider[] = [
     latencyMs: 38,
     lastCheckedAt: new Date().toISOString(),
   },
+  {
+    id: 'prov-custom-oneapi',
+    name: 'OneAPI / NewAPI 私有聚合中转站 #1',
+    providerType: 'CUSTOM',
+    baseUrl: 'https://api.oneapi-hub.example.com/v1',
+    apiKeys: ['sk-oneapi-relay-primary-9901', 'sk-oneapi-relay-backup-9902'],
+    activeKeyIndex: 0,
+    supportedModels: ['claude-3-7-sonnet-20250219', 'deepseek-r1', 'gpt-4o-2024-11-20', 'gemini-2.5-pro'],
+    rpmLimit: 240,
+    tpmLimit: 400000,
+    isEnabled: true,
+    healthStatus: 'HEALTHY',
+    latencyMs: 96,
+    lastCheckedAt: new Date().toISOString(),
+  },
+  {
+    id: 'prov-custom-openrouter',
+    name: 'OpenRouter 全球多模型路由池',
+    providerType: 'CUSTOM',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    apiKeys: ['sk-or-v1-889123456789abcdef'],
+    activeKeyIndex: 0,
+    supportedModels: ['anthropic/claude-3.7-sonnet', 'deepseek/deepseek-r1', 'google/gemini-2.5-pro-exp-03-25'],
+    rpmLimit: 200,
+    tpmLimit: 500000,
+    isEnabled: true,
+    healthStatus: 'HEALTHY',
+    latencyMs: 165,
+    lastCheckedAt: new Date().toISOString(),
+  },
+  {
+    id: 'prov-custom-volcark',
+    name: '火山方舟 / 满血 DeepSeek 专线中转',
+    providerType: 'CUSTOM',
+    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
+    apiKeys: ['ark-volc-ep-202503-deepseek-r1'],
+    activeKeyIndex: 0,
+    supportedModels: ['deepseek-r1-250120', 'deepseek-v3-250324', 'doubao-1.5-pro-256k'],
+    rpmLimit: 500,
+    tpmLimit: 800000,
+    isEnabled: true,
+    healthStatus: 'HEALTHY',
+    latencyMs: 82,
+    lastCheckedAt: new Date().toISOString(),
+  },
 ];
 
 export const defaultRoleAssignments: ModelRoleAssignment[] = [
@@ -224,11 +269,54 @@ export const defaultRoleAssignments: ModelRoleAssignment[] = [
   },
 ];
 
+const CUSTOM_PROVIDERS_STORAGE_KEY = 'inkverse_custom_providers_v1';
+
+function loadLocalCustomProviders(): ModelProvider[] {
+  try {
+    const raw = localStorage.getItem(CUSTOM_PROVIDERS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalCustomProviders(list: ModelProvider[]) {
+  try {
+    localStorage.setItem(CUSTOM_PROVIDERS_STORAGE_KEY, JSON.stringify(list));
+  } catch {
+    // ignore storage quota errors
+  }
+}
+
 export async function fetchModelProviders(): Promise<ModelProvider[]> {
-  return safeFetch<ModelProvider[]>('/models/providers', undefined, defaultModelProviders);
+  const remoteList = await safeFetch<ModelProvider[]>('/models/providers', undefined, defaultModelProviders);
+  const localCustom = loadLocalCustomProviders();
+  // Merge remoteList with default custom providers and localCustom by ID (localCustom overrides)
+  const map = new Map<string, ModelProvider>();
+  for (const p of defaultModelProviders) {
+    map.set(p.id, p);
+  }
+  for (const p of remoteList) {
+    map.set(p.id, p);
+  }
+  for (const p of localCustom) {
+    map.set(p.id, p);
+  }
+  return Array.from(map.values());
 }
 
 export async function saveModelProvider(provider: ModelProvider): Promise<ModelProvider> {
+  const localCustom = loadLocalCustomProviders();
+  const idx = localCustom.findIndex((p) => p.id === provider.id);
+  if (idx >= 0) {
+    localCustom[idx] = provider;
+  } else {
+    localCustom.push(provider);
+  }
+  saveLocalCustomProviders(localCustom);
+
   return safeFetch<ModelProvider>(
     '/models/providers',
     {
@@ -240,6 +328,9 @@ export async function saveModelProvider(provider: ModelProvider): Promise<ModelP
 }
 
 export async function deleteModelProvider(id: string): Promise<boolean> {
+  const localCustom = loadLocalCustomProviders().filter((p) => p.id !== id);
+  saveLocalCustomProviders(localCustom);
+
   return safeFetch<{ success: boolean }>(
     `/models/providers/${id}`,
     { method: 'DELETE' },
