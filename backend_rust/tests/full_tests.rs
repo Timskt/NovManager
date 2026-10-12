@@ -1783,3 +1783,97 @@ async fn test_swarm_multi_ai_debate_and_friendly_ux_endpoints() {
     assert!(!purify_val["purifiedText"].as_str().unwrap().is_empty());
     assert!(!purify_val["cliffhangerHooks"].as_array().unwrap().is_empty());
 }
+
+#[tokio::test]
+async fn test_multimodal_omni_source_context_endpoints() {
+    let app = setup_test_app();
+
+    // 1. POST /api/multimodal/scan-folder
+    let scan_req = json!({
+        "folderPath": ".",
+        "maxFiles": 10,
+        "includeExtensions": ["md", "json", "toml"]
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/multimodal/scan-folder")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&scan_req).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let scan_val: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert!(scan_val["filesCount"].as_u64().unwrap() >= 1);
+    assert!(!scan_val["synthesizedFolderPrompt"].as_str().unwrap().is_empty());
+
+    // 2. POST /api/multimodal/fetch-urls
+    let urls_req = json!({
+        "urls": [
+            "https://wiki.novmanager.local/lore/taixu-frost-cliff",
+            "https://forum.qidian.local/thread/reader-comments-ch14"
+        ]
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/multimodal/fetch-urls")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&urls_req).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let urls_val: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(urls_val["urlsCount"].as_u64().unwrap(), 2);
+
+    // 3. POST /api/multimodal/analyze-image
+    let img_req = json!({
+        "fileName": "hanbing_duanya_map.png",
+        "imageCategory": "WORLD_MAP",
+        "customPrompt": "寒冰断崖高潮对决"
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/multimodal/analyze-image")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&img_req).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let img_val: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert!(!img_val["spatialTopologyConstraint"].as_str().unwrap().is_empty());
+
+    // 4. GET /api/multimodal/blueprint-120
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/api/multimodal/blueprint-120")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let bp_val: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(bp_val["counts"]["total"].as_u64().unwrap(), 120);
+}
+

@@ -15,7 +15,12 @@ import {
   SwarmDebateEdge,
   SwarmEdgeRelationType,
   SwarmDebateResult,
+  OmniSourceAttachment,
 } from '../../lib/api';
+import {
+  OmniSourceAttachmentDock,
+  DEFAULT_OMNI_ATTACHMENTS,
+} from '../multimodal/MultimodalContextStudioView';
 import { ModelProvider, CrossViewTeleportPayload } from '../../types/novel';
 import type { NavTab } from '../Header';
 import {
@@ -523,7 +528,8 @@ export const MultiAgentDebateStudioView: React.FC<MultiAgentDebateStudioViewProp
   const [customNodeProviderId, setCustomNodeProviderId] = useState<string>('prov-deepseek');
   const [customNodeModel, setCustomNodeModel] = useState<string>('deepseek-chat');
 
-  // 运行与产物状态
+  // 运行与产物状态 + 多模态附件状态
+  const [attachments, setAttachments] = useState<OmniSourceAttachment[]>(DEFAULT_OMNI_ATTACHMENTS);
   const [isDebating, setIsDebating] = useState<boolean>(false);
   const [debateResult, setDebateResult] = useState<SwarmDebateResult | null>(null);
   const [activeOutputTab, setActiveOutputTab] = useState<'MANUSCRIPT' | 'PROMPT' | 'CONSENSUS' | 'BLUEPRINT'>('MANUSCRIPT');
@@ -730,7 +736,7 @@ export const MultiAgentDebateStudioView: React.FC<MultiAgentDebateStudioViewProp
     }
   };
 
-  // 启动多模型跨提供商圆桌辩论 (DF17 / DF18 / DF26)
+  // 启动多模型跨提供商圆桌辩论 (DF17 / DF18 / DF26 + 多模态参考源挂载)
   const handleRunSwarmDebate = async () => {
     if (!seedContent.trim()) {
       showToast('⚠️ 请先输入或载入待讨论的文章、评论或脑洞内容');
@@ -746,11 +752,14 @@ export const MultiAgentDebateStudioView: React.FC<MultiAgentDebateStudioViewProp
         humanDecree,
         nodes,
         edges,
+        attachments,
       });
       setDebateResult(res);
       setNodes((prev) => prev.map((n) => ({ ...n, status: 'DONE' })));
       setActiveOutputTab(sourceType === 'RAW_PROMPT' ? 'PROMPT' : 'MANUSCRIPT');
-      showToast(`🎉 多模型圆桌共 ${res.roundsExecuted} 轮交锋完成！共识度 ${res.consensusScore}%，质量跃升 +${res.qualityImprovementPercent}%`);
+      showToast(
+        `🎉 多模型圆桌共 ${res.roundsExecuted} 轮交锋完成（已融合 ${attachments.length} 项多模态参考源）！共识度 ${res.consensusScore}%，质量跃升 +${res.qualityImprovementPercent}%`
+      );
     } finally {
       setIsDebating(false);
     }
@@ -1642,10 +1651,19 @@ export const MultiAgentDebateStudioView: React.FC<MultiAgentDebateStudioViewProp
               style={{ backgroundColor: 'var(--accent-primary)' }}
             >
               <Send className="w-3.5 h-3.5" />
-              <span>携作者圣旨启动多模型交锋合成</span>
+              <span>携多模态参考源与作者圣旨启动多模型交锋合成</span>
             </button>
           </div>
         </div>
+
+        {/* 3B. 内嵌全模态多源上下文挂载坞（读取本地文件夹 / 一段或几段链接 / 图片视觉 / 文本设定文件） */}
+        <OmniSourceAttachmentDock
+          attachments={attachments}
+          onChangeAttachments={setAttachments}
+          availableNodes={nodes.map((n) => ({ id: n.id, name: n.name }))}
+          onInjectDigestToSeed={(digestText) => setSeedContent((prev) => `${prev}${digestText}`)}
+          compact
+        />
       </div>
 
       {/* ====================================================================

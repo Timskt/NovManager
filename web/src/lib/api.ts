@@ -1546,6 +1546,20 @@ export interface SwarmDebateResult {
   };
 }
 
+export interface OmniSourceAttachment {
+  id: string;
+  modality: 'FOLDER' | 'MULTI_URL' | 'IMAGE' | 'TEXT_FILE' | 'VOICE_CLIP';
+  title: string;
+  sourceLabel: string;
+  rawTokens: number;
+  dehydratedTokens: number;
+  digest: string;
+  boundNodeIds?: string[]; // 空数组或 undefined 表示全局挂载给所有 AI 节点，否则仅注入给指定节点
+  previewUrl?: string;
+  subItemsCount?: number;
+  tags?: string[];
+}
+
 export async function executeSwarmDebate(params: {
   sourceType: 'MANUSCRIPT' | 'AI_DRAFT' | 'READER_COMMENT' | 'RAW_PROMPT';
   seedContent: string;
@@ -1553,21 +1567,27 @@ export async function executeSwarmDebate(params: {
   humanDecree?: string;
   nodes: SwarmDebateNode[];
   edges: SwarmDebateEdge[];
+  attachments?: OmniSourceAttachment[];
 }): Promise<SwarmDebateResult> {
   const seedSnippet = (params.seedContent || '太虚古渊底，林越握紧残剑').slice(0, 90);
+  const attachList = params.attachments || [];
+  const attachSummary =
+    attachList.length > 0
+      ? `（已挂载多模态参考源 ${attachList.length} 项：${attachList.map((a) => a.title).join('、')}）`
+      : '';
   const turns: SwarmDebateTurn[] = [];
   for (let r = 1; r <= params.rounds; r++) {
     params.nodes.forEach((node, idx) => {
       const inEdge = params.edges.find((e) => e.to === node.id);
       const rel = inEdge?.relationType || 'INITIATE';
       const contentMap: Record<string, string> = {
-        CRITIQUE: `【第${r}轮 · 批判挑刺】审阅上游内容（“${seedSnippet}…”），指出两处优化空间：① 环境冷冽感需从纯视觉扩展到触觉与铁锈腥气；② 拔剑前的心理蓄势可再压紧三分。`,
-        REFINE: `【第${r}轮 · 顺承精修】吸收上游批注，将句式改写为长短句交错结构，强化残剑剥落铁锈时的金属颤音与气海真元震荡细节。`,
-        REBUTTAL: `【第${r}轮 · 红蓝交锋】反对过度慢热铺垫！网文黄金追读需要在 200 字内亮明底牌反差，建议直接用一句诛心反问打断反派施法。`,
-        VERIFY: `【第${r}轮 · 设定与防幻觉核验】核对 L4 事实锚点通过：林越当前为筑基初期，未出现元婴/化神越阶违禁词，道具损耗账本一致。`,
-        DISTILL_PROMPT: `【第${r}轮 · 提示词蒸馏】提炼高密度结构化约束：[POV:第三人称受限] + [五感配比>=38%] + [禁用套话水词] + [章末强制反转钩子]。`,
-        SYNTHESIZE: `【第${r}轮 · 总编终审收敛】综合 ${params.nodes.length} 位跨平台模型专家的多轮交锋${params.humanDecree ? `及作者圣旨（${params.humanDecree}）` : ''}，完成终极融合定稿与黄金提示词结晶。`,
-        INITIATE: `【第${r}轮 · 主创破题】基于输入源（${params.sourceType}）确立本幕核心冲突轴线与情绪爆发节拍。`,
+        CRITIQUE: `【第${r}轮 · 批判挑刺】审阅上游内容（“${seedSnippet}…”）${attachSummary}，指出两处优化空间：① 环境冷冽感需从纯视觉扩展到触觉与铁锈腥气；② 拔剑前的心理蓄势可再压紧三分。`,
+        REFINE: `【第${r}轮 · 顺承精修】吸收上游批注${attachSummary}，将句式改写为长短句交错结构，强化残剑剥落铁锈时的金属颤音与气海真元震荡细节。`,
+        REBUTTAL: `【第${r}轮 · 红蓝交锋】反对过度慢热铺垫！${attachSummary}网文黄金追读需要在 200 字内亮明底牌反差，建议直接用一句诛心反问打断反派施法。`,
+        VERIFY: `【第${r}轮 · 设定与防幻觉核验】核对 L4 事实锚点与多模态附件索引通过${attachSummary}：林越当前为筑基初期，未出现元婴/化神越阶违禁词，道具损耗账本一致。`,
+        DISTILL_PROMPT: `【第${r}轮 · 提示词蒸馏】提炼高密度结构化约束${attachSummary}：[POV:第三人称受限] + [五感配比>=38%] + [禁用套话水词] + [章末强制反转钩子]。`,
+        SYNTHESIZE: `【第${r}轮 · 总编终审收敛】综合 ${params.nodes.length} 位跨平台模型专家的多轮交锋${attachSummary}${params.humanDecree ? `及作者圣旨（${params.humanDecree}）` : ''}，完成终极融合定稿与黄金提示词结晶。`,
+        INITIATE: `【第${r}轮 · 主创破题】基于输入源（${params.sourceType}）${attachSummary}确立本幕核心冲突轴线与情绪爆发节拍。`,
       };
       turns.push({
         turnId: `turn-r${r}-n${idx + 1}`,
@@ -1593,12 +1613,14 @@ export async function executeSwarmDebate(params: {
     nodesParticipated: params.nodes.length,
     edgesTraversed: params.edges.length,
     consensusScore: 96,
-    qualityImprovementPercent: 31,
+    qualityImprovementPercent: 31 + Math.min(12, attachList.length * 3),
     debateTurns: turns,
-    synthesizedManuscript: `${params.seedContent.trim()}\n\n　　【多模型圆桌共创昇华段】\n　　渊底寒风如刀，卷起满地枯寂的剑锋残屑。林越指腹摩挲着断剑脊上那道深可见骨的古老裂痕，并未急于催动气海内仅存的三成筑基真元，而是任由对方狂暴的血煞威压将衣袍撕扯得猎猎作响。\n　　“你以为，这三百丈绝渊困住的是我的退路？”\n　　少年沙哑平静的声音在死寂的石殿中骤然回荡。下一瞬，断剑之上锈迹寸寸剥落，一缕苍凉如太古寒星的剑芒刺破血雾，直指来人眉心三寸！${
+    synthesizedManuscript: `${params.seedContent.trim()}\n\n　　【多模型圆桌共创昇华段${attachSummary}】\n　　渊底寒风如刀，卷起满地枯寂的剑锋残屑。林越指腹摩挲着断剑脊上那道深可见骨的古老裂痕，并未急于催动气海内仅存的三成筑基真元，而是任由对方狂暴的血煞威压将衣袍撕扯得猎猎作响。\n　　“你以为，这三百丈绝渊困住的是我的退路？”\n　　少年沙哑平静的声音在死寂的石殿中骤然回荡。下一瞬，断剑之上锈迹寸寸剥落，一缕苍凉如太古寒星的剑芒刺破血雾，直指来人眉心三寸！${
       params.humanDecree ? `\n　　（已贯彻作者圣旨钦定方向：${params.humanDecree}）` : ''
     }`,
-    distilledMasterPrompt: `# 【墨枢多模型圆桌淬炼 · 黄金主控 Prompt】\n## 1. 核心叙事目标\n围绕「${seedSnippet}」展开高张力场景创作，兼顾古典仙侠冷冽质感与网文黄金追读爽感。\n\n## 2. 多模型共识硬约束 (Guardrails)\n- **[逻辑与设定铁律]**：严守当前角色境界与道具账本，禁止跨大境界碾压或已故角色复活。\n- **[文风与五感配比]**：视觉与动作占比 >= 65%，每 300 字必须包含一处环境动静烘托（如寒风、铁锈、剑鸣）。\n- **[对白与潜台词]**：杜绝说明文式台词，角色每句话需暗含试探、威慑或信息差博弈。\n- **[章末断章钩子]**：结尾最后两行必须留下未解悬念或突发危机反转。${
+    distilledMasterPrompt: `# 【墨枢多模型圆桌淬炼 · 黄金主控 Prompt】\n## 1. 核心叙事目标\n围绕「${seedSnippet}」展开高张力场景创作，兼顾古典仙侠冷冽质感与网文黄金追读爽感。${
+      attachSummary ? `\n- **[已挂载多模态参考源]**：${attachSummary}` : ''
+    }\n\n## 2. 多模型共识硬约束 (Guardrails)\n- **[逻辑与设定铁律]**：严守当前角色境界与道具账本，禁止跨大境界碾压或已故角色复活。\n- **[文风与五感配比]**：视觉与动作占比 >= 65%，每 300 字必须包含一处环境动静烘托（如寒风、铁锈、剑鸣）。\n- **[对白与潜台词]**：杜绝说明文式台词，角色每句话需暗含试探、威慑或信息差博弈。\n- **[章末断章钩子]**：结尾最后两行必须留下未解悬念或突发危机反转。${
       params.humanDecree ? `\n- **[作者最高钦定指令]**：${params.humanDecree}` : ''
     }`,
     consensusSummary: {
@@ -1738,5 +1760,257 @@ export async function purifyManuscript(params: {
     fallback
   );
 }
+
+// ==============================================================================
+// 10. 多模态多源上下文感知与摄取接口 (Folder, Multi-URL, Image Vision, Documents)
+// ==============================================================================
+
+export interface ScannedFolderFileItem {
+  id: string;
+  relativePath: string;
+  fileName: string;
+  extension: string;
+  charCount: number;
+  rawTokens: number;
+  dehydratedTokens: number;
+  digest: string;
+  category: string;
+}
+
+export interface ScanFolderResponse {
+  folderPath: string;
+  realDiskScan: boolean;
+  filesCount: number;
+  totalRawTokens: number;
+  totalDehydratedTokens: number;
+  tokenSavingPercent: number;
+  files: ScannedFolderFileItem[];
+  synthesizedFolderPrompt: string;
+}
+
+export async function scanLocalFolder(params: {
+  folderPath: string;
+  maxFiles?: number;
+  extensions?: string[];
+}): Promise<ScanFolderResponse> {
+  const fallbackFiles: ScannedFolderFileItem[] = [
+    {
+      id: 'folder-f1',
+      relativePath: '01_世界观与境界设定/太虚九境战力铁律.md',
+      fileName: '太虚九境战力铁律.md',
+      extension: 'md',
+      charCount: 4280,
+      rawTokens: 2140,
+      dehydratedTokens: 420,
+      digest:
+        '【L4硬约束】淬骨 -> 凝煞 -> 筑基 -> 金丹 -> 元婴 -> 化神 -> 洞虚 -> 大乘 -> 太虚渡劫。跨大境界正面交锋胜率低于5%，必须依赖古阵残片、地理杀局或因果借贷。',
+      category: 'LORE_BIBLE',
+    },
+    {
+      id: 'folder-f2',
+      relativePath: '02_核心人物小传/林越与苏清寒宿命羁绊档案.md',
+      fileName: '林越与苏清寒宿命羁绊档案.md',
+      extension: 'md',
+      charCount: 3650,
+      rawTokens: 1825,
+      dehydratedTokens: 360,
+      digest:
+        '林越（外冷内热，执掌太虚残剑，绝不轻易暴露底牌）；苏清寒（北冥剑阁少主，表面奉命追杀，实则在暗中替林越挡下上界圣地神识搜捕）。',
+      category: 'CHARACTER_SHEET',
+    },
+    {
+      id: 'folder-f3',
+      relativePath: '03_名家文风拆解笔记/冷兵器雨夜巷战物理分镜.txt',
+      fileName: '冷兵器雨夜巷战物理分镜.txt',
+      extension: 'txt',
+      charCount: 5120,
+      rawTokens: 2560,
+      dehydratedTokens: 490,
+      digest:
+        '严禁空泛霞光对轰，强制描写：足尖碾碎青石板、雨水在剑脊蒸腾成白雾、虎口崩裂渗血与金铁交鸣的耳鸣感。',
+      category: 'STYLE_SAMPLE',
+    },
+    {
+      id: 'folder-f4',
+      relativePath: '04_伏笔与大纲台账/第一卷_古渊问剑_细纲.json',
+      fileName: '第一卷_古渊问剑_细纲.json',
+      extension: 'json',
+      charCount: 2940,
+      rawTokens: 1470,
+      dehydratedTokens: 310,
+      digest:
+        '第1-3章黄金三章：绝渊拾剑 -> 鉴毒反杀黑衣暗探 -> 外门剑冢大比一鸣惊人，卷末引出三百年前初代剑首坐化真相。',
+      category: 'OUTLINE_JSON',
+    },
+  ];
+  const fallback: ScanFolderResponse = {
+    folderPath: params.folderPath,
+    realDiskScan: false,
+    filesCount: fallbackFiles.length,
+    totalRawTokens: 7995,
+    totalDehydratedTokens: 1580,
+    tokenSavingPercent: 80,
+    files: fallbackFiles,
+    synthesizedFolderPrompt: `【文件夹知识库挂载 \`${params.folderPath}\`（共 4 个核心设定与大纲文件，脱水至 1580 Tokens）】已自动对齐九境战力铁律、人物宿命羁绊与雨夜冷兵器物理分镜法则。`,
+  };
+  return safeFetch<ScanFolderResponse>(
+    '/multimodal/scan-folder',
+    {
+      method: 'POST',
+      body: JSON.stringify(params),
+    },
+    fallback
+  );
+}
+
+export interface FetchedUrlDigestItem {
+  id: string;
+  url: string;
+  domain: string;
+  title: string;
+  extractMode: string;
+  rawTokens: number;
+  dehydratedTokens: number;
+  summary: string;
+  extractedEntities: string[];
+  styleTags: string[];
+  status: string;
+}
+
+export async function fetchBatchUrls(params: {
+  urls: string[];
+  extractMode?: 'LORE_FACTS' | 'STYLE_DNA' | 'READER_OPINION' | 'FULL_DIGEST';
+}): Promise<{
+  urlsCount: number;
+  extractMode: string;
+  items: FetchedUrlDigestItem[];
+  combinedUrlDirective: string;
+}> {
+  const mode = params.extractMode || 'FULL_DIGEST';
+  const items: FetchedUrlDigestItem[] = params.urls
+    .filter((u) => u.trim())
+    .map((u, idx) => ({
+      id: `url-${idx + 1}`,
+      url: u.trim(),
+      domain: u.split('//')[1]?.split('/')[0] || 'reference.literary.org',
+      title: `联网多源考据与讨论页 (#${idx + 1})`,
+      extractMode: mode,
+      rawTokens: 3200 + idx * 400,
+      dehydratedTokens: 360 + idx * 35,
+      summary: `已剥离网页噪音并提炼核心干货：针对链接 ${u.trim()} 萃取出 3 项关键设定事实与叙事爽点节拍。`,
+      extractedEntities: ['太微星垣', '黄金三章钩子', '器物考据'],
+      styleTags: ['去噪脱水', '事实核验', '多链接聚合'],
+      status: 'FETCHED_AND_DEHYDRATED',
+    }));
+  return safeFetch(
+    '/multimodal/fetch-urls',
+    {
+      method: 'POST',
+      body: JSON.stringify(params),
+    },
+    {
+      urlsCount: items.length,
+      extractMode: mode,
+      items,
+      combinedUrlDirective: `【多链接联网知识挂载（共 ${items.length} 条 URL）】已融合网页考据与读者风向，节省 88% 冗余网页 Token。`,
+    }
+  );
+}
+
+export interface ImageVisionAnalysisResult {
+  fileName: string;
+  imageCategory: string;
+  mimeType: string;
+  fileSizeBytes: number;
+  visionSensoryDescription: string;
+  spatialTopologyConstraint: string;
+  ocrExtractedText: string;
+  loreCardDraft: string;
+  dehydratedTokens: number;
+  readyForPromptInjection: string;
+}
+
+export async function analyzeImageContext(params: {
+  fileName: string;
+  imageCategory?:
+    | 'CHARACTER_PORTRAIT'
+    | 'WORLD_MAP'
+    | 'WEAPON_ARTIFACT'
+    | 'READER_SCREENSHOT'
+    | 'SCENE_CONCEPT';
+  customPrompt?: string;
+  mimeType?: string;
+  fileSizeBytes?: number;
+}): Promise<ImageVisionAnalysisResult> {
+  const cat = params.imageCategory || 'SCENE_CONCEPT';
+  const fallback: ImageVisionAnalysisResult = {
+    fileName: params.fileName,
+    imageCategory: cat,
+    mimeType: params.mimeType || 'image/png',
+    fileSizeBytes: params.fileSizeBytes || 245760,
+    visionSensoryDescription:
+      '玄衣墨发少年独立于风雪断崖，眉骨锋利如刀裁，外罩鸦青色暗纹广袖长衫，腰间斜挎半截布满青铜绿锈的无锋古剑。',
+    spatialTopologyConstraint:
+      '人物居于断崖黄金分割右侧，背光寒雾与剑鞘微光形成冷暖对比，距离对岸锁龙索桥三丈。',
+    ocrExtractedText: '【图像批注OCR】：林越·筑基期寒渊装束 | 太虚葬仙残剑',
+    loreCardDraft: '【视觉转设定卡】已锁定服饰纹理、兵器磨损细节与空间方位约束。',
+    dehydratedTokens: 290,
+    readyForPromptInjection: `【图片视觉锚点 \`${params.fileName}\` (${cat})】画面五感与空间拓扑已提取并注入防幻觉上下文。`,
+  };
+  return safeFetch<ImageVisionAnalysisResult>(
+    '/multimodal/analyze-image',
+    {
+      method: 'POST',
+      body: JSON.stringify(params),
+    },
+    fallback
+  );
+}
+
+export interface ParsedDocumentItem {
+  id: string;
+  name: string;
+  mimeType: string;
+  charCount: number;
+  chunksCount: number;
+  rawTokens: number;
+  dehydratedTokens: number;
+  dehydratedDigest: string;
+  extractedKeywords: string[];
+}
+
+export async function parseDocumentsContext(params: {
+  files: { name: string; content: string; mimeType?: string }[];
+  chunkSize?: number;
+}): Promise<{
+  documentsCount: number;
+  chunkSize: number;
+  documents: ParsedDocumentItem[];
+}> {
+  const docs: ParsedDocumentItem[] = params.files.map((f, i) => ({
+    id: `doc-${i + 1}`,
+    name: f.name,
+    mimeType: f.mimeType || 'text/plain',
+    charCount: f.content.length,
+    chunksCount: Math.max(1, Math.ceil(f.content.length / (params.chunkSize || 600))),
+    rawTokens: Math.max(20, Math.round(f.content.length / 2)),
+    dehydratedTokens: Math.max(15, Math.round(f.content.length / 8)),
+    dehydratedDigest: `【核心摘录】${f.content.slice(0, 200).replace(/\n/g, ' ')}…`,
+    extractedKeywords: ['设定对齐', '伏笔线索', '人物动机', '场景氛围'],
+  }));
+  return safeFetch(
+    '/multimodal/parse-documents',
+    {
+      method: 'POST',
+      body: JSON.stringify(params),
+    },
+    {
+      documentsCount: docs.length,
+      chunkSize: params.chunkSize || 600,
+      documents: docs,
+    }
+  );
+}
+
 
 

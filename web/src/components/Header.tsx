@@ -44,6 +44,7 @@ import {
   ShieldCheck,
   Network,
   Keyboard,
+  FolderOpen,
 } from 'lucide-react';
 
 export type NavTab =
@@ -51,6 +52,7 @@ export type NavTab =
   | 'ARCHITECT'
   | 'STUDIO'
   | 'AI_COUNCIL'
+  | 'OMNI_CONTEXT'
   | 'AUTOPILOT'
   | 'SPARK_HUB'
   | 'SKILL_VAULT'
@@ -100,7 +102,7 @@ export const DOMAIN_GROUPS: DomainGroup[] = [
     key: 'STUDIO_DOMAIN',
     title: '创制工坊',
     icon: '✍️',
-    description: '核心文字执笔、多模型圆桌辩论、无人巡航码字、灵光听劝与分镜架构',
+    description: '核心文字执笔、多模型圆桌辩论、全模态多源上下文、无人巡航码字、灵光听劝与分镜架构',
     items: [
       {
         id: 'STUDIO',
@@ -115,6 +117,13 @@ export const DOMAIN_GROUPS: DomainGroup[] = [
         subtitle: '跨提供商AI节点增删改 · 自由连线交锋 · 终稿/提示词合成',
         icon: <Network className="w-4 h-4 text-indigo-400" />,
         badge: '多AI圆桌',
+      },
+      {
+        id: 'OMNI_CONTEXT',
+        title: '全模态多源上下文中枢',
+        subtitle: '读取本地文件夹 · 多段链接抓取 · 图片视觉锁定 · 文档切片挂载',
+        icon: <FolderOpen className="w-4 h-4 text-amber-400" />,
+        badge: '120项全模态',
       },
       {
         id: 'AUTOPILOT',

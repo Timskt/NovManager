@@ -48,10 +48,11 @@ import { CentralSkillVaultView } from './components/skills/CentralSkillVaultView
 import { FloatingSparkCapsule } from './components/sparks/FloatingSparkCapsule';
 import { MemoryTokenAntiHallucinationView } from './components/memory/MemoryTokenAntiHallucinationView';
 import { MultiAgentDebateStudioView } from './components/swarm/MultiAgentDebateStudioView';
+import { MultimodalContextStudioView } from './components/multimodal/MultimodalContextStudioView';
 import { FriendlyInteractionHubModal } from './components/common/FriendlyInteractionHub';
 
 const ALL_VALID_TABS: Set<string> = new Set(
-  DOMAIN_GROUPS.flatMap((g) => g.items.map((i) => i.id)).concat(['OUTLINES', 'AI_COUNCIL'])
+  DOMAIN_GROUPS.flatMap((g) => g.items.map((i) => i.id)).concat(['OUTLINES', 'AI_COUNCIL', 'OMNI_CONTEXT'])
 );
 
 function parseTabFromHash(): NavTab {
@@ -70,6 +71,7 @@ function formatTabToHash(tab: NavTab): string {
 const DEFAULT_PINNED_TABS: NavTab[] = [
   'STUDIO',
   'AI_COUNCIL',
+  'OMNI_CONTEXT',
   'AUTOPILOT',
   'SPARK_HUB',
   'SKILL_VAULT',
@@ -302,6 +304,9 @@ const AppContent: React.FC = () => {
         {activeTab === 'STUDIO' && <StudioView onNavigateTab={navigateToTab} />}
         {activeTab === 'AI_COUNCIL' && (
           <MultiAgentDebateStudioView onNavigateTab={navigateToTab} />
+        )}
+        {activeTab === 'OMNI_CONTEXT' && (
+          <MultimodalContextStudioView onNavigateTab={navigateToTab} />
         )}
         {activeTab === 'AUTOPILOT' && <AutopilotCockpitView onNavigateTab={navigateToTab} />}
         {activeTab === 'SPARK_HUB' && <SparkAndReaderHubView onNavigateTab={navigateToTab} />}
