@@ -386,9 +386,12 @@ const AppContent: React.FC = () => {
     ? getNavItemMeta(historyStack[historyIndex + 1]).item?.title
     : undefined;
 
+  const isThreePaneStudio =
+    activeTab === 'STUDIO' || activeTab === 'OUTLINES' || activeTab === 'CANVAS';
+
   return (
     <div
-      className="min-h-screen flex flex-col selection:bg-amber-500/25 transition-colors"
+      className="h-screen w-screen overflow-hidden flex flex-col selection:bg-amber-500/25 transition-colors"
       style={{
         backgroundColor: 'var(--bg-canvas)',
         color: 'var(--text-main)',
@@ -424,7 +427,13 @@ const AppContent: React.FC = () => {
         onGoForward={handleGoForward}
       />
 
-      <div className="flex-1 flex overflow-hidden pb-16 lg:pb-0">
+      <div
+        className={`flex-1 min-h-0 flex pb-16 lg:pb-0 ${
+          isThreePaneStudio
+            ? 'overflow-hidden'
+            : 'overflow-y-auto overscroll-contain'
+        }`}
+      >
         <Suspense fallback={<ViewLoadingFallback />}>
           {activeTab === 'LIBRARY' && <LibraryView onNavigateTab={navigateToTab} />}
           {activeTab === 'ARCHITECT' && <ArchitectView onNavigateTab={navigateToTab} />}

@@ -182,15 +182,14 @@ export const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({
   return (
     <>
       <div
-        className="h-10 border-b flex items-center justify-between px-3.5 lg:px-5 gap-2.5 select-none shrink-0 z-30 transition-colors"
+        className="h-9 border-b flex items-center justify-between px-3 lg:px-4 gap-2 select-none shrink-0 z-30 transition-colors"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-subtle)',
         }}
       >
-        {/* Left: History Back/Forward + Interactive Contextual Breadcrumb + Chapter Switcher */}
+        {/* Left: History Back/Forward + Teleport Return Pill */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Back / Forward Navigation */}
           <div
             className="flex items-center rounded-lg border p-0.5"
             style={{
@@ -206,7 +205,7 @@ export const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({
                   ? `后退至：${previousTabTitle || '上一页'} (Alt+←)`
                   : '暂无可后退的历史视图'
               }
-              className="p-1 rounded transition-colors disabled:opacity-30 hover:bg-indigo-500/10"
+              className="p-0.5 rounded transition-colors disabled:opacity-30 hover:bg-indigo-500/10 cursor-pointer"
               style={{ color: 'var(--text-main)' }}
             >
               <ArrowLeft className="w-3.5 h-3.5" />
@@ -219,14 +218,14 @@ export const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({
                   ? `前进至：${nextTabTitle || '下一页'} (Alt+→)`
                   : '暂无可前进的历史视图'
               }
-              className="p-1 rounded transition-colors disabled:opacity-30 hover:bg-indigo-500/10"
+              className="p-0.5 rounded transition-colors disabled:opacity-30 hover:bg-indigo-500/10 cursor-pointer"
               style={{ color: 'var(--text-main)' }}
             >
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Stateful Cross-View Teleport Return Pill (F22 / A22) */}
+          {/* Stateful Cross-View Teleport Return Pill */}
           {teleportContext?.sourceTab && teleportContext.sourceTab !== activeTab && (
             <button
               onClick={() => {
@@ -234,253 +233,20 @@ export const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({
                 onClearTeleportContext?.();
                 onSelectTab(target);
               }}
-              className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-indigo-500/15 text-indigo-400 hover:bg-indigo-500/25 border border-indigo-500/30 flex items-center gap-1 transition-colors whitespace-nowrap"
+              className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-indigo-500/15 text-indigo-400 hover:bg-indigo-500/25 border border-indigo-500/30 flex items-center gap-1 transition-colors whitespace-nowrap cursor-pointer"
               title="一键返回发起跨页跳转的源页面与焦点上下文"
             >
               <CornerUpLeft className="w-3 h-3" />
-              <span className="truncate max-w-[110px]">返回：{teleportContext.sourceTitle || teleportContext.sourceTab}</span>
-            </button>
-          )}
-
-          {/* Interactive Domain & View Breadcrumb (F24 / A24) */}
-          <div className="relative" ref={domainRef}>
-            <button
-              onClick={() => setDomainMenuOpen((prev) => !prev)}
-              className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-colors hover:bg-indigo-500/10 border border-transparent hover:border-indigo-500/20 whitespace-nowrap"
-              style={{ color: 'var(--text-muted)' }}
-              title="点击展开 31 模块全站瞬移矩阵"
-            >
-              <span>{activeDomain?.icon || '🧭'}</span>
-              <span className="hidden xl:inline">{activeDomain?.title || '工作区'}</span>
-              <ChevronRight className="w-3 h-3 opacity-50 hidden xl:inline" />
-              <span className="font-bold flex items-center gap-1" style={{ color: 'var(--text-main)' }}>
-                {activeItem?.icon}
-                <span>{activeItem?.shortTitle || activeItem?.title || activeTab}</span>
+              <span className="truncate max-w-[110px]">
+                返回：{teleportContext.sourceTitle || teleportContext.sourceTab}
               </span>
-              <ChevronDown className="w-3 h-3 opacity-60" />
             </button>
-
-            {domainMenuOpen && (
-              <div
-                className="absolute left-0 top-full mt-1.5 w-72 rounded-xl border shadow-2xl p-2 z-50 max-h-[75vh] overflow-y-auto"
-                style={{
-                  backgroundColor: 'var(--bg-surface)',
-                  borderColor: 'var(--border-subtle)',
-                }}
-              >
-                <div
-                  className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider border-b mb-1.5"
-                  style={{ color: 'var(--text-muted)', borderColor: 'var(--border-subtle)' }}
-                >
-                  全站模块一跳直达 ({DOMAIN_GROUPS.reduce((acc, g) => acc + g.items.length, 0)} 个工作台)
-                </div>
-                {DOMAIN_GROUPS.map((group) => (
-                  <div key={group.key} className="mb-2 last:mb-0">
-                    <div
-                      className="px-2 py-1 text-[11px] font-bold flex items-center gap-1.5"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      <span>{group.icon}</span>
-                      <span>{group.title}</span>
-                    </div>
-                    <div className="grid grid-cols-1 gap-0.5">
-                      {group.items.map((item) => {
-                        const isCurrent = item.id === activeTab;
-                        return (
-                          <button
-                            key={item.id}
-                            onClick={() => {
-                              onSelectTab(item.id);
-                              setDomainMenuOpen(false);
-                            }}
-                            className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${
-                              isCurrent
-                                ? 'bg-indigo-600 text-white font-semibold'
-                                : 'hover:bg-indigo-500/10'
-                            }`}
-                            style={!isCurrent ? { color: 'var(--text-main)' } : undefined}
-                          >
-                            <span className="flex items-center gap-2 truncate">
-                              {item.icon}
-                              <span className="truncate">{item.title}</span>
-                            </span>
-                            {item.badge && (
-                              <span
-                                className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                  isCurrent
-                                    ? 'bg-white/20 text-white'
-                                    : 'bg-indigo-500/10 text-indigo-400'
-                                }`}
-                              >
-                                {item.badge}
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Active Chapter & Scene Quick Switcher + PiP Companion Trigger */}
-          {activeChapter && (
-            <div className="relative hidden lg:block" ref={chapterRef}>
-              <div className="flex items-center gap-1">
-                <ChevronRight className="w-3 h-3 opacity-40" style={{ color: 'var(--text-muted)' }} />
-                <button
-                  onClick={() => setChapterMenuOpen((prev) => !prev)}
-                  className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs transition-colors hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30"
-                  style={{ color: 'var(--text-main)' }}
-                  title="跨视图快速切换当前焦点章节与分镜，无需先回创作台"
-                >
-                  <BookOpen className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                  <span className="truncate max-w-[120px] font-medium">
-                    {activeChapter.title}
-                  </span>
-                  <ChevronDown className="w-3 h-3 opacity-60" />
-                </button>
-
-                {activeTab !== 'STUDIO' && (
-                  <div className="hidden 2xl:flex items-center gap-1">
-                    <button
-                      onClick={() => setPipManuscriptOpen((prev) => !prev)}
-                      className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-colors flex items-center gap-1 border ${
-                        pipManuscriptOpen
-                          ? 'bg-amber-500 text-white border-amber-500'
-                          : 'bg-amber-500/10 text-amber-500 border-amber-500/25 hover:bg-amber-500/20'
-                      }`}
-                      title="在不离开当前页面的情况下打开【悬浮正文伴侣抽屉】对照或修改手稿 (F23/A23)"
-                    >
-                      <BookOpen className="w-3 h-3" />
-                      <span>伴侣</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {chapterMenuOpen && (
-                <div
-                  className="absolute left-0 top-full mt-1.5 w-80 rounded-xl border shadow-2xl p-2.5 z-50 max-h-96 overflow-y-auto"
-                  style={{
-                    backgroundColor: 'var(--bg-surface)',
-                    borderColor: 'var(--border-subtle)',
-                  }}
-                >
-                  <div
-                    className="flex items-center justify-between pb-2 mb-2 border-b"
-                    style={{ borderColor: 'var(--border-subtle)' }}
-                  >
-                    <span className="text-xs font-bold" style={{ color: 'var(--text-main)' }}>
-                      跨视图快速切换焦点章节与分镜
-                    </span>
-                    <button
-                      onClick={() => {
-                        onSelectTab('STUDIO');
-                        setChapterMenuOpen(false);
-                      }}
-                      className="text-[11px] text-indigo-400 hover:underline flex items-center gap-1 font-semibold"
-                    >
-                      <span>打开创作台</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
-                  </div>
-
-                  {volumes.map((vol) => {
-                    const volChapters = vol.chapters || [];
-                    return (
-                      <div key={vol.id} className="mb-2.5 last:mb-0">
-                        <div
-                          className="text-[11px] font-bold px-2 py-1 opacity-75"
-                          style={{ color: 'var(--text-muted)' }}
-                        >
-                          📚 {vol.title}
-                        </div>
-                        <div className="space-y-1">
-                          {volChapters.map((chap) => {
-                            const chapScenes = chap.scenes || [];
-                            const isCurrentChap = chap.id === activeChapter?.id;
-                            return (
-                              <div
-                                key={chap.id}
-                                className={`rounded-lg p-1.5 border transition-colors ${
-                                  isCurrentChap
-                                    ? 'border-amber-500/40 bg-amber-500/5'
-                                    : 'border-transparent hover:bg-indigo-500/5'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between gap-2">
-                                  <button
-                                    onClick={() => {
-                                      setActiveChapterId(chap.id);
-                                      setActiveSceneIndex(0);
-                                      setChapterMenuOpen(false);
-                                    }}
-                                    className="text-left text-xs font-semibold truncate flex-1"
-                                    style={{ color: 'var(--text-main)' }}
-                                  >
-                                    {chap.title}
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setActiveChapterId(chap.id);
-                                      setActiveSceneIndex(0);
-                                      onSelectTab('STUDIO');
-                                      setChapterMenuOpen(false);
-                                    }}
-                                    className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 shrink-0"
-                                  >
-                                    去码字 →
-                                  </button>
-                                </div>
-                                {chapScenes.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 mt-1.5">
-                                    {chapScenes.map((sc, scIdx) => {
-                                      const isCurrentScene =
-                                        isCurrentChap && sc.id === activeScene?.id;
-                                      return (
-                                        <button
-                                          key={sc.id}
-                                          onClick={() => {
-                                            setActiveChapterId(chap.id);
-                                            setActiveSceneIndex(scIdx);
-                                            setChapterMenuOpen(false);
-                                          }}
-                                          className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
-                                            isCurrentScene
-                                              ? 'bg-amber-500 text-white font-semibold'
-                                              : 'bg-black/10 hover:bg-amber-500/15'
-                                          }`}
-                                          style={
-                                            !isCurrentScene
-                                              ? { color: 'var(--text-muted)' }
-                                              : undefined
-                                          }
-                                        >
-                                          🎬 第{sc.sceneIndex}场: {sc.sceneGoal.slice(0, 10)}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           )}
         </div>
 
-        {/* Center: IDE-Style Multi-Tab Workspace Dock (with Alt+1..9 index hints) */}
+        {/* Center-Left: IDE-Style Multi-Tab Workspace Dock (with Alt+1..9 index hints) */}
         <div
-          className="flex-1 flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 px-1"
+          className="flex-1 flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {openTabs.map((tabId, idx) => {
@@ -496,12 +262,20 @@ export const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({
                 title={`${item.title} — ${item.subtitle} (快捷键 Alt+${idx + 1})`}
                 className={`group flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs cursor-pointer transition-all shrink-0 whitespace-nowrap border ${
                   isCurrent
-                    ? 'bg-indigo-600/15 border-indigo-500/40 font-bold shadow-2xs'
-                    : 'border-transparent hover:bg-black/5 dark:hover:bg-white/5 opacity-80 hover:opacity-100'
+                    ? 'font-bold shadow-2xs'
+                    : 'border-transparent hover:bg-black/5 dark:hover:bg-white/5 opacity-75 hover:opacity-100'
                 }`}
-                style={{
-                  color: isCurrent ? 'var(--text-main)' : 'var(--text-muted)',
-                }}
+                style={
+                  isCurrent
+                    ? {
+                        backgroundColor: 'var(--accent-surface)',
+                        borderColor: 'var(--accent-primary)',
+                        color: 'var(--accent-primary)',
+                      }
+                    : {
+                        color: 'var(--text-muted)',
+                      }
+                }
               >
                 <span className="shrink-0">{item.icon}</span>
                 <span className="whitespace-nowrap">{item.shortTitle || item.title}</span>
@@ -513,7 +287,7 @@ export const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({
                     title={isPinned ? '取消固定此工作区标签' : '固定此标签到工作栏'}
                     className={`p-0.5 rounded transition-opacity ${
                       isPinned
-                        ? 'opacity-65 hover:opacity-100 text-indigo-400'
+                        ? 'opacity-65 hover:opacity-100'
                         : 'opacity-0 group-hover:opacity-60 hover:!opacity-100'
                     }`}
                   >
@@ -534,8 +308,57 @@ export const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({
           })}
         </div>
 
-        {/* Right: Quick Studio Return + Workspace Preset Switcher + Live Memory Guard Pill */}
+        {/* Right: Independent Scroll Lock Status + Quick Studio Return + Preset Switcher + Memory Guard */}
         <div className="flex items-center gap-1.5 shrink-0">
+          {/* 当处于创作台时显示三栏独立滚轮定住状态提示 */}
+          {(activeTab === 'STUDIO' || activeTab === 'OUTLINES') && (
+            <div
+              className="hidden xl:flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg border text-[11px] font-medium whitespace-nowrap"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-muted)',
+              }}
+              title="左栏(大纲树)、中栏(手稿正本)、右栏(全模态AI参谋)已独立定住：鼠标停留在哪一栏滑动滚轮，仅滚动对应区域，互不牵连"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+              <span>🔒 左/中/右三栏已定住 (独立滚轮)</span>
+            </div>
+          )}
+
+          {/* 非创作台视图下的跨视图章节快切与悬浮伴侣 */}
+          {activeTab !== 'STUDIO' && activeChapter && (
+            <div className="relative hidden lg:flex items-center gap-1" ref={chapterRef}>
+              <button
+                onClick={() => setChapterMenuOpen((prev) => !prev)}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] transition-colors border cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--text-main)',
+                }}
+                title="跨视图快速切换当前焦点章节与分镜"
+              >
+                <BookOpen className="w-3 h-3 text-amber-500 shrink-0" />
+                <span className="truncate max-w-[110px] font-medium">
+                  {activeChapter.title}
+                </span>
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
+
+              <button
+                onClick={() => setPipManuscriptOpen((prev) => !prev)}
+                className={`px-2 py-0.5 rounded-lg text-[11px] font-semibold transition-colors flex items-center gap-1 border cursor-pointer ${
+                  pipManuscriptOpen
+                    ? 'bg-amber-500 text-white border-amber-500'
+                    : 'bg-amber-500/10 text-amber-500 border-amber-500/25 hover:bg-amber-500/20'
+                }`}
+                title="在不离开当前页面的情况下打开【悬浮正文伴侣抽屉】对照或修改手稿"
+              >
+                <span>伴侣</span>
+              </button>
+            </div>
+          )}
           {/* Quick Return to Studio when on another tab */}
           {activeTab !== 'STUDIO' && (
             <button

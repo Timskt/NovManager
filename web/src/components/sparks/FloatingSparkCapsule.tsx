@@ -48,12 +48,13 @@ export const FloatingSparkCapsule: React.FC<FloatingSparkCapsuleProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   // 默认折叠快捷外挂按钮，避免三个按钮平铺挡住底部内容
   const [showQuickLinks, setShowQuickLinks] = useState(false);
-  // 支持一键贴边最小化为小书签，彻底不挡任何界面元素
+  // 默认贴边收起为侧边小书签，彻底避免遮挡右侧 AI 参谋底部发送框
   const [isMinimizedToEdge, setIsMinimizedToEdge] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('spark_capsule_minimized') === 'true';
+      const saved = localStorage.getItem('spark_capsule_minimized');
+      return saved === null ? true : saved === 'true';
     } catch {
-      return false;
+      return true;
     }
   });
 
@@ -128,14 +129,17 @@ export const FloatingSparkCapsule: React.FC<FloatingSparkCapsuleProps> = ({
     refreshCounts();
   };
 
-  // 贴边最小化状态：仅在右侧垂直居中偏下显示一个极窄的 28px 书签耳，绝不遮挡底部任何 Tab
+  // 贴边最小化状态：仅在右侧垂直居中显示一个极窄的 26px 书签耳，绝不遮挡底部任何发送框或 Tab
   if (isMinimizedToEdge) {
     return (
-      <div className="fixed right-0 bottom-24 lg:bottom-16 z-40 flex items-center">
+      <div className="fixed right-0 top-1/2 -translate-y-1/2 z-40 flex items-center">
         <button
-          onClick={() => toggleMinimizeToEdge(false)}
+          onClick={() => {
+            toggleMinimizeToEdge(false);
+            setIsOpen(true);
+          }}
           title="展开【灵光速记】悬浮窗"
-          className="px-2 py-2.5 rounded-l-xl border border-r-0 shadow-lg flex flex-col items-center gap-1 transition-all hover:pr-3 cursor-pointer"
+          className="px-1.5 py-2.5 rounded-l-xl border border-r-0 shadow-lg flex flex-col items-center gap-1 transition-all hover:pr-2.5 cursor-pointer opacity-80 hover:opacity-100"
           style={{
             backgroundColor: 'var(--bg-surface)',
             borderColor: 'var(--border-strong)',
@@ -143,7 +147,7 @@ export const FloatingSparkCapsule: React.FC<FloatingSparkCapsuleProps> = ({
           }}
         >
           <Sparkles className="w-3.5 h-3.5" />
-          <span className="text-[10px] font-bold writing-vertical-rl tracking-widest">
+          <span className="text-[10px] font-bold [writing-mode:vertical-rl] tracking-widest">
             灵光({pendingCount})
           </span>
           <ChevronLeft className="w-3 h-3 opacity-70" />
@@ -154,7 +158,7 @@ export const FloatingSparkCapsule: React.FC<FloatingSparkCapsuleProps> = ({
 
   return (
     <div
-      className="fixed right-3 sm:right-5 bottom-[68px] lg:bottom-4 z-40 flex flex-col items-end gap-2.5 pointer-events-none"
+      className="fixed right-3 sm:right-5 bottom-24 lg:bottom-28 z-40 flex flex-col items-end gap-2.5 pointer-events-none"
     >
       {toast && (
         <div

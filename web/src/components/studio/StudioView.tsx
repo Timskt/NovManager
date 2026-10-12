@@ -204,19 +204,31 @@ export const StudioView: React.FC<StudioViewProps> = ({
     };
   }, [isDraggingRight, isLeftCollapsed, isRightCollapsed]);
 
+  // 当前鼠标悬停的独立滚轮激活区域 ('left' | 'center' | 'right')
+  const [activeScrollZone, setActiveScrollZone] = useState<'left' | 'center' | 'right'>('center');
+
   return (
-    <div className="flex-1 flex overflow-hidden relative select-auto">
+    <div className="flex-1 h-full min-h-0 flex overflow-hidden relative select-auto">
       {/* 拖拽全局蒙层：防止在高速拖拽时光标越过 iframe 或选中编辑器文本 */}
       {(isDraggingLeft || isDraggingRight) && (
         <div className="fixed inset-0 z-50 cursor-col-resize select-none" />
       )}
 
-      {/* 桌面端左侧抽屉（支持宽度拖动调节与收起） */}
+      {/* 桌面端左侧抽屉（定住容器 + 独立滚轮 + 支持宽度拖动调节与收起） */}
       {!isLeftCollapsed && (
         <div
-          className="hidden md:flex flex-shrink-0 relative"
+          onMouseEnter={() => setActiveScrollZone('left')}
+          className="hidden md:flex flex-col h-full min-h-0 flex-shrink-0 overflow-hidden relative"
           style={{ width: `${leftWidth}px` }}
         >
+          {/* 顶部滚轮焦点微指示条 */}
+          <div
+            className="h-0.5 w-full shrink-0 transition-opacity duration-200"
+            style={{
+              backgroundColor: 'var(--accent-primary)',
+              opacity: activeScrollZone === 'left' ? 0.85 : 0,
+            }}
+          />
           <ContextDrawer
             onNavigateTab={onNavigateTab}
             onSwitchStudioTab={switchStudioTab}
@@ -289,9 +301,21 @@ export const StudioView: React.FC<StudioViewProps> = ({
         </button>
       )}
 
-      {/* 中间主工作区：支持【✍️ 正文撰写】与【✨ 剧情推演幕布】Tab 切换 */}
-      <div className="flex-1 flex flex-col overflow-hidden relative" style={{ backgroundColor: 'var(--bg-canvas)' }}>
-        {/* 顶部工作台全局模式切换与导航条：仅当处于 canvas 幕布视图时在此展示，处于正文 editor 时由 ManuscriptEditor 内嵌一体化导演中控台承接，彻底告别三层工具栏地狱 */}
+      {/* 中间主工作区（定住容器 + 独立滚轮）：支持【✍️ 正文撰写】与【✨ 剧情推演幕布】Tab 切换 */}
+      <div
+        onMouseEnter={() => setActiveScrollZone('center')}
+        className="flex-1 h-full min-h-0 flex flex-col overflow-hidden relative"
+        style={{ backgroundColor: 'var(--bg-canvas)' }}
+      >
+        {/* 顶部滚轮焦点微指示条 */}
+        <div
+          className="h-0.5 w-full shrink-0 transition-opacity duration-200"
+          style={{
+            backgroundColor: 'var(--accent-primary)',
+            opacity: activeScrollZone === 'center' ? 0.85 : 0,
+          }}
+        />
+        {/* 顶部工作台全局模式切换与导航条：仅当处于 canvas 幕布视图时在此展示 */}
         {studioTab === 'canvas' && (
           <div
             className="border-b px-3 sm:px-5 py-2 flex items-center justify-between gap-3 shrink-0 z-20 transition-colors backdrop-blur-md"
@@ -382,7 +406,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
         )}
 
         {/* 区域内容 */}
-        <div className="flex-1 flex flex-col overflow-hidden relative">
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
           {studioTab === 'editor' ? (
             <ManuscriptEditor
               onNavigateTab={onNavigateTab}
@@ -474,13 +498,22 @@ export const StudioView: React.FC<StudioViewProps> = ({
         </div>
       </div>
 
-      {/* 桌面端常驻右侧 Agent 舱（支持宽度拖动调节与收起） */}
+      {/* 桌面端常驻右侧 Agent 舱（定住容器 + 独立滚轮 + 支持宽度拖动调节与收起） */}
       {!isRightCollapsed && (
         <div
-          className="hidden md:flex flex-shrink-0 relative"
+          onMouseEnter={() => setActiveScrollZone('right')}
+          className="hidden md:flex flex-col h-full min-h-0 flex-shrink-0 overflow-hidden relative"
           style={{ width: `${rightWidth}px` }}
         >
-          <AgentDock />
+          {/* 顶部滚轮焦点微指示条 */}
+          <div
+            className="h-0.5 w-full shrink-0 transition-opacity duration-200"
+            style={{
+              backgroundColor: 'var(--accent-primary)',
+              opacity: activeScrollZone === 'right' ? 0.85 : 0,
+            }}
+          />
+          <AgentDock onNavigateTab={onNavigateTab} />
         </div>
       )}
 

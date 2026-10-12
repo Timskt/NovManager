@@ -242,7 +242,7 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
     } catch {}
   };
 
-  const [isDossierOpen, setIsDossierOpen] = useState(true);
+  const [isDossierOpen, setIsDossierOpen] = useState(false);
 
   // 新功能模态框开关
   const [isConsistencyGuardOpen, setIsConsistencyGuardOpen] = useState(false);
@@ -388,7 +388,7 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
 
   return (
     <main
-      className={`flex-1 flex flex-col overflow-hidden transition-colors ${
+      className={`flex-1 h-full min-h-0 flex flex-col overflow-hidden transition-colors ${
         isFullscreen ? 'fixed inset-0 z-50' : ''
       }`}
       style={{
@@ -397,23 +397,22 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
       }}
     >
       {/* ====================================================================
-          导演级全景一体化中控台 (Single-Row Director Control Bar)
-          消除重复标题、消除重复模式切换、消除多层堆叠，释放超大写作视界
+          导演级全景一体化中控台 (Single-Row Director Control Bar — 定住于中栏顶部)
       ==================================================================== */}
       <div
-        className="border-b px-3 sm:px-5 py-2 flex items-center justify-between gap-3 shrink-0 z-20 backdrop-blur-md select-none transition-colors"
+        className="border-b px-3 sm:px-4 py-1.5 flex items-center justify-between gap-2 shrink-0 z-20 backdrop-blur-md select-none transition-colors"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-subtle)',
         }}
       >
-        {/* 左侧：章节大纲定位指示 + 场景分镜幕 (Scene Acts) */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        {/* 左侧：章节大纲定位指示 + 完整场景分镜幕 (Scene Acts，不遮挡不截断) */}
+        <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto no-scrollbar">
           {/* 手机端打开左侧抽屉 */}
           {onOpenContext && (
             <button
               onClick={onOpenContext}
-              className="md:hidden p-1.5 rounded-lg border hover:opacity-80 transition cursor-pointer"
+              className="md:hidden p-1.5 rounded-lg border hover:opacity-80 transition cursor-pointer shrink-0"
               style={{
                 backgroundColor: 'var(--bg-card)',
                 borderColor: 'var(--border-subtle)',
@@ -426,47 +425,30 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
           )}
 
           {/* 大纲与章节标题 Breadcrumb */}
-          <div className="flex items-center gap-1.5 text-xs truncate shrink-0">
+          <div className="flex items-center gap-1.5 text-xs shrink-0">
             <button
               onClick={onOpenOutlineModal || onOpenContext}
-              className="font-medium flex items-center gap-1 hover:underline cursor-pointer"
+              className="font-medium flex items-center gap-1 hover:underline cursor-pointer shrink-0"
               style={{ color: 'var(--accent-primary)' }}
               title="打开全景大纲分镜架构总览"
             >
               <Compass className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">大纲架构</span>
+              <span className="hidden xl:inline">大纲</span>
             </button>
             <span style={{ color: 'var(--text-faint)' }}>/</span>
             <span
               onClick={onOpenOutlineModal}
-              className="font-semibold truncate max-w-[120px] sm:max-w-[180px] cursor-pointer hover:underline"
+              className="font-semibold truncate max-w-[140px] lg:max-w-[180px] cursor-pointer hover:underline"
               style={{ color: 'var(--text-main)' }}
               title={activeChapter?.title}
             >
               第 {activeChapter?.chapterIndex} 章 · {activeChapter?.title || '未命名'}
             </span>
-            {activeChapter?.status && (
-              <span
-                className="text-[10px] px-1.5 py-0.2 rounded font-medium hidden md:inline"
-                style={{
-                  backgroundColor: 'var(--bg-card)',
-                  color: 'var(--text-muted)',
-                }}
-              >
-                {activeChapter.status === 'PUBLISHED'
-                  ? '已发布'
-                  : activeChapter.status === 'REVIEWED'
-                  ? '已精修'
-                  : activeChapter.status === 'DRAFTED'
-                  ? '草稿'
-                  : '构思中'}
-              </span>
-            )}
           </div>
 
-          {/* 分镜节拍幕选 (Scene Act Pills) */}
+          {/* 分镜节拍幕选 (Scene Act Pills — 完整展示不截断) */}
           <div
-            className="hidden sm:flex items-center gap-1 overflow-x-auto pl-2 border-l"
+            className="hidden sm:flex items-center gap-1 pl-2 border-l shrink-0"
             style={{ borderColor: 'var(--border-subtle)' }}
           >
             {activeChapter?.scenes?.map((s) => (
@@ -474,7 +456,7 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                 key={s.id}
                 onClick={() => setActiveSceneIndex(s.sceneIndex)}
                 title={`第 ${s.sceneIndex} 幕${s.sceneGoal ? ` · 目标：${s.sceneGoal}` : ''} (${s.draftContent?.length || 0}字)`}
-                className={`px-2 py-0.5 rounded-md text-xs font-medium transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                className={`px-2 py-0.5 rounded-md text-xs font-medium transition flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer ${
                   s.sceneIndex === activeSceneIndex
                     ? 'shadow-xs font-semibold'
                     : 'hover:opacity-80'
@@ -513,22 +495,8 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
           </div>
         </div>
 
-        {/* 中间：本幕戏剧目标胶囊 (Scene Goal Pill) */}
-        <div
-          className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs max-w-xs truncate"
-          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
-          title={`当前幕戏剧目标: ${activeScene?.sceneGoal || '承接上文推进情节'}`}
-        >
-          <span className="font-semibold shrink-0" style={{ color: 'var(--accent-primary)' }}>
-            🎯 目标:
-          </span>
-          <span className="truncate font-literary-sans" style={{ color: 'var(--text-muted)' }}>
-            {activeScene?.sceneGoal || '承接上文推进情节'}
-          </span>
-        </div>
-
         {/* 右侧：模式切换 + AI文学工具集 + 审阅与保存 */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 text-xs">
+        <div className="flex items-center gap-1.5 shrink-0 text-xs">
           {/* 模式双联切换器：正文 vs 幕布 */}
           {onSwitchToCanvas && (
             <div
@@ -726,15 +694,15 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
         </div>
       </div>
 
-      {/* 可平滑滚动正文工作区 */}
-      <div className="flex-1 overflow-y-auto p-2 sm:p-5 md:p-8">
+      {/* 中栏独立平滑滚动正文工作区 (Mouse wheel inside middle pane ONLY scrolls middle pane) */}
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-2 sm:p-4 md:p-6">
         <div
-          className={`mx-auto w-full flex-1 flex flex-col space-y-4 transition-all duration-200 ${
+          className={`mx-auto w-full flex-1 flex flex-col space-y-3 transition-all duration-200 ${
             pageWidth === 'standard'
               ? 'max-w-4xl'
               : pageWidth === 'wide'
               ? 'max-w-6xl'
-              : 'max-w-full px-1 sm:px-4'
+              : 'max-w-full px-1 sm:px-3'
           }`}
         >
           {/* 差异审阅区：支持句段级微观比对与打勾合入 */}
@@ -796,61 +764,46 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
 
           {/* 巨匠文稿正本纸张 (Master Manuscript Paper Sheet) */}
           <div
-            className="w-full flex-1 flex flex-col rounded-2xl sm:rounded-3xl border shadow-xl transition-all duration-200"
+            className="w-full flex-1 flex flex-col rounded-2xl border shadow-xl transition-all duration-200"
             style={{
               backgroundColor: 'var(--bg-surface)',
               borderColor: 'var(--border-subtle)',
               boxShadow: 'var(--shadow-warm)',
-              minHeight: 'calc(100vh - 160px)',
             }}
           >
-            {/* 1. 文稿卷首徽章与页面宽度切换器 (Manuscript Sheet Masthead) */}
+            {/* 1. 紧凑文稿卷首与页面宽度/导演看板切换器 (Compact Masthead) */}
             <div
-              className="px-6 sm:px-10 pt-7 pb-4 border-b select-none flex flex-wrap items-center justify-between gap-3"
+              className="px-5 sm:px-8 pt-4 pb-3 border-b select-none flex flex-wrap items-center justify-between gap-2"
               style={{ borderColor: 'var(--border-subtle)' }}
             >
-              {/* 卷章血脉路径 */}
-              <div className="flex items-center gap-2 text-xs flex-wrap">
+              {/* 章节标题与当前幕次 */}
+              <div className="flex items-center gap-2.5 flex-wrap min-w-0">
                 <span
-                  className="px-2 py-0.5 rounded font-mono font-bold"
-                  style={{ backgroundColor: 'var(--bg-card)', color: 'var(--accent-primary)' }}
+                  className="px-2 py-0.5 rounded-md font-semibold font-mono text-xs shrink-0"
+                  style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--accent-primary)' }}
                 >
-                  {novel.title}
+                  第 {activeScene?.sceneIndex || 1} 幕
                 </span>
-                <span style={{ color: 'var(--text-faint)' }}>•</span>
-                <span className="font-literary-sans" style={{ color: 'var(--text-muted)' }}>
-                  第 {currentVolume?.volumeIndex || 1} 卷 · {currentVolume?.title || '正传'}
+                <h1
+                  className="text-lg sm:text-xl font-bold font-literary-serif tracking-wide truncate"
+                  style={{ color: 'var(--text-main)' }}
+                >
+                  第 {activeChapter?.chapterIndex} 章 · {activeChapter?.title || '未命名章节'}
+                </h1>
+                <span className="text-[11px] font-mono opacity-60 hidden md:inline" style={{ color: 'var(--text-muted)' }}>
+                  ({currentVolume?.title || '第一卷'} · 本幕 {wordCount} 字 / 全章 {chapterTotalWords.toLocaleString()} 字)
                 </span>
-                <span style={{ color: 'var(--text-faint)' }}>•</span>
-                <span className="font-semibold" style={{ color: 'var(--text-main)' }}>
-                  第 {activeChapter?.chapterIndex} 章 · {activeChapter?.title || '未命名'}
-                </span>
-                {activeChapter?.status && (
-                  <span
-                    className="text-[10px] px-1.5 py-0.2 rounded font-medium"
-                    style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--accent-primary)' }}
-                  >
-                    {activeChapter.status === 'PUBLISHED'
-                      ? '已发布'
-                      : activeChapter.status === 'REVIEWED'
-                      ? '已精修'
-                      : activeChapter.status === 'DRAFTED'
-                      ? '草稿'
-                      : '构思中'}
-                  </span>
-                )}
               </div>
 
               {/* 页面宽度与导演节拍开关 */}
               <div className="flex items-center gap-2 text-xs flex-wrap">
-                {/* 页面宽度选择器 */}
                 <div
                   className="flex items-center p-0.5 rounded-lg border"
                   style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
                 >
                   <button
                     onClick={() => handleSetPageWidth('standard')}
-                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
+                    className={`px-2 py-0.5 rounded text-[11px] font-medium transition cursor-pointer ${
                       pageWidth === 'standard' ? 'shadow-xs text-white' : 'opacity-60 hover:opacity-100'
                     }`}
                     style={pageWidth === 'standard' ? { backgroundColor: 'var(--accent-primary)' } : {}}
@@ -860,7 +813,7 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                   </button>
                   <button
                     onClick={() => handleSetPageWidth('wide')}
-                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
+                    className={`px-2 py-0.5 rounded text-[11px] font-medium transition cursor-pointer ${
                       pageWidth === 'wide' ? 'shadow-xs text-white' : 'opacity-60 hover:opacity-100'
                     }`}
                     style={pageWidth === 'wide' ? { backgroundColor: 'var(--accent-primary)' } : {}}
@@ -870,7 +823,7 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                   </button>
                   <button
                     onClick={() => handleSetPageWidth('full')}
-                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
+                    className={`px-2 py-0.5 rounded text-[11px] font-medium transition cursor-pointer ${
                       pageWidth === 'full' ? 'shadow-xs text-white' : 'opacity-60 hover:opacity-100'
                     }`}
                     style={pageWidth === 'full' ? { backgroundColor: 'var(--accent-primary)' } : {}}
@@ -883,50 +836,63 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                 {/* 导演大纲看板折叠开关 */}
                 <button
                   onClick={() => setIsDossierOpen(!isDossierOpen)}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-medium transition cursor-pointer hover:opacity-85"
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg border font-medium transition cursor-pointer hover:opacity-85"
                   style={{
-                    backgroundColor: 'var(--bg-card)',
-                    borderColor: 'var(--border-subtle)',
+                    backgroundColor: isDossierOpen ? 'var(--accent-surface)' : 'var(--bg-card)',
+                    borderColor: isDossierOpen ? 'var(--accent-primary)' : 'var(--border-subtle)',
                     color: isDossierOpen ? 'var(--accent-primary)' : 'var(--text-muted)',
                   }}
-                  title="折叠或展开本幕导演节拍机要看板"
+                  title="折叠或展开本幕 4 维导演节拍机要看板"
                 >
                   <Target className="w-3.5 h-3.5" />
-                  <span>{isDossierOpen ? '收起导演看板' : '展开导演看板'}</span>
+                  <span>{isDossierOpen ? '收起导演看板' : '4维导演看板'}</span>
                   {isDossierOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                 </button>
               </div>
             </div>
 
-            {/* 2. 章节巨标题与幕次主题 (Chapter Big Title & Dramatic Act Header) */}
-            <div className="px-6 sm:px-12 pt-6 pb-2">
-              <h1 className="text-2xl sm:text-3xl font-bold font-literary-serif tracking-wider" style={{ color: 'var(--text-main)' }}>
-                第 {activeChapter?.chapterIndex} 章 · {activeChapter?.title || '未命名章节'}
-              </h1>
-              <div className="flex flex-wrap items-center gap-3 mt-2 text-xs font-literary-sans" style={{ color: 'var(--text-muted)' }}>
-                <span
-                  className="px-2 py-0.5 rounded-md font-semibold font-mono"
-                  style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--accent-primary)' }}
-                >
-                  第 {activeScene?.sceneIndex || 1} 幕
+            {/* 2. 折叠态单行导演节拍摘要条 (1-Line Compact Director Ribbon when collapsed) */}
+            {!isDossierOpen && (
+              <div
+                onClick={() => setIsDossierOpen(true)}
+                className="px-5 sm:px-8 py-2 border-b text-[11px] flex flex-wrap items-center justify-between gap-2 cursor-pointer transition hover:opacity-90"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--text-muted)',
+                }}
+                title="点击展开完整 4 维戏剧节拍看板 (目标 / 冲突 / 转折 / 战果)"
+              >
+                <div className="flex items-center gap-3 flex-wrap min-w-0">
+                  <span className="flex items-center gap-1 font-medium truncate max-w-xs sm:max-w-md" style={{ color: 'var(--text-main)' }}>
+                    <Target className="w-3 h-3 text-amber-500 shrink-0" />
+                    <span className="truncate">目标：{activeScene?.sceneGoal || '承接情节展开故事'}</span>
+                  </span>
+                  {activeScene?.conflict && (
+                    <span className="hidden lg:flex items-center gap-1 truncate max-w-xs">
+                      <Swords className="w-3 h-3 text-rose-500 shrink-0" />
+                      <span className="truncate">冲突：{activeScene.conflict}</span>
+                    </span>
+                  )}
+                  {activeScene?.location && (
+                    <span className="flex items-center gap-1 text-emerald-500 font-medium shrink-0">
+                      <MapPin className="w-3 h-3" />
+                      <span>{activeScene.location}</span>
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] font-mono opacity-65 shrink-0 flex items-center gap-0.5">
+                  <span>展开详情</span>
+                  <ChevronDown className="w-3 h-3" />
                 </span>
-                <span className="font-medium text-sm" style={{ color: 'var(--text-main)' }}>
-                  {activeScene?.sceneGoal ? activeScene.sceneGoal.slice(0, 36) : '承接情节展开故事'}
-                </span>
-                <span className="opacity-40">•</span>
-                <span>本幕 {wordCount} 字</span>
-                <span className="opacity-40">•</span>
-                <span>全章 {chapterTotalWords.toLocaleString()} 字</span>
-                <span className="opacity-40">•</span>
-                <span>约 {readingTimeMin} 分钟通读</span>
               </div>
-            </div>
+            )}
 
-            {/* 3. 本幕导演机要卡 (Director Scene Dossier) */}
+            {/* 3. 展开态本幕导演机要卡 (Director Scene Dossier) */}
             {isDossierOpen && (
-              <div className="px-6 sm:px-12 py-3">
+              <div className="px-5 sm:px-8 py-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
                 <div
-                  className="rounded-2xl border p-4 sm:p-5 space-y-3 font-literary-sans text-xs transition animate-in fade-in duration-150"
+                  className="rounded-xl border p-3.5 sm:p-4 space-y-2.5 font-literary-sans text-xs transition animate-in fade-in duration-150"
                   style={{
                     backgroundColor: 'var(--bg-card)',
                     borderColor: 'var(--border-subtle)',
@@ -946,7 +912,7 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                   </div>
 
                   {/* 4 维戏剧坐标网格 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
                     <div className="p-2.5 rounded-xl border bg-black/5 dark:bg-white/5" style={{ borderColor: 'var(--border-subtle)' }}>
                       <div className="font-semibold flex items-center gap-1.5 text-amber-500 mb-1">
                         <Target className="w-3.5 h-3.5" />
@@ -1040,13 +1006,13 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
             )}
 
             {/* 4. 实时文学五感与智能工笔条 (In-Document Sensory HUD & Copilot Ribbon) */}
-            <div className="px-6 sm:px-12 py-2">
+            <div className="px-5 sm:px-8 pt-2.5 pb-1">
               <div
-                className="flex flex-wrap items-center justify-between px-3.5 py-2 rounded-xl border text-xs gap-3"
+                className="flex flex-wrap items-center justify-between px-3 py-1.5 rounded-xl border text-xs gap-2"
                 style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
               >
                 {/* 实时五感分布 */}
-                <div className="flex items-center gap-3 font-mono text-[11px] flex-wrap">
+                <div className="flex items-center gap-2.5 font-mono text-[11px] flex-wrap">
                   <span className="flex items-center gap-1" title="视觉描写占比">
                     <span>👁️ 视觉</span>
                     <span className="font-bold">{sensoryMetrics.visual}%</span>
@@ -1063,17 +1029,17 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                     <span>👂 氛围</span>
                     <span className="font-bold">{sensoryMetrics.sensory}%</span>
                   </span>
-                  <span className="flex items-center gap-1 border-l pl-3" style={{ borderColor: 'var(--border-subtle)' }}>
-                    <span className="text-amber-500 font-bold">⚡ 张力指数: {sensoryMetrics.tension}/100</span>
+                  <span className="flex items-center gap-1 border-l pl-2.5" style={{ borderColor: 'var(--border-subtle)' }}>
+                    <span className="text-amber-500 font-bold">⚡ 张力: {sensoryMetrics.tension}/100</span>
                   </span>
                 </div>
 
                 {/* 快速工笔与微操工具栏 */}
-                <div className="flex items-center gap-1.5 flex-wrap">
+                <div className="flex items-center gap-1 flex-wrap">
                   <button
                     onClick={handleUndo}
                     disabled={undoStack.length === 0}
-                    className="p-1.5 rounded-md border text-xs flex items-center hover:opacity-85 transition cursor-pointer disabled:opacity-35"
+                    className="p-1 rounded-md border text-xs flex items-center hover:opacity-85 transition cursor-pointer disabled:opacity-35"
                     style={{
                       backgroundColor: 'var(--bg-surface)',
                       borderColor: 'var(--border-subtle)',
@@ -1086,7 +1052,7 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                   <button
                     onClick={handleRedo}
                     disabled={redoStack.length === 0}
-                    className="p-1.5 rounded-md border text-xs flex items-center hover:opacity-85 transition cursor-pointer disabled:opacity-35"
+                    className="p-1 rounded-md border text-xs flex items-center hover:opacity-85 transition cursor-pointer disabled:opacity-35"
                     style={{
                       backgroundColor: 'var(--bg-surface)',
                       borderColor: 'var(--border-subtle)',
@@ -1099,7 +1065,7 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                   <button
                     onClick={runDrafterWriteScene}
                     disabled={isAgentRunning}
-                    className="px-2.5 py-1 rounded-md border text-xs font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer disabled:opacity-50"
+                    className="px-2 py-0.5 rounded-md border text-[11px] font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer disabled:opacity-50"
                     style={{
                       backgroundColor: 'var(--bg-surface)',
                       borderColor: 'var(--border-subtle)',
@@ -1107,12 +1073,12 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                     }}
                     title="智能起草续写当前幕"
                   >
-                    <span>✍️ 起草续写</span>
+                    <span>✍️ 续写</span>
                   </button>
                   <button
                     onClick={() => runStylistPolish()}
                     disabled={isAgentRunning}
-                    className="px-2.5 py-1 rounded-md border text-xs font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer disabled:opacity-50"
+                    className="px-2 py-0.5 rounded-md border text-[11px] font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer disabled:opacity-50"
                     style={{
                       backgroundColor: 'var(--bg-surface)',
                       borderColor: 'var(--border-subtle)',
@@ -1120,11 +1086,11 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                     }}
                     title="名家工笔润色"
                   >
-                    <span>🎨 工笔润色</span>
+                    <span>🎨 润色</span>
                   </button>
                   <button
                     onClick={handlePurifyTypography}
-                    className="px-2.5 py-1 rounded-md border text-xs font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer"
+                    className="px-2 py-0.5 rounded-md border text-[11px] font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer"
                     style={{
                       backgroundColor: 'var(--bg-surface)',
                       borderColor: 'var(--border-subtle)',
@@ -1132,11 +1098,11 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                     }}
                     title="一键全角标点净化、首行缩进与水词脱水 (F2)"
                   >
-                    <span>🧹 排版脱水</span>
+                    <span>🧹 脱水</span>
                   </button>
                   <button
                     onClick={handleInsertCliffhangerHook}
-                    className="px-2.5 py-1 rounded-md border text-xs font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer"
+                    className="px-2 py-0.5 rounded-md border text-[11px] font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer"
                     style={{
                       backgroundColor: 'var(--bg-surface)',
                       borderColor: 'var(--border-subtle)',
@@ -1144,11 +1110,11 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                     }}
                     title="在章末自动生成并追加黄金断章悬念钩子 (F4)"
                   >
-                    <span>🪝 断章钩子</span>
+                    <span>🪝 断章钩</span>
                   </button>
                   <button
                     onClick={handleInsertDivider}
-                    className="px-2 py-1 rounded-md border text-xs font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer"
+                    className="px-2 py-0.5 rounded-md border text-[11px] font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer"
                     style={{
                       backgroundColor: 'var(--bg-surface)',
                       borderColor: 'var(--border-subtle)',
@@ -1156,11 +1122,11 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                     }}
                     title="插入古典场景切换分隔符"
                   >
-                    <span>◇ 分幕符</span>
+                    <span>◇ 分幕</span>
                   </button>
                   <button
                     onClick={handleToggleTtsSpeak}
-                    className="px-2.5 py-1 rounded-md border text-xs font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer"
+                    className="px-2 py-0.5 rounded-md border text-[11px] font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer"
                     style={{
                       backgroundColor: isSpeaking ? 'var(--accent-surface)' : 'var(--bg-surface)',
                       borderColor: isSpeaking ? 'var(--accent-primary)' : 'var(--border-subtle)',
@@ -1168,12 +1134,12 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                     }}
                     title="开启/停止 TTS 沉浸听书语音校对 (F7)"
                   >
-                    {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-                    <span>{isSpeaking ? '停止朗读' : '听书校对'}</span>
+                    {isSpeaking ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+                    <span>{isSpeaking ? '停止' : '听书'}</span>
                   </button>
                   <button
                     onClick={() => setIsActionDirectorOpen(true)}
-                    className="px-2.5 py-1 rounded-md border text-xs font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer"
+                    className="px-2 py-0.5 rounded-md border text-[11px] font-medium flex items-center gap-1 hover:opacity-85 transition cursor-pointer"
                     style={{
                       backgroundColor: 'var(--bg-surface)',
                       borderColor: 'var(--border-subtle)',
@@ -1181,13 +1147,13 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                     }}
                     title="电影级打斗分镜与动作导演"
                   >
-                    <Swords className="w-3.5 h-3.5 text-rose-400" />
+                    <Swords className="w-3 h-3 text-rose-400" />
                     <span>打斗导演</span>
                   </button>
                   {onNavigateTab && (
                     <button
                       onClick={() => onNavigateTab('AI_COUNCIL')}
-                      className="px-2.5 py-1 rounded-md border text-xs font-bold flex items-center gap-1 hover:opacity-90 transition cursor-pointer"
+                      className="px-2 py-0.5 rounded-md border text-[11px] font-bold flex items-center gap-1 hover:opacity-90 transition cursor-pointer"
                       style={{
                         backgroundColor: 'var(--accent-surface)',
                         borderColor: 'var(--accent-primary)',
@@ -1195,7 +1161,7 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                       }}
                       title="将当前正文送入【多AI跨提供商圆桌辩论与连线拓扑工坊】博弈出终极正本"
                     >
-                      <Network className="w-3.5 h-3.5" />
+                      <Network className="w-3 h-3" />
                       <span>送入多AI圆桌</span>
                     </button>
                   )}
@@ -1301,7 +1267,7 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
             </div>
 
             {/* 5. 巨匠正文正本输入流 (Core Manuscript Writing Flow) */}
-            <div className="px-6 sm:px-12 py-4 flex-1 flex flex-col">
+            <div className="px-5 sm:px-10 py-3 flex-1 flex flex-col">
               <textarea
                 value={editorContent}
                 onChange={(e) => {
@@ -1338,7 +1304,7 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                   }
                 }}
                 placeholder="此地为正文字正本，落子生花。可直接动笔，亦可划选任意句子触发【五感扩写/古风化/多AI圆桌会审】..."
-                className="w-full flex-1 min-h-[560px] sm:min-h-[700px] bg-transparent border-none outline-none resize-none font-literary-serif selection:bg-amber-500/25 leading-relaxed placeholder:opacity-30"
+                className="w-full flex-1 min-h-[480px] sm:min-h-[600px] bg-transparent border-none outline-none resize-none font-literary-serif selection:bg-amber-500/25 leading-relaxed placeholder:opacity-30"
                 style={{
                   fontSize: `${themeSettings.fontSize}px`,
                   lineHeight: themeSettings.lineHeight,
@@ -1347,143 +1313,121 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
                 }}
               />
             </div>
-
-            {/* 6. 文稿底部幕次流转与原子落盘 (Bottom Act Carousel & Persistent Actions) */}
-            <div
-              className="px-6 sm:px-12 py-4 border-t select-none flex flex-wrap items-center justify-between gap-3 mt-auto"
-              style={{ borderColor: 'var(--border-subtle)' }}
-            >
-              {/* 幕次流转导航 */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {hasPrevScene && prevScene && (
-                  <button
-                    onClick={() => setActiveSceneIndex(prevScene.sceneIndex)}
-                    className="px-3 py-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-medium transition cursor-pointer hover:opacity-85"
-                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
-                    title={`跳转至上一幕: 第 ${prevScene.sceneIndex} 幕`}
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>上一幕 (第 {prevScene.sceneIndex} 幕)</span>
-                  </button>
-                )}
-
-                <span
-                  className="px-3 py-1.5 rounded-xl border text-xs font-bold"
-                  style={{
-                    backgroundColor: 'var(--accent-surface)',
-                    borderColor: 'var(--accent-primary)',
-                    color: 'var(--accent-primary)',
-                  }}
-                >
-                  当前：第 {activeSceneIndex} 幕 ({wordCount} 字)
-                </span>
-
-                {hasNextScene && nextScene && (
-                  <button
-                    onClick={() => setActiveSceneIndex(nextScene.sceneIndex)}
-                    className="px-3 py-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-medium transition cursor-pointer hover:opacity-85"
-                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
-                    title={`跳转至下一幕: 第 ${nextScene.sceneIndex} 幕`}
-                  >
-                    <span>下一幕 (第 {nextScene.sceneIndex} 幕)</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                )}
-
-                <button
-                  onClick={handleAddScene}
-                  className="px-2.5 py-1.5 rounded-xl border border-dashed text-xs font-medium flex items-center gap-1 transition cursor-pointer hover:opacity-85"
-                  style={{ borderColor: 'var(--border-strong)', color: 'var(--text-muted)' }}
-                  title="新增下一分镜幕"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>新增分镜幕</span>
-                </button>
-              </div>
-
-              {/* 底部动作保存与专注 */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => setShowFullChapterModal(true)}
-                  className="px-3 py-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-medium transition cursor-pointer hover:opacity-85"
-                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
-                >
-                  <BookOpen className="w-3.5 h-3.5" />
-                  <span>连续通读全章</span>
-                </button>
-
-                <button
-                  onClick={() => setIsZenFocusOpen(true)}
-                  className="px-3 py-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-medium transition cursor-pointer hover:opacity-85 text-amber-500"
-                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>禅定专注</span>
-                </button>
-
-                <button
-                  onClick={handleManualSave}
-                  className="px-4 py-1.5 rounded-xl text-xs font-bold text-white flex items-center gap-1.5 transition cursor-pointer shadow-md hover:opacity-90"
-                  style={{ backgroundColor: 'var(--accent-primary)' }}
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>立即落盘 (Ctrl+S)</span>
-                </button>
-              </div>
-            </div>
-
-            {/* 7. 底部 IDE 级沉浸文稿状态栏 (Bottom Manuscript Status Bar - UX08 / F3) */}
-            <div
-              className="px-6 sm:px-12 py-2 border-t rounded-b-2xl sm:rounded-b-3xl flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono select-none"
-              style={{
-                backgroundColor: 'var(--bg-card)',
-                borderColor: 'var(--border-subtle)',
-                color: 'var(--text-muted)',
-              }}
-            >
-              <div className="flex items-center gap-3 flex-wrap">
-                <span>
-                  行 {cursorPos.line}, 列 {cursorPos.col}
-                </span>
-                <span>|</span>
-                <span>
-                  {selectedSnippet ? `已选 ${selectedSnippet.length} 字 / ` : ''}本幕 {wordCount} 字 · 全章 {chapterTotalWords} 字
-                </span>
-                <span>|</span>
-                <span>预计阅读 ~{readingTimeMin} 分钟</span>
-              </div>
-
-              <div className="flex items-center gap-3 flex-wrap">
-                <div className="flex items-center gap-1">
-                  <span>字号:</span>
-                  <button
-                    onClick={() => setFontSize(Math.max(14, themeSettings.fontSize - 1))}
-                    className="px-1.5 py-0.5 rounded border hover:opacity-80 cursor-pointer"
-                    style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
-                    title="减小正文字号"
-                  >
-                    A-
-                  </button>
-                  <span className="px-1 font-bold" style={{ color: 'var(--text-main)' }}>
-                    {themeSettings.fontSize}px
-                  </span>
-                  <button
-                    onClick={() => setFontSize(Math.min(26, themeSettings.fontSize + 1))}
-                    className="px-1.5 py-0.5 rounded border hover:opacity-80 cursor-pointer"
-                    style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
-                    title="增大正文字号"
-                  >
-                    A+
-                  </button>
-                </div>
-                <span>|</span>
-                <span className="flex items-center gap-1 text-emerald-500 font-sans font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-                  WAL 双重防丢保护中
-                </span>
-              </div>
-            </div>
           </div>
+        </div>
+      </div>
+
+      {/* 6. 中栏底部固定幕次切换与 IDE 状态栏 (Pinned Bottom Footer of Middle Column) */}
+      <div
+        className="shrink-0 border-t px-3 sm:px-5 py-2 flex flex-wrap items-center justify-between gap-2 text-[11px] select-none z-10"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          borderColor: 'var(--border-subtle)',
+          color: 'var(--text-muted)',
+        }}
+      >
+        {/* 左侧：幕次快速流转导航 */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {hasPrevScene && prevScene && (
+            <button
+              onClick={() => setActiveSceneIndex(prevScene.sceneIndex)}
+              className="px-2 py-1 rounded-lg border flex items-center gap-1 text-[11px] font-medium transition cursor-pointer hover:opacity-85"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+              title={`跳转至上一幕: 第 ${prevScene.sceneIndex} 幕`}
+            >
+              <ArrowLeft className="w-3 h-3" />
+              <span>上一幕</span>
+            </button>
+          )}
+
+          <span
+            className="px-2.5 py-1 rounded-lg border text-[11px] font-bold font-mono"
+            style={{
+              backgroundColor: 'var(--accent-surface)',
+              borderColor: 'var(--accent-primary)',
+              color: 'var(--accent-primary)',
+            }}
+          >
+            第 {activeSceneIndex} 幕 · {wordCount}字
+          </span>
+
+          {hasNextScene && nextScene && (
+            <button
+              onClick={() => setActiveSceneIndex(nextScene.sceneIndex)}
+              className="px-2 py-1 rounded-lg border flex items-center gap-1 text-[11px] font-medium transition cursor-pointer hover:opacity-85"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+              title={`跳转至下一幕: 第 ${nextScene.sceneIndex} 幕`}
+            >
+              <span>下一幕</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          )}
+
+          <button
+            onClick={handleAddScene}
+            className="px-2 py-1 rounded-lg border border-dashed text-[11px] font-medium flex items-center gap-1 transition cursor-pointer hover:opacity-85"
+            style={{ borderColor: 'var(--border-strong)', color: 'var(--text-muted)' }}
+            title="新增下一分镜幕"
+          >
+            <Plus className="w-3 h-3" />
+            <span className="hidden sm:inline">新幕</span>
+          </button>
+        </div>
+
+        {/* 中部：行号/列号与全章字数统计 */}
+        <div className="hidden xl:flex items-center gap-2.5 font-mono text-[11px]">
+          <span>
+            行 {cursorPos.line}, 列 {cursorPos.col}
+          </span>
+          <span className="opacity-40">|</span>
+          <span>
+            {selectedSnippet ? `已选 ${selectedSnippet.length} 字 · ` : ''}全章 {chapterTotalWords.toLocaleString()} 字 (~{readingTimeMin}m)
+          </span>
+        </div>
+
+        {/* 右侧：字号微调、禅定、WAL 防丢与立即落盘 */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1 font-mono">
+            <button
+              onClick={() => setFontSize(Math.max(14, themeSettings.fontSize - 1))}
+              className="px-1.5 py-0.5 rounded border hover:opacity-80 cursor-pointer"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+              title="减小正文字号"
+            >
+              A-
+            </button>
+            <span className="px-1 font-bold" style={{ color: 'var(--text-main)' }}>
+              {themeSettings.fontSize}px
+            </span>
+            <button
+              onClick={() => setFontSize(Math.min(26, themeSettings.fontSize + 1))}
+              className="px-1.5 py-0.5 rounded border hover:opacity-80 cursor-pointer"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+              title="增大正文字号"
+            >
+              A+
+            </button>
+          </div>
+
+          <button
+            onClick={() => setIsZenFocusOpen(true)}
+            className="px-2 py-1 rounded-lg border flex items-center gap-1 text-[11px] font-medium transition cursor-pointer hover:opacity-85 text-amber-500"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+            title="开启全屏禅定码字舱"
+          >
+            <Sparkles className="w-3 h-3" />
+            <span className="hidden sm:inline">禅定</span>
+          </button>
+
+          <button
+            onClick={handleManualSave}
+            className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-white flex items-center gap-1 transition cursor-pointer shadow-xs hover:opacity-90"
+            style={{ backgroundColor: 'var(--accent-primary)' }}
+            title="立即保存并落盘 (Ctrl+S)"
+          >
+            <Save className="w-3 h-3" />
+            <span>落盘</span>
+          </button>
         </div>
       </div>
 

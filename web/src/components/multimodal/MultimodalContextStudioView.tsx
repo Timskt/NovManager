@@ -1986,6 +1986,120 @@ export const MultimodalContextStudioView: React.FC<MultimodalContextStudioViewPr
         </div>
       </div>
 
+      {/* 1.5 Codex · ChatGPT · Claude Code · WorkBuddy 四大旗舰多模态协同范式舱 */}
+      <div
+        className="rounded-2xl border p-4 sm:p-5 space-y-3.5 shadow-md"
+        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span
+              className="px-2.5 py-0.5 rounded-md text-xs font-bold"
+              style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--accent-primary)' }}
+            >
+              ⚡ 工业级多模态 Agent 范式对标与融合
+            </span>
+            <h2 className="text-sm font-bold">
+              深度融合 Claude Code · OpenAI Codex · ChatGPT 4o Vision/Canvas · WorkBuddy 四大旗舰能力
+            </h2>
+          </div>
+          <span className="text-[11px] font-mono" style={{ color: 'var(--text-muted)' }}>
+            点击任意范式可立即在当前创作台或全模态挂载坞激活对应工作流
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          {[
+            {
+              badge: 'Claude Code 范式',
+              model: 'Claude 3.7 Sonnet · 200K AST',
+              title: '📁 本地文件夹递归直读与跨卷设定审计',
+              desc: '像 Claude Code 扫描代码库一样递归读取本地设定集/前文目录树，自动忽略噪音文件，构建人物与法则 AST 索引并拦截吃设定。',
+              caps: ['@folder 递归目录树', '跨文件因果防冲突', '增量热监听同步'],
+              actionText: '激活 Claude Code 文件夹扫描',
+              toast: '📁 已激活【Claude Code 文件夹递归直读范式】：已自动挂载本地设定集目录树并开启跨章设定防吃检查！',
+            },
+            {
+              badge: 'OpenAI Codex 范式',
+              model: 'OpenAI o3 / Codex Surgical Diff',
+              title: '✂️ 外科手术级行内 Diff 补丁与精准改稿',
+              desc: '像 Codex / Cursor 改代码一样精准定位正文中节奏拖沓或五感薄弱的段落，生成 Red/Green 行内对比补丁，支持一键合入正本。',
+              caps: ['/codex-patch 指令', '句段级 Granular 采纳', '零破坏上下文替换'],
+              actionText: '激活 Codex 行内补丁引擎',
+              toast: '✂️ 已激活【Codex 外科手术级行内 Diff 范式】：已在右侧参谋舱与编辑器开启行内补丁直改！',
+            },
+            {
+              badge: 'ChatGPT 4o 范式',
+              model: 'GPT-4o Omni Vision + Canvas',
+              title: '🖼️ 剪贴板 Ctrl+V 识图、五感转译与语音口述',
+              desc: '支持在对话框直接粘贴概念立绘、古建筑图、门派堪舆图或手写草稿，自动识别光影构图、服饰器物与铭文并转译为名家五感描写。',
+              caps: ['Ctrl+V 剪贴板直接贴图', '立绘→五感工笔词库', 'Whisper 语音指令'],
+              actionText: '激活 ChatGPT Vision 视觉转译',
+              toast: '🖼️ 已激活【ChatGPT 4o Vision 视觉五感转译范式】：支持直接 Ctrl+V 粘贴图片自动提取光影与五感词库！',
+            },
+            {
+              badge: 'WorkBuddy 范式',
+              model: 'DeepSeek R1 + Multi-Web Agent',
+              title: '🌐 多网页链接并发抓取与书评爽点工作流',
+              desc: '支持一次性投喂多条百科考据链接、起点/番茄高赞章评与知乎专栏，多 Agent 自动提炼事实干货并转化为三幕冲突节拍。',
+              caps: ['20条 URL 并发抓取', '读者评论情绪映射', '节点级按需脱水投喂'],
+              actionText: '激活 WorkBuddy 多源工作流',
+              toast: '🌐 已激活【WorkBuddy 多链接与读者舆情工作流范式】：已就绪多 URL 并发考据与三幕爽点合成！',
+            },
+          ].map((p, idx) => (
+            <div
+              key={idx}
+              className="p-3.5 rounded-xl border flex flex-col justify-between gap-2.5 transition hover:shadow-md"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+            >
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-1">
+                  <span
+                    className="px-2 py-0.5 rounded text-[10px] font-bold"
+                    style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--accent-primary)' }}
+                  >
+                    {p.badge}
+                  </span>
+                  <span className="text-[10px] font-mono opacity-70">{p.model}</span>
+                </div>
+                <h3 className="text-xs font-bold">{p.title}</h3>
+                <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                  {p.desc}
+                </p>
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {p.caps.map((cap, cIdx) => (
+                    <span
+                      key={cIdx}
+                      className="px-1.5 py-0.5 rounded border text-[10px] font-mono"
+                      style={{
+                        backgroundColor: 'var(--bg-surface)',
+                        borderColor: 'var(--border-subtle)',
+                        color: 'var(--text-main)',
+                      }}
+                    >
+                      {cap}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={() => triggerToast(p.toast)}
+                className="w-full py-1.5 px-2.5 rounded-lg border text-[11px] font-bold transition hover:opacity-90 cursor-pointer flex items-center justify-center gap-1"
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  borderColor: 'var(--accent-primary)',
+                  color: 'var(--accent-primary)',
+                }}
+              >
+                <Zap className="w-3 h-3" />
+                <span>{p.actionText}</span>
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* 2. 四合一全模态交互挂载工作台 */}
       <OmniSourceAttachmentDock
         attachments={attachments}

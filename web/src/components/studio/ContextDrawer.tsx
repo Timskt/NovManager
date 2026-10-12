@@ -431,8 +431,8 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
     <aside
       className={`${
         isMobile
-          ? 'w-full h-full p-3 flex flex-col gap-3 overflow-y-auto'
-          : 'w-full border-r p-3 flex flex-col gap-3 overflow-y-auto h-[calc(100vh-60px)]'
+          ? 'w-full h-full p-3 flex flex-col gap-3 overflow-y-auto overscroll-contain'
+          : 'w-full flex-1 h-full min-h-0 border-r p-3 flex flex-col gap-2.5 overflow-hidden'
       }`}
       style={{
         backgroundColor: 'var(--bg-surface)',
@@ -440,9 +440,9 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
         color: 'var(--text-main)',
       }}
     >
-      {/* 1. 创作平台左上角：大纲分镜全局架构看板与模式切换 */}
+      {/* 1. 创作平台左上角固定区：大纲分镜全局架构看板与模式切换 (定住不随滚轮滚走) */}
       <div
-        className="rounded-xl p-3 border shadow-xs space-y-2.5"
+        className="rounded-xl p-2.5 border shadow-xs space-y-2 shrink-0"
         style={{
           backgroundColor: 'var(--bg-card)',
           borderColor: 'var(--border-subtle)',
@@ -474,7 +474,7 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                 </span>
               </div>
               <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>
-                全书大纲架构与分镜管理
+                左栏独立滚轮 · 顶底工具已定住
               </p>
             </div>
           </div>
@@ -531,9 +531,9 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
 
       {/* 模式 A：大纲目录树视图 (Outline Tree View) */}
       {drawerTab === 'tree' && (
-        <div className="space-y-3 flex-1">
-          {/* 快捷新建与统计指示 */}
-          <div className="flex items-center justify-between text-[11px] px-1" style={{ color: 'var(--text-muted)' }}>
+        <div className="flex-1 min-h-0 flex flex-col gap-2 overflow-hidden">
+          {/* 快捷新建与统计指示 (固定在左栏顶部) */}
+          <div className="flex items-center justify-between text-[11px] px-1 shrink-0" style={{ color: 'var(--text-muted)' }}>
             <span className="flex items-center gap-1.5 truncate" style={{ color: 'var(--text-muted)' }}>
               <BookOpen className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
               <span>
@@ -576,8 +576,8 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
             </div>
           </div>
 
-          {/* 分卷与章节层级树 */}
-          <div className="space-y-2.5">
+          {/* 分卷与章节层级树 (独立滚轮区域：鼠标在左侧滑动仅滚动此处) */}
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-2.5 pr-1">
             {volumes.map((vol) => {
               const expanded = isVolExpanded(vol.id);
               const volTotalWords = (vol.chapters || []).reduce(
@@ -1045,9 +1045,9 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
             })}
           </div>
 
-          {/* 底部功能直达区 */}
-          <div className="pt-2 space-y-2 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
-            <div className="grid grid-cols-2 gap-2">
+          {/* 底部功能直达区 (固定在左栏底部，不随滚轮滚走) */}
+          <div className="pt-2 space-y-1.5 border-t shrink-0" style={{ borderColor: 'var(--border-subtle)' }}>
+            <div className="grid grid-cols-2 gap-1.5">
               <button
                 onClick={() => {
                   setVolTitle('');
@@ -1090,7 +1090,7 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1.5">
               <button
                 onClick={openFullOutline}
                 className="py-1.5 px-2 border rounded-lg text-[11px] font-medium transition flex items-center justify-center gap-1 cursor-pointer hover:opacity-85"
@@ -1136,9 +1136,9 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
         </div>
       )}
 
-      {/* 模式 B：本幕节拍与上下文视图 (Scene Beats & Context) */}
+      {/* 模式 B：本幕节拍与上下文视图 (Scene Beats & Context — 独立滚轮区域) */}
       {drawerTab === 'context' && (
-        <div className="space-y-3.5 flex-1">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-3.5 pr-1">
           {/* 1. 卷章与分镜切换 */}
           <div
             className="rounded-xl p-3 space-y-2 border shadow-xs"

@@ -197,7 +197,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header
       ref={navContainerRef}
-      className="border-b sticky top-0 z-40 w-full h-14 px-3.5 lg:px-5 flex items-center justify-between gap-3 transition-colors select-none shrink-0"
+      className="border-b z-40 w-full h-12 px-3 lg:px-4 flex items-center justify-between gap-2.5 transition-colors select-none shrink-0"
       style={{
         backgroundColor: 'var(--bg-surface)',
         borderColor: 'var(--border-subtle)',
@@ -205,25 +205,25 @@ export const Header: React.FC<HeaderProps> = ({
       }}
     >
       {/* ====================================================================
-          1. 左侧区：品牌徽标 + 作品切换胶囊 (严格单行、紧凑清晰)
+          1. 左侧+主导航连续区：品牌徽标 + 作品胶囊 + 四大领域矩阵 (告别两侧断层留白)
       ==================================================================== */}
-      <div className="flex items-center gap-2.5 shrink-0 min-w-0">
+      <div className="flex items-center gap-2 shrink-0 min-w-0">
         <div
           onClick={() => setActiveTab('LIBRARY')}
           onContextMenu={(e) => {
             e.preventDefault();
             setIsBrandModalOpen(true);
           }}
-          className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition transform hover:scale-105 shadow-xs shrink-0"
+          className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition transform hover:scale-105 shadow-xs shrink-0"
           title="左键返回【作品库】 | 右键打开【品牌视觉 VI 定制中心】"
         >
-          <BrandLogo size={34} />
+          <BrandLogo size={30} />
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           <h1
             onClick={() => setActiveTab('LIBRARY')}
-            className="text-sm sm:text-base font-extrabold tracking-wide cursor-pointer font-literary-serif hover:opacity-80 transition whitespace-nowrap"
+            className="text-sm font-extrabold tracking-wide cursor-pointer font-literary-serif hover:opacity-80 transition whitespace-nowrap"
             title="点击查看作品档案库"
           >
             {brand.brandName}
@@ -231,17 +231,16 @@ export const Header: React.FC<HeaderProps> = ({
           <BrandSealBadge />
         </div>
 
-        {/* 竖向分隔符 */}
         <div
           className="hidden sm:block h-4 w-px mx-0.5 shrink-0"
           style={{ backgroundColor: 'var(--border-subtle)' }}
         />
 
-        {/* 当前激活作品胶囊 (点击直接切换/管理作品) */}
+        {/* 当前激活作品胶囊 */}
         <button
           type="button"
           onClick={() => setActiveTab('LIBRARY')}
-          className={`hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-lg border text-xs transition cursor-pointer whitespace-nowrap shrink-0 ${
+          className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs transition cursor-pointer whitespace-nowrap shrink-0 ${
             activeTab === 'LIBRARY'
               ? 'font-bold shadow-2xs'
               : 'hover:opacity-90'
@@ -253,13 +252,13 @@ export const Header: React.FC<HeaderProps> = ({
                 ? 'var(--accent-primary)'
                 : 'var(--border-subtle)',
           }}
-          title={`当前执笔作品：《${novel.title}》 (${novel.currentWordCount.toLocaleString()} / ${novel.targetWordCount.toLocaleString()} 字) · 点击进入藏书阁切换作品`}
+          title={`当前执笔作品：《${novel.title}》 (${novel.currentWordCount.toLocaleString()} / ${novel.targetWordCount.toLocaleString()} 字) · 点击进入作品库切换作品`}
         >
           <span
             className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"
             aria-hidden="true"
           />
-          <span className="font-bold max-w-[110px] xl:max-w-[160px] truncate">
+          <span className="font-bold max-w-[110px] xl:max-w-[150px] truncate">
             《{novel.title}》
           </span>
           <span
@@ -278,14 +277,10 @@ export const Header: React.FC<HeaderProps> = ({
             {progressPercent}%
           </span>
         </button>
-      </div>
 
-      {/* ====================================================================
-          2. 中间区：四大创作研判域分段主控导航 (严格单行 + 双列宽幅下拉面板)
-      ==================================================================== */}
-      <div className="hidden lg:flex items-center justify-center gap-2 font-literary-sans shrink-0">
+        {/* 四大创作研判域分段主控导航 (紧贴左侧作品胶囊，消除空洞断层) */}
         <nav
-          className="flex items-center p-1 rounded-xl border text-xs shadow-2xs shrink-0"
+          className="hidden lg:flex items-center p-0.5 rounded-xl border text-xs shadow-2xs shrink-0 ml-1"
           style={{
             backgroundColor: 'var(--bg-card)',
             borderColor: 'var(--border-subtle)',
@@ -307,7 +302,7 @@ export const Header: React.FC<HeaderProps> = ({
                       setOpenDomainKey(group.key);
                     }
                   }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition font-medium cursor-pointer whitespace-nowrap shrink-0 ${
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition font-medium cursor-pointer whitespace-nowrap shrink-0 ${
                     isDomainActive
                       ? 'font-bold shadow-2xs'
                       : 'hover:opacity-85'
@@ -335,7 +330,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* 双列宽幅域级功能矩阵 (2-Column Wide MegaMenu) */}
                 {isOpen && (
                   <div
-                    className="absolute left-1/2 -translate-x-1/2 top-11 w-[540px] p-3 rounded-2xl border shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-xl"
+                    className="absolute left-0 top-10 w-[540px] p-3 rounded-2xl border shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-xl"
                     style={{
                       backgroundColor: 'var(--bg-surface)',
                       borderColor: 'var(--border-strong)',
@@ -442,53 +437,57 @@ export const Header: React.FC<HeaderProps> = ({
             );
           })}
         </nav>
+      </div>
 
-        {/* 核心双引擎快捷直达胶囊：多AI圆桌 + 全模态上下文 */}
-        <div
-          className="hidden xl:flex items-center gap-1.5 pl-2 border-l shrink-0"
-          style={{ borderColor: 'var(--border-subtle)' }}
-        >
+      {/* ====================================================================
+          2. 中部弹性区：IDE 级全模态指挥搜索舱 (Codex / Claude Code / Cursor 风格)
+      ==================================================================== */}
+      {onOpenCommandPalette && (
+        <div className="hidden xl:flex flex-1 max-w-md mx-2">
           <button
             type="button"
-            onClick={() => setActiveTab('AI_COUNCIL')}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs transition cursor-pointer whitespace-nowrap shrink-0 ${
-              activeTab === 'AI_COUNCIL'
-                ? 'border-indigo-500 bg-indigo-500/15 font-bold text-indigo-400'
-                : 'hover:border-indigo-500/40 hover:bg-indigo-500/10'
-            }`}
+            onClick={onOpenCommandPalette}
+            className="w-full px-3 py-1.5 rounded-xl border hover:opacity-95 transition text-xs font-literary-sans flex items-center justify-between gap-2 cursor-pointer shadow-2xs"
             style={{
               backgroundColor: 'var(--bg-card)',
-              borderColor:
-                activeTab === 'AI_COUNCIL' ? undefined : 'var(--border-subtle)',
+              borderColor: 'var(--border-subtle)',
+              color: 'var(--text-muted)',
             }}
-            title="多模型圆桌辩论与自由连线拓扑中枢"
+            title="打开全局指挥中心：搜索章节 / @挂载文件夹·图片·网页 / 执行斜杠指令 (Cmd+K)"
           >
-            <Network className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-            <span className="whitespace-nowrap">多AI圆桌</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('OMNI_CONTEXT')}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs transition cursor-pointer whitespace-nowrap shrink-0 ${
-              activeTab === 'OMNI_CONTEXT'
-                ? 'border-amber-500 bg-amber-500/15 font-bold text-amber-500'
-                : 'hover:border-amber-500/40 hover:bg-amber-500/10'
-            }`}
-            style={{
-              backgroundColor: 'var(--bg-card)',
-              borderColor:
-                activeTab === 'OMNI_CONTEXT'
-                  ? undefined
-                  : 'var(--border-subtle)',
-            }}
-            title="全模态多源上下文中枢 (读取本地文件夹/多段链接/图片/文档)"
-          >
-            <FolderOpen className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-            <span className="whitespace-nowrap">全模态挂载</span>
+            <div className="flex items-center gap-2 min-w-0 truncate">
+              <Compass
+                className="w-3.5 h-3.5 shrink-0"
+                style={{ color: 'var(--accent-primary)' }}
+              />
+              <span className="truncate">
+                搜索章节、@挂载文件夹/图片/链接、/召唤 Agent 指令...
+              </span>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <span
+                className="text-[10px] px-1.5 py-0.2 rounded font-mono"
+                style={{
+                  backgroundColor: 'var(--accent-surface)',
+                  color: 'var(--accent-primary)',
+                }}
+              >
+                @Omni
+              </span>
+              <kbd
+                className="text-[10px] font-mono px-1.5 py-0.2 rounded border"
+                style={{
+                  backgroundColor: 'var(--bg-canvas)',
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--text-muted)',
+                }}
+              >
+                ⌘K
+              </kbd>
+            </div>
           </button>
         </div>
-      </div>
+      )}
 
       {/* ====================================================================
           3. 移动端/平板端响应式中枢触发器
@@ -497,7 +496,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           type="button"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-literary-sans cursor-pointer whitespace-nowrap"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-literary-sans cursor-pointer whitespace-nowrap"
           style={{
             backgroundColor: 'var(--bg-card)',
             borderColor: 'var(--border-subtle)',
@@ -513,15 +512,15 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* ====================================================================
-          4. 右侧区：全局穿梭 (⌘K) + 场次百宝箱 + 主题色盘 + 工程中枢 (全部严格单行)
+          4. 右侧区：多模态模型引擎路由状态 + 场次辅助 + 主题 + 工程中枢
       ==================================================================== */}
       <div className="flex items-center gap-1.5 shrink-0">
-        {/* 全局穿梭指挥官 (Cmd+K) */}
+        {/* 小屏下的 Cmd+K 按钮 */}
         {onOpenCommandPalette && (
           <button
             type="button"
             onClick={onOpenCommandPalette}
-            className="px-2.5 py-1.5 rounded-lg border hover:opacity-85 transition text-xs font-literary-sans flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+            className="xl:hidden px-2.5 py-1 rounded-lg border hover:opacity-85 transition text-xs font-literary-sans flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
             style={{
               backgroundColor: 'var(--bg-card)',
               borderColor: 'var(--border-subtle)',
@@ -532,7 +531,6 @@ export const Header: React.FC<HeaderProps> = ({
               className="w-3.5 h-3.5 shrink-0"
               style={{ color: 'var(--accent-primary)' }}
             />
-            <span className="hidden md:inline whitespace-nowrap">穿梭</span>
             <kbd
               className="text-[10px] font-mono px-1 py-0.2 rounded border"
               style={{
@@ -545,6 +543,37 @@ export const Header: React.FC<HeaderProps> = ({
             </kbd>
           </button>
         )}
+
+        {/* 多模态模型网关直达胶囊 (Codex / Claude Code / ChatGPT 4o / DeepSeek 路由) */}
+        <button
+          type="button"
+          onClick={() => setActiveTab('MODEL_HUB')}
+          className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs transition cursor-pointer whitespace-nowrap shrink-0 ${
+            activeTab === 'MODEL_HUB'
+              ? 'font-bold shadow-2xs'
+              : 'hover:opacity-90'
+          }`}
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            borderColor:
+              activeTab === 'MODEL_HUB'
+                ? 'var(--accent-primary)'
+                : 'var(--border-subtle)',
+          }}
+          title="点击管理多提供商模型路由矩阵 (支持 Claude Code / ChatGPT 4o Vision / Codex / DeepSeek R1 / WorkBuddy)"
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          <span className="font-medium">全模态引擎</span>
+          <span
+            className="text-[10px] font-mono px-1.5 py-0.2 rounded hidden 2xl:inline"
+            style={{
+              backgroundColor: 'var(--accent-surface)',
+              color: 'var(--accent-primary)',
+            }}
+          >
+            Vision·Repo·Web
+          </span>
+        </button>
 
         {/* 聚合【场次百宝箱】下拉菜单 (收纳上帝视角 / 登场人物 / 东方取名·快捷键 / 禅定模式，彻底解决顶栏拥挤) */}
         <div className="relative shrink-0">
