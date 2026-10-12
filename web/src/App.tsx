@@ -8,7 +8,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { NovelProvider, useNovel } from './context/NovelContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { Header, NavTab, DOMAIN_GROUPS, getNavItemMeta } from './components/Header';
-import { WorkspaceTabBar } from './components/common/WorkspaceTabBar';
+import { WorkspaceTabBar, WORKSPACE_PRESETS } from './components/common/WorkspaceTabBar';
+import { CrossViewTeleportPayload, WorkspacePresetId } from './types/novel';
 import { LibraryView } from './components/library/LibraryView';
 import { ArchitectView } from './components/architect/ArchitectView';
 import { StudioView } from './components/studio/StudioView';
@@ -82,6 +83,7 @@ const AppContent: React.FC = () => {
   const [activeTab, setActiveTabState] = useState<NavTab>(initialTab);
   const [historyStack, setHistoryStack] = useState<NavTab[]>([initialTab]);
   const [historyIndex, setHistoryIndex] = useState<number>(0);
+  const [teleportContext, setTeleportContext] = useState<CrossViewTeleportPayload | null>(null);
 
   const [pinnedTabs, setPinnedTabs] = useState<NavTab[]>(DEFAULT_PINNED_TABS);
   const [openTabs, setOpenTabs] = useState<NavTab[]>(() => {
@@ -96,13 +98,25 @@ const AppContent: React.FC = () => {
   const [isGodsEyeOpen, setIsGodsEyeOpen] = useState(false);
   const [isInSceneOpen, setIsInSceneOpen] = useState(false);
 
-  // Unified navigation handler with history stack + open tab dock + URL hash sync
+  // Unified navigation handler with history stack + open tab dock + URL hash sync + teleport payload
   const navigateToTab = useCallback(
-    (nextTab: NavTab, options?: { skipHistoryPush?: boolean }) => {
+    (
+      nextTab: NavTab,
+      optionsOrPayload?: { skipHistoryPush?: boolean } | CrossViewTeleportPayload
+    ) => {
       setActiveTabState(nextTab);
       setOpenTabs((prev) => (prev.includes(nextTab) ? prev : [...prev, nextTab]));
 
-      if (!options?.skipHistoryPush) {
+      if (optionsOrPayload && 'targetTab' in optionsOrPayload) {
+        setTeleportContext(optionsOrPayload);
+      }
+
+      const skipHistoryPush =
+        optionsOrPayload && 'skipHistoryPush' in optionsOrPayload
+          ? optionsOrPayload.skipHistoryPush
+          : false;
+
+      if (!skipHistoryPush) {
         setHistoryStack((prev) => {
           const sliced = prev.slice(0, historyIndex + 1);
           if (sliced[sliced.length - 1] === nextTab) return sliced;
@@ -118,6 +132,17 @@ const AppContent: React.FC = () => {
       }
     },
     [historyIndex]
+  );
+
+  const handleApplyPreset = useCallback(
+    (presetId: WorkspacePresetId) => {
+      const preset = WORKSPACE_PRESETS[presetId];
+      if (!preset) return;
+      setPinnedTabs(preset.tabs);
+      setOpenTabs(preset.tabs);
+      navigateToTab(preset.defaultTab);
+    },
+    [navigateToTab]
   );
 
   const canGoBack = historyIndex > 0;
@@ -190,7 +215,7 @@ const AppContent: React.FC = () => {
     };
   }, [activeTab, navigateToTab]);
 
-  // Global keyboard shortcuts: Cmd+K (Command Palette), Alt+Left (Back), Alt+Right (Forward)
+  // Global keyboard shortcuts: Cmd+K (Command Palette), Alt+Left (Back), Alt+Right (Forward), Alt+1..9 (Tab Quick-Dial)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -202,11 +227,17 @@ const AppContent: React.FC = () => {
       } else if (e.altKey && e.key === 'ArrowRight') {
         e.preventDefault();
         handleGoForward();
+      } else if (e.altKey && /^[1-9]$/.test(e.key)) {
+        const idx = Number(e.key) - 1;
+        if (openTabs[idx]) {
+          e.preventDefault();
+          navigateToTab(openTabs[idx]);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleGoBack, handleGoForward]);
+  }, [handleGoBack, handleGoForward, openTabs, navigateToTab]);
 
   const previousTabTitle = canGoBack
     ? getNavItemMeta(historyStack[historyIndex - 1]).item?.title
@@ -243,6 +274,9 @@ const AppContent: React.FC = () => {
         canGoForward={canGoForward}
         previousTabTitle={previousTabTitle}
         nextTabTitle={nextTabTitle}
+        teleportContext={teleportContext}
+        onClearTeleportContext={() => setTeleportContext(null)}
+        onApplyPreset={handleApplyPreset}
         onSelectTab={navigateToTab}
         onCloseTab={handleCloseTab}
         onTogglePinTab={handleTogglePinTab}
@@ -274,7 +308,7 @@ const AppContent: React.FC = () => {
         {activeTab === 'WORKFLOW' && <WorkflowOrchestratorView />}
         {activeTab === 'PROGRESS_PULSE' && <ProgressPulseView onNavigateTab={navigateToTab} />}
         {activeTab === 'DUNGEONS' && <DungeonArcTrajectoryView />}
-        {activeTab === 'CHARACTERS' && <CharacterView />}
+        {activeTab === 'CHARACTERS' && <CharacterView onNavigateTab={navigateToTab} />}
         {activeTab === 'RELATIONS' && <CharacterRelationGraph />}
         {activeTab === 'TIMELINE' && <TimelineMatrixView onNavigateTab={navigateToTab} />}
         {activeTab === 'TENSION' && <TensionCurveView onNavigateTab={navigateToTab} />}
@@ -285,7 +319,7 @@ const AppContent: React.FC = () => {
         {activeTab === 'PRODUCTIVITY' && <ProductivityHeatmap />}
         {activeTab === 'CLINIC' && <GoldenThreeChaptersClinic />}
         {activeTab === 'PLUGINS' && <WorkflowPluginHub />}
-        {activeTab === 'LORE' && <LoreView />}
+        {activeTab === 'LORE' && <LoreView onNavigateTab={navigateToTab} />}
         {activeTab === 'MCP' && <McpInspectorView />}
       </div>
 

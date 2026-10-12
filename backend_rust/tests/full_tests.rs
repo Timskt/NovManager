@@ -1564,5 +1564,100 @@ async fn test_sparks_skill_vault_and_autopilot_engines() {
     assert!(seg.quality_score >= 90);
 }
 
+#[tokio::test]
+async fn test_memory_token_anti_hallucination_and_navigation_30x30() {
+    let app = setup_test_app();
+
+    // 1. POST /api/memory/consolidate
+    let cons_req = json!({
+        "novelId": "nov-001",
+        "rawPrompt": "请你作为一名经验丰富的网文大神作家，一定要特别注意千万不要忘记林越当前仅为筑基初期！",
+        "tokenBudget": 1600
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/memory/consolidate")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&cons_req).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let cons_val: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert!(cons_val["savedTokens"].as_u64().unwrap() > 500);
+    assert!(cons_val["compressionRatioPercent"].as_u64().unwrap() >= 50);
+
+    // 2. POST /api/memory/audit-hallucinations
+    let audit_req = json!({
+        "draftText": "林越虽是筑基初期，却猛然元婴出窍，掏出早已燃尽的血遁千里符，此时青云老祖真身降临！",
+        "protagonistName": "林越",
+        "currentRealm": "筑基初期"
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/memory/audit-hallucinations")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&audit_req).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let audit_val: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(audit_val["findingsCount"].as_u64().unwrap(), 3);
+    assert!(!audit_val["sanitizedDraft"].as_str().unwrap().contains("元婴出窍"));
+
+    // 3. POST /api/navigation/entity-links
+    let links_req = json!({
+        "novelId": "nov-001",
+        "draftText": "林越握紧断剑，在太虚古渊底部凝视着玄天宗遗迹。"
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/navigation/entity-links")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&links_req).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let links_val: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert!(links_val["linksCount"].as_u64().unwrap() >= 2);
+
+    // 4. GET /api/memory/blueprint-30x30
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/api/memory/blueprint-30x30")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let bp_val: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(bp_val["totalFeatures"].as_u64().unwrap(), 30);
+    assert_eq!(bp_val["totalArchitectures"].as_u64().unwrap(), 30);
+    assert_eq!(bp_val["items"].as_array().unwrap().len(), 30);
+}
+
+
 
 

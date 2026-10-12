@@ -20,7 +20,13 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-export const CharacterView: React.FC = () => {
+import { NavTab } from '../Header';
+
+interface CharacterViewProps {
+  onNavigateTab?: (tab: NavTab) => void;
+}
+
+export const CharacterView: React.FC<CharacterViewProps> = ({ onNavigateTab }) => {
   const {
     characters,
     characterStates,
@@ -255,14 +261,53 @@ export const CharacterView: React.FC = () => {
             </p>
           </div>
 
-          <button
-            onClick={handleOpenAddModal}
-            className="px-3.5 py-2 text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center gap-1.5"
-            style={{ backgroundColor: 'var(--accent-primary)' }}
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>新增登场人物</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {onNavigateTab && (
+              <>
+                <button
+                  onClick={() => onNavigateTab('MEMORY_GUARD')}
+                  className="px-3 py-2 text-xs font-semibold rounded-xl border transition flex items-center gap-1.5 hover:bg-emerald-500/10"
+                  style={{
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>防幻觉生死/境界锁 ↗</span>
+                </button>
+                <button
+                  onClick={() => onNavigateTab('RELATIONS')}
+                  className="px-3 py-2 text-xs font-semibold rounded-xl border transition flex items-center gap-1.5 hover:bg-indigo-500/10"
+                  style={{
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
+                >
+                  <HeartHandshake className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>关系图谱 ↗</span>
+                </button>
+                <button
+                  onClick={() => onNavigateTab('STUDIO')}
+                  className="px-3 py-2 text-xs font-semibold rounded-xl border transition flex items-center gap-1.5 hover:bg-amber-500/10"
+                  style={{
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
+                >
+                  <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+                  <span>返回创作台 ↗</span>
+                </button>
+              </>
+            )}
+            <button
+              onClick={handleOpenAddModal}
+              className="px-3.5 py-2 text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center gap-1.5"
+              style={{ backgroundColor: 'var(--accent-primary)' }}
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>新增登场人物</span>
+            </button>
+          </div>
         </div>
 
         {/* 主体分栏：左侧角色卡选择，右侧详情与状态机 */}

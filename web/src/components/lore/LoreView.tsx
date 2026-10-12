@@ -18,7 +18,13 @@ import {
   BookOpen,
 } from 'lucide-react';
 
-export const LoreView: React.FC = () => {
+import { NavTab } from '../Header';
+
+interface LoreViewProps {
+  onNavigateTab?: (tab: NavTab) => void;
+}
+
+export const LoreView: React.FC<LoreViewProps> = ({ onNavigateTab }) => {
   const { worldSettings, addWorldSetting, deleteWorldSetting } = useNovel();
   const [selectedCat, setSelectedCat] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,14 +102,53 @@ export const LoreView: React.FC = () => {
             </p>
           </div>
 
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="px-3.5 py-2 text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center gap-1.5"
-            style={{ backgroundColor: 'var(--accent-primary)' }}
-          >
-            <Plus className="w-4 h-4" />
-            <span>新建法则设定</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {onNavigateTab && (
+              <>
+                <button
+                  onClick={() => onNavigateTab('MEMORY_GUARD')}
+                  className="px-3 py-2 text-xs font-semibold rounded-xl border transition flex items-center gap-1.5 hover:bg-emerald-500/10"
+                  style={{
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
+                >
+                  <Shield className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>设为 L4 铁律防幻觉锚点 ↗</span>
+                </button>
+                <button
+                  onClick={() => onNavigateTab('MAP')}
+                  className="px-3 py-2 text-xs font-semibold rounded-xl border transition flex items-center gap-1.5 hover:bg-indigo-500/10"
+                  style={{
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
+                >
+                  <MapPin className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>疆域地图 ↗</span>
+                </button>
+                <button
+                  onClick={() => onNavigateTab('STUDIO')}
+                  className="px-3 py-2 text-xs font-semibold rounded-xl border transition flex items-center gap-1.5 hover:bg-amber-500/10"
+                  style={{
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
+                >
+                  <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+                  <span>返回创作台 ↗</span>
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="px-3.5 py-2 text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center gap-1.5"
+              style={{ backgroundColor: 'var(--accent-primary)' }}
+            >
+              <Plus className="w-4 h-4" />
+              <span>新建法则设定</span>
+            </button>
+          </div>
         </div>
 
         {/* 筛选与搜索 */}

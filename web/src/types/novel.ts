@@ -823,5 +823,100 @@ export interface HallucinationAuditReport {
   timestamp: string;
 }
 
+// ==============================================================================
+// 10. 进阶省 Token 记忆归档、道具守恒账本与全站智能超链穿梭 (30x30 Expansion Types)
+// ==============================================================================
 
+export type MemoryConsolidationTemperature = 'HOT_ACTIVE' | 'WARM_DIGEST' | 'COLD_ARCHIVE';
 
+export interface ChapterMemoryConsolidationItem {
+  chapterId: string;
+  chapterIndex: number;
+  chapterTitle: string;
+  temperature: MemoryConsolidationTemperature;
+  rawWordCount: number;
+  rawTokens: number;
+  consolidatedTokens: number;
+  savingPercent: number;
+  consolidatedPayload: string;
+  causalKeyEvents: string[];
+}
+
+export type EntityPruningDecision =
+  | 'RECALLED_IN_SCENE'
+  | 'PRUNED_IRRELEVANT'
+  | 'PINNED_BY_AUTHOR'
+  | 'MUTED_BY_AUTHOR';
+
+export interface EntityPruningRecord {
+  entityId: string;
+  entityName: string;
+  entityType: 'CHARACTER' | 'LORE' | 'FORESHADOWING' | 'SKILL';
+  targetTab: string;
+  decision: EntityPruningDecision;
+  relevanceScore: number;
+  reason: string;
+  rawTokens: number;
+  tupleTokens: number;
+  tupleDslPreview: string;
+  stateDeltaPreview?: string;
+}
+
+export interface InventoryLedgerItem {
+  id: string;
+  itemName: string;
+  holderName: string;
+  category: 'ARTIFACT' | 'CONSUMABLE_PILL' | 'TALISMAN' | 'KEY_CLUE';
+  status: 'HELD_INTACT' | 'DAMAGED' | 'CONSUMED_DESTROYED' | 'LOST_STOLEN';
+  lastUpdatedChapter: number;
+  conservationConstraint: string;
+  forbiddenReusePhrases: string[];
+}
+
+export interface UnregisteredEntityCandidate {
+  id: string;
+  name: string;
+  inferredCategory: 'CHARACTER' | 'LORE' | 'ITEM' | 'LOCATION';
+  contextSnippet: string;
+  riskNote: string;
+  status: 'PENDING' | 'WHITELISTED' | 'BLOCKED';
+}
+
+export interface SmartEntityLinkMatch {
+  id: string;
+  entityName: string;
+  category: 'CHARACTER' | 'LORE' | 'FORESHADOWING' | 'SKILL';
+  targetTab: string;
+  occurrencesCount: number;
+  summary: string;
+  backlinkChapters: { chapterId: string; chapterIndex: number; chapterTitle: string }[];
+}
+
+export interface CrossViewTeleportPayload {
+  sourceTab: string;
+  sourceTitle: string;
+  targetTab: string;
+  entityName?: string;
+  chapterId?: string;
+  sceneIndex?: number;
+  contextSummary: string;
+  timestamp: string;
+}
+
+export type WorkspacePresetId =
+  | 'WRITING_FLOW'
+  | 'MEMORY_AUDIT'
+  | 'WORLD_BUILDING'
+  | 'LAZY_AUTOPILOT';
+
+export interface Architecture30BlueprintItem {
+  index: number;
+  pillar: 'MEMORY_TOKEN' | 'ANTI_HALLUCINATION' | 'HYPER_NAVIGATION';
+  featureCode: string;
+  featureTitle: string;
+  architectureCode: string;
+  architectureTitle: string;
+  architectureMechanism: string;
+  tokenSavingOrUxImpact: string;
+  jumpTargetTab: string;
+}

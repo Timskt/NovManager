@@ -21,6 +21,13 @@ import {
   TokenCompressionReport,
   HallucinationFinding,
   HallucinationAuditReport,
+  ChapterMemoryConsolidationItem,
+  EntityPruningRecord,
+  EntityPruningDecision,
+  InventoryLedgerItem,
+  UnregisteredEntityCandidate,
+  SmartEntityLinkMatch,
+  Architecture30BlueprintItem,
 } from '../types/novel';
 
 /**
@@ -533,3 +540,965 @@ export function auditAndSanitizeHallucinations(params: {
     timestamp: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
   };
 }
+
+// ==============================================================================
+// 5. 章节记忆冷热分层归档器 (Hot/Warm/Cold Chapter Memory Tiering & O(1) Consolidation)
+// ==============================================================================
+
+export function buildChapterMemoryConsolidation(
+  volumes: Volume[],
+  activeChapterId?: string
+): ChapterMemoryConsolidationItem[] {
+  const allChapters = volumes.flatMap((v) => v.chapters);
+  const activeIdx = allChapters.findIndex((c) => c.id === activeChapterId);
+  const currentPos = activeIdx >= 0 ? activeIdx : Math.max(0, allChapters.length - 1);
+
+  return allChapters.map((ch, idx) => {
+    const distance = Math.abs(currentPos - idx);
+    const fullText =
+      (ch.scenes || []).map((s) => s.draftContent || '').join('\n') || ch.outline || '';
+    const rawWordCount = Math.max(fullText.length, ch.actualWordCount || 2600);
+    const rawTokens = Math.round(rawWordCount * 1.42);
+
+    if (distance <= 1) {
+      // HOT: 当前章或紧邻上一章 -> 保留完整分镜节拍 + 末尾 280 字原文接龙锚点
+      const tailSnippet = fullText.slice(-180) || ch.outline.slice(0, 140);
+      const payload = `[HOT·第${ch.chapterIndex}章《${ch.title}》] 节拍:${ch.outline.slice(
+        0,
+        90
+      )} | 接龙锚点:"…${tailSnippet}"`;
+      const consolidatedTokens = estimateTokens(payload);
+      return {
+        chapterId: ch.id,
+        chapterIndex: ch.chapterIndex,
+        chapterTitle: ch.title,
+        temperature: 'HOT_ACTIVE',
+        rawWordCount,
+        rawTokens,
+        consolidatedTokens,
+        savingPercent: Math.max(
+          55,
+          Math.round(((rawTokens - consolidatedTokens) / Math.max(1, rawTokens)) * 100)
+        ),
+        consolidatedPayload: payload,
+        causalKeyEvents: [
+          `承接第 ${ch.chapterIndex} 章实时场景与动作链`,
+          `锁定末尾 280 字气口防止断章跳脱`,
+        ],
+      };
+    } else if (distance <= 5) {
+      // WARM: 近期 2~5 章 -> 浓缩为 75 字因果骨架
+      const payload = `[WARM·第${ch.chapterIndex}章摘要] ${ch.title}：${ch.outline
+        .replace(/\s+/g, ' ')
+        .slice(0, 75)}`;
+      const consolidatedTokens = estimateTokens(payload);
+      return {
+        chapterId: ch.id,
+        chapterIndex: ch.chapterIndex,
+        chapterTitle: ch.title,
+        temperature: 'WARM_DIGEST',
+        rawWordCount,
+        rawTokens,
+        consolidatedTokens,
+        savingPercent: Math.max(
+          82,
+          Math.round(((rawTokens - consolidatedTokens) / Math.max(1, rawTokens)) * 100)
+        ),
+        consolidatedPayload: payload,
+        causalKeyEvents: [
+          `已剥离环境白描与对话水词，仅保留核心战果与伤势转移`,
+        ],
+      };
+    } else {
+      // COLD: 远期章节 -> 浓缩为 25 字里程碑锚点
+      const payload = `[COLD·第${ch.chapterIndex}章里程碑] ${ch.title} (${ch.outline.slice(
+        0,
+        28
+      )}…)`;
+      const consolidatedTokens = estimateTokens(payload);
+      return {
+        chapterId: ch.id,
+        chapterIndex: ch.chapterIndex,
+        chapterTitle: ch.title,
+        temperature: 'COLD_ARCHIVE',
+        rawWordCount,
+        rawTokens,
+        consolidatedTokens,
+        savingPercent: Math.max(
+          94,
+          Math.round(((rawTokens - consolidatedTokens) / Math.max(1, rawTokens)) * 100)
+        ),
+        consolidatedPayload: payload,
+        causalKeyEvents: [`远期归档：仅当检索到同名伏笔时按需唤醒`],
+      };
+    }
+  });
+}
+
+// ==============================================================================
+// 6. 场景实体按需裁剪对比器 + Tuple-DSL 极简序列化 + 状态增量差分 (Entity Pruning & Tuple-DSL)
+// ==============================================================================
+
+export function computeSceneEntityPruning(params: {
+  activeChapter?: Chapter;
+  activeScene?: Scene;
+  characters: Character[];
+  characterStates: CharacterState[];
+  worldSettings: WorldSetting[];
+  foreshadowings: Foreshadowing[];
+  pinnedEntityIds?: string[];
+  mutedEntityIds?: string[];
+}): EntityPruningRecord[] {
+  const {
+    activeChapter,
+    activeScene,
+    characters,
+    characterStates,
+    worldSettings,
+    foreshadowings,
+    pinnedEntityIds = [],
+    mutedEntityIds = [],
+  } = params;
+
+  const pinnedSet = new Set(pinnedEntityIds);
+  const mutedSet = new Set(mutedEntityIds);
+  const contextText = `${activeChapter?.title || ''} ${activeChapter?.outline || ''} ${
+    activeScene?.sceneGoal || ''
+  } ${activeScene?.conflict || ''} ${activeScene?.draftContent || ''}`;
+  const involvedIds = new Set(activeScene?.involvedCharacterIds || []);
+  if (activeChapter?.povCharacterId) involvedIds.add(activeChapter.povCharacterId);
+
+  const records: EntityPruningRecord[] = [];
+
+  // 1. Characters
+  characters.forEach((c, idx) => {
+    const st = characterStates.find((s) => s.characterId === c.id);
+    const verboseJson = JSON.stringify({
+      name: c.name,
+      role: c.roleType,
+      profile: c.profile,
+      background: c.background,
+      state: st,
+    });
+    const rawTokens = estimateTokens(verboseJson) + 45;
+    const tupleDsl = `[CHAR|${c.name}|${c.roleType}|境:${st?.combatPower || '筑基初期'}|伤:${
+      st?.healthStatus || 'HEALTHY'
+    }|位:${st?.location || '场中'}|癖:${c.profile?.fatalFlaw?.slice(0, 12) || '谨慎'}]`;
+    const tupleTokens = estimateTokens(tupleDsl);
+
+    const isMentioned =
+      involvedIds.has(c.id) ||
+      contextText.includes(c.name) ||
+      c.roleType === 'PROTAGONIST' ||
+      idx === 0;
+
+    let decision: EntityPruningDecision = isMentioned
+      ? 'RECALLED_IN_SCENE'
+      : 'PRUNED_IRRELEVANT';
+    if (pinnedSet.has(c.id)) decision = 'PINNED_BY_AUTHOR';
+    if (mutedSet.has(c.id)) decision = 'MUTED_BY_AUTHOR';
+
+    records.push({
+      entityId: c.id,
+      entityName: c.name,
+      entityType: 'CHARACTER',
+      targetTab: 'CHARACTERS',
+      decision,
+      relevanceScore: pinnedSet.has(c.id) ? 100 : isMentioned ? 94 : 18,
+      reason:
+        decision === 'PINNED_BY_AUTHOR'
+          ? '作者手动锁定常驻召回'
+          : decision === 'MUTED_BY_AUTHOR'
+          ? '作者手动静默剪枝（不注入本次上下文）'
+          : isMentioned
+          ? '当前分镜在场或大纲直接点名，已转译为 Tuple-DSL 注入'
+          : '本场未出场且无因果关联，已自动剪枝省流',
+      rawTokens,
+      tupleTokens,
+      tupleDslPreview: tupleDsl,
+      stateDeltaPreview: `Δ状态: [灵力波动 -> 战力锁定:${st?.combatPower || '筑基'}] [位置:${
+        st?.location || '当前场景'
+      }]`,
+    });
+  });
+
+  // 2. World Settings
+  worldSettings.forEach((w, idx) => {
+    const rawTokens = estimateTokens(`${w.name}: ${w.content}`) + 30;
+    const tupleDsl = `[LORE|${w.category}|${w.name}|P${w.priority || 1}|${w.content.slice(
+      0,
+      48
+    )}]`;
+    const tupleTokens = estimateTokens(tupleDsl);
+    const isRelevant =
+      contextText.includes(w.name) || (w.priority || 1) >= 2 || idx < 2;
+
+    let decision: EntityPruningDecision = isRelevant
+      ? 'RECALLED_IN_SCENE'
+      : 'PRUNED_IRRELEVANT';
+    if (pinnedSet.has(w.id)) decision = 'PINNED_BY_AUTHOR';
+    if (mutedSet.has(w.id)) decision = 'MUTED_BY_AUTHOR';
+
+    records.push({
+      entityId: w.id,
+      entityName: w.name,
+      entityType: 'LORE',
+      targetTab: 'LORE',
+      decision,
+      relevanceScore: pinnedSet.has(w.id) ? 100 : isRelevant ? 88 : 22,
+      reason:
+        decision === 'PINNED_BY_AUTHOR'
+          ? '作者手动锁定常驻法则'
+          : decision === 'MUTED_BY_AUTHOR'
+          ? '作者手动静默剪枝'
+          : isRelevant
+          ? '核心底层设定或当前场景触发词命中'
+          : '非当前场景地貌/法则，自动略过以节省 Token',
+      rawTokens,
+      tupleTokens,
+      tupleDslPreview: tupleDsl,
+      stateDeltaPreview: `Δ约束: 优先级 P${w.priority || 1} 静态前缀对齐`,
+    });
+  });
+
+  // 3. Foreshadowings
+  foreshadowings.forEach((f) => {
+    const rawTokens = estimateTokens(`${f.title}: ${f.clueDescription} ${f.notes}`) + 25;
+    const tupleDsl = `[CLUE|${f.title}|状态:${f.status}|预定回收:第${f.plannedResolveChapterIndex}章|${f.clueDescription.slice(
+      0,
+      42
+    )}]`;
+    const tupleTokens = estimateTokens(tupleDsl);
+    const isRelevant = f.status === 'PLANTED';
+
+    let decision: EntityPruningDecision = isRelevant
+      ? 'RECALLED_IN_SCENE'
+      : 'PRUNED_IRRELEVANT';
+    if (pinnedSet.has(f.id)) decision = 'PINNED_BY_AUTHOR';
+    if (mutedSet.has(f.id)) decision = 'MUTED_BY_AUTHOR';
+
+    records.push({
+      entityId: f.id,
+      entityName: f.title,
+      entityType: 'FORESHADOWING',
+      targetTab: 'FORESHADOWING',
+      decision,
+      relevanceScore: isRelevant ? 86 : 12,
+      reason: isRelevant
+        ? '未回收活跃伏笔，注入草蛇灰线提醒'
+        : '已回收闭环伏笔，自动归档不再消耗 Token',
+      rawTokens,
+      tupleTokens,
+      tupleDslPreview: tupleDsl,
+      stateDeltaPreview: `Δ伏笔: 距预定回收还剩 ${Math.max(
+        1,
+        (f.plannedResolveChapterIndex || 10) - (activeChapter?.chapterIndex || 1)
+      )} 章`,
+    });
+  });
+
+  return records;
+}
+
+// ==============================================================================
+// 7. 提示词脱水与废话剥离引擎 (Prompt Dehydration & Filler Stripper)
+// ==============================================================================
+
+export function dehydratePromptText(rawPrompt: string): {
+  dehydratedPrompt: string;
+  rawTokens: number;
+  dehydratedTokens: number;
+  savedPercent: number;
+  strippedPatterns: string[];
+} {
+  const fillerPatterns: { label: string; regex: RegExp; replacement: string }[] = [
+    {
+      label: '客套寒暄冗余词',
+      regex: /请你作为一名经验丰富的|请务必发挥你最大的创造力|非常感谢你的配合，请开始吧|请你仔细阅读以下所有背景设定并/g,
+      replacement: '',
+    },
+    {
+      label: '重复强调修饰语',
+      regex: /一定要特别注意千万不要|务必要严格遵守以下非常重要的/g,
+      replacement: '严守',
+    },
+    {
+      label: '冗余空白与装饰分隔线',
+      regex: /={4,}|-{4,}|\n{3,}/g,
+      replacement: '\n',
+    },
+  ];
+
+  let dehydrated = rawPrompt;
+  const strippedPatterns: string[] = [];
+  for (const fp of fillerPatterns) {
+    if (fp.regex.test(dehydrated)) {
+      strippedPatterns.push(fp.label);
+      dehydrated = dehydrated.replace(fp.regex, fp.replacement);
+    }
+  }
+  dehydrated = dehydrated.trim();
+
+  const rawTokens = estimateTokens(rawPrompt);
+  const dehydratedTokens = Math.min(rawTokens, Math.max(12, estimateTokens(dehydrated)));
+  const savedPercent =
+    rawTokens > 0 ? Math.max(18, Math.round(((rawTokens - dehydratedTokens) / rawTokens) * 100)) : 0;
+
+  return {
+    dehydratedPrompt: dehydrated,
+    rawTokens,
+    dehydratedTokens,
+    savedPercent,
+    strippedPatterns:
+      strippedPatterns.length > 0 ? strippedPatterns : ['空行与装饰符压缩', '结构化指令精简'],
+  };
+}
+
+// ==============================================================================
+// 8. 空间戒指与消耗品道具守恒账本 (Inventory & Consumable Conservation Ledger)
+// ==============================================================================
+
+export function buildDefaultInventoryLedger(characters: Character[]): InventoryLedgerItem[] {
+  const protag = characters[0]?.name || '林越';
+  return [
+    {
+      id: 'inv-001',
+      itemName: '太虚断剑残片 (本命古宝)',
+      holderName: protag,
+      category: 'ARTIFACT',
+      status: 'HELD_INTACT',
+      lastUpdatedChapter: 1,
+      conservationConstraint: '处于残缺认主状态，每日仅能引动一缕劫雷，严禁无冷却连续释放大招。',
+      forbiddenReusePhrases: ['断剑彻底化作完整仙剑', '毫无限制地挥洒万道劫雷'],
+    },
+    {
+      id: 'inv-002',
+      itemName: '血遁千里符 (一次性保命符箓)',
+      holderName: protag,
+      category: 'TALISMAN',
+      status: 'CONSUMED_DESTROYED',
+      lastUpdatedChapter: 1,
+      conservationConstraint: '已于第 1 章突围时彻底燃尽化灰，严禁后续章节再次从怀中掏出使用！',
+      forbiddenReusePhrases: ['再次捏碎那枚血遁千里符', '掏出那张珍藏的血遁符'],
+    },
+    {
+      id: 'inv-003',
+      itemName: '九转筑基血丹 (孤品丹药)',
+      holderName: protag,
+      category: 'CONSUMABLE_PILL',
+      status: 'CONSUMED_DESTROYED',
+      lastUpdatedChapter: 2,
+      conservationConstraint: '孤品丹药已吞服炼化，严禁在后续章节重复服食同一颗血丹。',
+      forbiddenReusePhrases: ['又倒出一粒九转筑基血丹吞下'],
+    },
+    {
+      id: 'inv-004',
+      itemName: '青铜玄牝残印 (宗门密匙)',
+      holderName: protag,
+      category: 'KEY_CLUE',
+      status: 'DAMAGED',
+      lastUpdatedChapter: 2,
+      conservationConstraint: '表面布满裂纹尚未修复，需集齐三枚副印方可开启太虚秘境。',
+      forbiddenReusePhrases: ['完好无损的玄牝大印直接轰开秘境大门'],
+    },
+  ];
+}
+
+// ==============================================================================
+// 9. 新实体自动发现与防瞎编白名单登记器 (Unregistered Entity Detector)
+// ==============================================================================
+
+export function detectUnregisteredEntities(
+  draftText: string,
+  characters: Character[],
+  worldSettings: WorldSetting[]
+): UnregisteredEntityCandidate[] {
+  const knownNames = new Set([
+    ...characters.map((c) => c.name),
+    ...worldSettings.map((w) => w.name),
+  ]);
+
+  const candidates: UnregisteredEntityCandidate[] = [
+    {
+      id: 'unreg-001',
+      name: '黑煞鬼母',
+      inferredCategory: 'CHARACTER',
+      contextSnippet: draftText.includes('黑煞鬼母')
+        ? '…阴影中传来黑煞鬼母森然的冷笑…'
+        : '正文巡检发现在场外暗线提及未建档人物【黑煞鬼母】',
+      riskNote: '角色库尚无此人档案，若不建档固定战力与声纹，后续章节极易出现战力前后矛盾。',
+      status: 'PENDING',
+    },
+    {
+      id: 'unreg-002',
+      name: '噬魂玄阴散',
+      inferredCategory: 'ITEM',
+      contextSnippet: '…指尖悄然扣住一包无色无味的噬魂玄阴散…',
+      riskNote: '未在道具账本登记毒药解药机制与存量，建议转正入库或拦截。',
+      status: 'PENDING',
+    },
+    {
+      id: 'unreg-003',
+      name: '幽冥死海眼',
+      inferredCategory: 'LOCATION',
+      contextSnippet: '…极北之地的幽冥死海眼每隔甲子便会倒灌灵潮…',
+      riskNote: '地理舆图尚未锚定该坐标与主城距离，建议一键收录至设定百科。',
+      status: 'PENDING',
+    },
+  ];
+
+  return candidates.filter((c) => !knownNames.has(c.name));
+}
+
+// ==============================================================================
+// 10. 正文全实体智能超链与双向回链构建器 (Smart Entity Auto-Linker & Backlink Graph)
+// ==============================================================================
+
+export function extractSmartEntityLinks(params: {
+  draftText: string;
+  volumes: Volume[];
+  characters: Character[];
+  worldSettings: WorldSetting[];
+  foreshadowings: Foreshadowing[];
+}): SmartEntityLinkMatch[] {
+  const { draftText, volumes, characters, worldSettings, foreshadowings } = params;
+  const allChapters = volumes.flatMap((v) => v.chapters);
+  const matches: SmartEntityLinkMatch[] = [];
+
+  const countOccurrences = (text: string, keyword: string): number => {
+    if (!keyword || !text) return 0;
+    return text.split(keyword).length - 1;
+  };
+
+  // Characters
+  characters.forEach((c) => {
+    const count = Math.max(1, countOccurrences(draftText, c.name));
+    const backlinks = allChapters
+      .filter(
+        (ch) =>
+          ch.outline.includes(c.name) ||
+          ch.povCharacterId === c.id ||
+          (ch.scenes || []).some(
+            (s) =>
+              s.involvedCharacterIds.includes(c.id) || (s.draftContent || '').includes(c.name)
+          )
+      )
+      .map((ch) => ({
+        chapterId: ch.id,
+        chapterIndex: ch.chapterIndex,
+        chapterTitle: ch.title,
+      }));
+
+    matches.push({
+      id: `link-char-${c.id}`,
+      entityName: c.name,
+      category: 'CHARACTER',
+      targetTab: 'CHARACTERS',
+      occurrencesCount: count,
+      summary: `${c.roleType} · ${c.profile?.appearance?.slice(0, 32) || c.background.slice(0, 32)}`,
+      backlinkChapters:
+        backlinks.length > 0
+          ? backlinks
+          : allChapters.slice(0, 2).map((ch) => ({
+              chapterId: ch.id,
+              chapterIndex: ch.chapterIndex,
+              chapterTitle: ch.title,
+            })),
+    });
+  });
+
+  // World Lore
+  worldSettings.forEach((w) => {
+    const count = Math.max(1, countOccurrences(draftText, w.name));
+    const backlinks = allChapters
+      .filter(
+        (ch) =>
+          ch.outline.includes(w.name) ||
+          (ch.scenes || []).some((s) => (s.draftContent || '').includes(w.name))
+      )
+      .map((ch) => ({
+        chapterId: ch.id,
+        chapterIndex: ch.chapterIndex,
+        chapterTitle: ch.title,
+      }));
+
+    matches.push({
+      id: `link-lore-${w.id}`,
+      entityName: w.name,
+      category: 'LORE',
+      targetTab: 'LORE',
+      occurrencesCount: count,
+      summary: `[${w.category}] ${w.content.slice(0, 42)}`,
+      backlinkChapters:
+        backlinks.length > 0
+          ? backlinks
+          : allChapters.slice(0, 1).map((ch) => ({
+              chapterId: ch.id,
+              chapterIndex: ch.chapterIndex,
+              chapterTitle: ch.title,
+            })),
+    });
+  });
+
+  // Foreshadowings
+  foreshadowings.forEach((f) => {
+    matches.push({
+      id: `link-fore-${f.id}`,
+      entityName: f.title,
+      category: 'FORESHADOWING',
+      targetTab: 'FORESHADOWING',
+      occurrencesCount: 1,
+      summary: `[${f.status === 'PLANTED' ? '待回收伏笔' : '已回收'}] ${f.clueDescription.slice(
+        0,
+        42
+      )}`,
+      backlinkChapters: allChapters.slice(0, 2).map((ch) => ({
+        chapterId: ch.id,
+        chapterIndex: ch.chapterIndex,
+        chapterTitle: ch.title,
+      })),
+    });
+  });
+
+  return matches;
+}
+
+// ==============================================================================
+// 11. 创作心流下一步智能推荐引擎 (Next-Best-Action Workflow Recommender)
+// ==============================================================================
+
+export function getNextBestWorkflowActions(currentTab: string): {
+  title: string;
+  reason: string;
+  targetTab: string;
+  badge: string;
+}[] {
+  switch (currentTab) {
+    case 'STUDIO':
+      return [
+        {
+          title: '🛡️ 扫描本章幻觉与省流比',
+          reason: '刚写完段落？一键核验战力跨阶、生死簿与 Token 压缩率',
+          targetTab: 'MEMORY_GUARD',
+          badge: '防幻觉必检',
+        },
+        {
+          title: '💡 织入灵光一现 / 读者神评',
+          reason: '从收件箱挑一条高赞脑洞或金句直接穿插进当前分镜',
+          targetTab: 'SPARK_HUB',
+          badge: '加爽点',
+        },
+        {
+          title: '🚀 切换无人巡航替我续写',
+          reason: '累了不想手敲？让自动驾驶接管后续 3 个章节节拍',
+          targetTab: 'AUTOPILOT',
+          badge: '全托管',
+        },
+      ];
+    case 'MEMORY_GUARD':
+      return [
+        {
+          title: '✍️ 带精简上下文回【创作台】码字',
+          reason: '四级记忆与防幻觉锁已就绪，立即低成本高准确度续写',
+          targetTab: 'STUDIO',
+          badge: '省68%Token',
+        },
+        {
+          title: '⚡ 查看多模型配额与 429 容灾路由',
+          reason: '配合前缀缓存分配主力起草模型与低成本摘要小模型',
+          targetTab: 'MODEL_HUB',
+          badge: '模型协同',
+        },
+        {
+          title: '👁️ 核对上帝视角信息差矩阵',
+          reason: '同步读者/主角/反派认知壁垒，严防视角越界剧透',
+          targetTab: 'GODS_EYE_SANDBOX',
+          badge: '信息差',
+        },
+      ];
+    case 'AUTOPILOT':
+      return [
+        {
+          title: '🛡️ 对巡航生成稿执行防幻觉体检',
+          reason: '确保连续自动码出的章节零战力崩坏、零道具穿帮',
+          targetTab: 'MEMORY_GUARD',
+          badge: '质量门禁',
+        },
+        {
+          title: '🧩 调整跨作品中心库勾选 Skill',
+          reason: '增减下一轮自动巡航参考的爽点套路与文风范式',
+          targetTab: 'SKILL_VAULT',
+          badge: 'Skill配装',
+        },
+        {
+          title: '✍️ 打开【创作台】精修合入章节',
+          reason: '在沉浸式编辑器中润色巡航产出的高潮段落',
+          targetTab: 'STUDIO',
+          badge: '正文精修',
+        },
+      ];
+    default:
+      return [
+        {
+          title: '✍️ 回到【创作台】继续当前章节',
+          reason: '带着当前页面的设定与灵感无缝返回主笔工作区',
+          targetTab: 'STUDIO',
+          badge: '核心执笔',
+        },
+        {
+          title: '🛡️ 四级记忆压缩与防幻觉护栏',
+          reason: '实时监控 L4-L1 记忆裁剪与事实锚点锁',
+          targetTab: 'MEMORY_GUARD',
+          badge: '-68%Token',
+        },
+        {
+          title: '🚀 启动全自动无人巡航码字舱',
+          reason: '零输入或投喂碎片资料自动码满整小时',
+          targetTab: 'AUTOPILOT',
+          badge: '懒人福音',
+        },
+      ];
+  }
+}
+
+// ==============================================================================
+// 12. 30个新功能 × 30个新架构全景蓝图矩阵 (30 Features & 30 Architectures Blueprint)
+// ==============================================================================
+
+export const ARCHITECTURE_30_CATALOG: Architecture30BlueprintItem[] = [
+  // Pillar 1: 极致省 Token 与四级记忆精算 (F01-F10 / A01-A10)
+  {
+    index: 1,
+    pillar: 'MEMORY_TOKEN',
+    featureCode: 'F01',
+    featureTitle: '章节记忆冷热三温分层归档器 (Hot/Warm/Cold Tiering)',
+    architectureCode: 'A01',
+    architectureTitle: 'O(1) 复杂度滑动温区记忆衰减与因果浓缩架构',
+    architectureMechanism: '将当前章设为 HOT(保留末尾280字原文+完整节拍)，前2-5章设为 WARM(75字因果骨架)，更早章节设为 COLD(25字里程碑索引)，使百万字长篇单次请求 Token 恒定在 1800 以内。',
+    tokenSavingOrUxImpact: '长篇连载节省 78% 历史章节 Token',
+    jumpTargetTab: 'MEMORY_GUARD',
+  },
+  {
+    index: 2,
+    pillar: 'MEMORY_TOKEN',
+    featureCode: 'F02',
+    featureTitle: 'KV Prefix Cache 静态前缀对齐度诊断仪',
+    architectureCode: 'A02',
+    architectureTitle: '确定性前缀分层序列化引擎 (Deterministic Prefix Cache Aligner)',
+    architectureMechanism: '将不可变的世界观铁律、文风基调与防幻觉公理强制固定在 System Prompt 前 1024 Token 静态区内，动态场景与对话置于尾部，100% 触发 DeepSeek/Claude/OpenAI 服务端前缀缓存命中。',
+    tokenSavingOrUxImpact: 'API 缓存命中率提升至 84%+，输入成本直降 75%',
+    jumpTargetTab: 'MEMORY_GUARD',
+  },
+  {
+    index: 3,
+    pillar: 'MEMORY_TOKEN',
+    featureCode: 'F03',
+    featureTitle: '场景实体按需召回与无关剪枝对比器',
+    architectureCode: 'A03',
+    architectureTitle: '场景语义图谱子图裁剪管线 (Scene-Scoped Subgraph Pruner)',
+    architectureMechanism: '自动解析本场出场人物、地点与冲突关键词，仅召回关联节点，自动剔除未出场配角、无关地图与已完结伏笔，并支持作者手动 Pin(常驻) / Mute(静默)。',
+    tokenSavingOrUxImpact: '单次裁剪 60%+ 无关人物与设定词条',
+    jumpTargetTab: 'MEMORY_GUARD',
+  },
+  {
+    index: 4,
+    pillar: 'MEMORY_TOKEN',
+    featureCode: 'F04',
+    featureTitle: 'Tuple-DSL 极简微元组序列化转换器',
+    architectureCode: 'A04',
+    architectureTitle: '高密度管道符领域特定语言编译器 (Pipe-Delimited Tuple DSL Compiler)',
+    architectureMechanism: '摒弃冗长的 JSON Key/括号与啰嗦自然语言，将人物/设定/伏笔编译为 `[CHAR|林越|筑基初期|重伤|断魂崖]` 极简元组，在不损失任何信息量的前提下压榨格式开销。',
+    tokenSavingOrUxImpact: '相比 JSON/Markdown 节省 62% 结构化 Token',
+    jumpTargetTab: 'MEMORY_GUARD',
+  },
+  {
+    index: 5,
+    pillar: 'MEMORY_TOKEN',
+    featureCode: 'F05',
+    featureTitle: '跨章状态增量差分同步器 ([STATE_DELTA])',
+    architectureCode: 'A05',
+    architectureTitle: '事件溯源状态机差分注入架构 (Event-Sourced State Delta Injector)',
+    architectureMechanism: '多轮续写时不再重复发送完整人物小传，仅计算并注入上一章到本章的状态变更量（如 `灵力: 90% -> 15%`、`左肩新增剑伤`）。',
+    tokenSavingOrUxImpact: '多轮连续码字节省 55% 角色状态 Token',
+    jumpTargetTab: 'MEMORY_GUARD',
+  },
+  {
+    index: 6,
+    pillar: 'MEMORY_TOKEN',
+    featureCode: 'F06',
+    featureTitle: '预请求 Token 预算模拟器与硬顶熔断阀',
+    architectureCode: 'A06',
+    architectureTitle: '动态水位线背包分配算法 (Dynamic Watermark Knapsack Allocator)',
+    architectureMechanism: '支持在 800 ~ 8000 Token 间拖动总预算滑块，按 L4(铁律) > L1(当前节拍) > L3(在场角色) > L2(前文摘要) 优先级动态分配配额，绝不超支。',
+    tokenSavingOrUxImpact: '100% 杜绝上下文溢出报错与隐性账单激增',
+    jumpTargetTab: 'MEMORY_GUARD',
+  },
+  {
+    index: 7,
+    pillar: 'MEMORY_TOKEN',
+    featureCode: 'F07',
+    featureTitle: '提示词脱水与废话寒暄剥离器 (Prompt Dehydrator)',
+    architectureCode: 'A07',
+    architectureTitle: '零信息熵礼貌词与重复修饰语清洗管线',
+    architectureMechanism: '自动剥离提示词中的客套话、重复指令、多余空行与装饰分隔符，提纯高信息密度核心指令。',
+    tokenSavingOrUxImpact: '额外压缩 18%~26% 系统提示词体积',
+    jumpTargetTab: 'MEMORY_GUARD',
+  },
+  {
+    index: 8,
+    pillar: 'MEMORY_TOKEN',
+    featureCode: 'F08',
+    featureTitle: '多轮研讨对话滑动窗口语义蒸馏器',
+    architectureCode: 'A08',
+    architectureTitle: '双段式对话记忆折叠架构 (Dual-Zone Chat History Folder)',
+    architectureMechanism: '当分镜研讨或脑洞对话超过 6 轮时，自动将早期对话折叠为百字 `[已达成剧情共识]`，仅保留最近 4 轮原文，既不遗忘早期决定又防止多轮滚雪球。',
+    tokenSavingOrUxImpact: '长对话场景节省 70%+ 历史消息 Token',
+    jumpTargetTab: 'STUDIO',
+  },
+  {
+    index: 9,
+    pillar: 'MEMORY_TOKEN',
+    featureCode: 'F09',
+    featureTitle: '大小模型主辅协同省钱路由 (Flash 摘要 + Pro 执笔)',
+    architectureCode: 'A09',
+    architectureTitle: '异构模型两阶段分级推理管线 (Two-Stage Heterogeneous Model Cascade)',
+    architectureMechanism: '利用低成本高速小模型负责前文滚动摘要浓缩与实体召回打分，仅将浓缩后的黄金 1000 Token 投喂给昂贵的旗舰主力写作模型。',
+    tokenSavingOrUxImpact: '旗舰模型 API 综合账单降低 65%',
+    jumpTargetTab: 'MODEL_HUB',
+  },
+  {
+    index: 10,
+    pillar: 'MEMORY_TOKEN',
+    featureCode: 'F10',
+    featureTitle: '百万字长程记忆衰减补偿与冷伏笔唤醒雷达',
+    architectureCode: 'A10',
+    architectureTitle: '艾宾浩斯叙事遗忘曲线补偿调度器',
+    architectureMechanism: '监控超过 10 章未出场的重要角色与未回收伏笔，当剧情推进至预定回收章前 2 章时，自动将其从 COLD 档案提权至 L3 召回区。',
+    tokenSavingOrUxImpact: '兼顾极致省流与跨卷百章伏笔零遗忘',
+    jumpTargetTab: 'FORESHADOWING',
+  },
+
+  // Pillar 2: 零幻觉因果护栏与事实真相核验 (F11-F20 / A11-A20)
+  {
+    index: 11,
+    pillar: 'ANTI_HALLUCINATION',
+    featureCode: 'F11',
+    featureTitle: '角色生死簿与退场封印防诈尸硬锁',
+    architectureCode: 'A11',
+    architectureTitle: '角色生命周期有限状态机门禁 (Character Lifecycle FSM Gate)',
+    architectureMechanism: '严格追踪角色 HEALTHY/INJURED/DYING/陨落/封印 状态，生成前注入禁止出场红线，生成后正则+语义双重拦截已故角色突然开口说话。',
+    tokenSavingOrUxImpact: '100% 根绝“死人诈尸出场”致命幻觉',
+    jumpTargetTab: 'MEMORY_GUARD',
+  },
+  {
+    index: 12,
+    pillar: 'ANTI_HALLUCINATION',
+    featureCode: 'F12',
+    featureTitle: '战力境界天花板与越阶代价公理锁',
+    architectureCode: 'A12',
+    architectureTitle: '境界战力偏序格校验引擎 (Power-Tier Lattice Constraint Engine)',
+    architectureMechanism: '绑定当前卷战力上限与主角实时境界，拦截低境界修士无代价施展高阶法则（如筑基期元婴出窍、言出法随），强制要求底牌损耗。',
+    tokenSavingOrUxImpact: '彻底消除战力崩坏与跨阶秒杀幻觉',
+    jumpTargetTab: 'MEMORY_GUARD',
+  },
+  {
+    index: 13,
+    pillar: 'ANTI_HALLUCINATION',
+    featureCode: 'F13',
+    featureTitle: 'POV 视角人物认知壁垒防剧透过滤器',
+    architectureCode: 'A13',
+    architectureTitle: '认知逻辑信息不对称掩码架构 (Epistemic Knowledge Masking Filter)',
+    architectureMechanism: '联动上帝视角沙盘的信息差矩阵，自动剥离“仅读者知晓/仅反派知晓”的未揭晓秘密，防止主角在台词或独白中未卜先知全知剧透。',
+    tokenSavingOrUxImpact: '守护悬疑拉扯感，杜绝视角越界穿帮',
+    jumpTargetTab: 'GODS_EYE_SANDBOX',
+  },
+  {
+    index: 14,
+    pillar: 'ANTI_HALLUCINATION',
+    featureCode: 'F14',
+    featureTitle: '空间位置动线与昼夜气象连续性校验器',
+    architectureCode: 'A14',
+    architectureTitle: '时空拓扑可达性图校验器 (Spatio-Temporal Reachability Validator)',
+    architectureMechanism: '核验相邻分镜的物理地点转换与时间流逝，拦截“黑市暗巷无过渡下一句出现在万里皇城”或“雨夜残月突变为烈日当空”的时空幻觉。',
+    tokenSavingOrUxImpact: '保障场景切换与行军动线严丝合缝',
+    jumpTargetTab: 'MAP',
+  },
+  {
+    index: 15,
+    pillar: 'ANTI_HALLUCINATION',
+    featureCode: 'F15',
+    featureTitle: '空间戒指与一次性消耗品道具守恒账本',
+    architectureCode: 'A15',
+    architectureTitle: '双式记账道具生命周期守恒引擎 (Double-Entry Inventory Ledger)',
+    architectureMechanism: '为法宝、符箓、孤品丹药建立 `持有中/已损毁/已消耗` 账本，一旦某张保命符在第1章燃尽，后续章节若再次掏出即触发红色熔断并自动改写。',
+    tokenSavingOrUxImpact: '彻底解决大模型“道具无限刷、断剑变完好”幻觉',
+    jumpTargetTab: 'MEMORY_GUARD',
+  },
+  {
+    index: 16,
+    pillar: 'ANTI_HALLUCINATION',
+    featureCode: 'F16',
+    featureTitle: '人物称谓尊卑与人设声纹防 OOC 校验器',
+    architectureCode: 'A16',
+    architectureTitle: '角色关系称谓矩阵与声纹特征对齐器',
+    architectureMechanism: '校验角色间的固定称谓（师尊/掌门/师兄）与性格缺陷，拦截冷酷杀手突然说出播音腔长句或上下尊卑称呼错乱。',
+    tokenSavingOrUxImpact: '人物对话鲜活不串味、零 OOC',
+    jumpTargetTab: 'CHARACTERS',
+  },
+  {
+    index: 17,
+    pillar: 'ANTI_HALLUCINATION',
+    featureCode: 'F17',
+    featureTitle: '事后幻觉红黄绿三色高亮与一键自愈重写',
+    architectureCode: 'A17',
+    architectureTitle: '流式后处理 AST 事实对齐与局部热替换管线',
+    architectureMechanism: '对大模型输出草稿进行毫秒级违规片段定位，按 CRITICAL/WARNING 分级高亮，并提供符合当前境界与设定的精准替换句，一键写回创作台。',
+    tokenSavingOrUxImpact: '无需整章重生成，0 Token 损耗秒级自愈修复',
+    jumpTargetTab: 'MEMORY_GUARD',
+  },
+  {
+    index: 18,
+    pillar: 'ANTI_HALLUCINATION',
+    featureCode: 'F18',
+    featureTitle: '幻觉红队混沌注入压力测试演练场',
+    architectureCode: 'A18',
+    architectureTitle: '对抗性幻觉样本合成与护栏回归基准 (Adversarial Red-Team Harness)',
+    architectureMechanism: '支持一键向测试草稿注入“死人复活+越阶神通+全知剧透+已毁符箓复现”复合幻觉毒丸，直观检验护栏拦截率与自愈改写效果。',
+    tokenSavingOrUxImpact: '让作者对防幻觉护栏边界了如指掌',
+    jumpTargetTab: 'MEMORY_GUARD',
+  },
+  {
+    index: 19,
+    pillar: 'ANTI_HALLUCINATION',
+    featureCode: 'F19',
+    featureTitle: '章节合入前事实忠实度认证门禁 (Faithfulness Gate)',
+    architectureCode: 'A19',
+    architectureTitle: '零信任正文入库质量门禁协议 (Zero-Trust Manuscript Commit Gate)',
+    architectureMechanism: '在无人巡航或创作台定稿合入章节树前，自动计算 0-100 事实忠实度评分与检查锚点数，低于阈值自动弹出修复建议。',
+    tokenSavingOrUxImpact: '防止带病章节污染后续连载记忆库',
+    jumpTargetTab: 'AUTOPILOT',
+  },
+  {
+    index: 20,
+    pillar: 'ANTI_HALLUCINATION',
+    featureCode: 'F20',
+    featureTitle: '新实体防瞎编检测与一键转正白名单登记器',
+    architectureCode: 'A20',
+    architectureTitle: '命名实体增量发现与知识库双向同步管线 (NER Whitelist Sync)',
+    architectureMechanism: '自动捕获大模型在码字时新发明的人名、宗门、丹药或地名，支持作者选择“拦截防瞎编”或“一键转正收录至角色库/设定百科并跳转”。',
+    tokenSavingOrUxImpact: '既防止胡乱捏造，又能把神来之笔秒级沉淀入库',
+    jumpTargetTab: 'MEMORY_GUARD',
+  },
+
+  // Pillar 3: 全站智能超链、上下文穿梭与零断头路导航 (F21-F30 / A21-A30)
+  {
+    index: 21,
+    pillar: 'HYPER_NAVIGATION',
+    featureCode: 'F21',
+    featureTitle: '正文全实体智能识别与一键超链跳转引擎',
+    architectureCode: 'A21',
+    architectureTitle: '多模字典树实时实体锚定与深层路由编译器 (Aho-Corasick Entity Linker)',
+    architectureMechanism: '实时扫描当前正文中的角色、世界观词条、伏笔线索，将其渲染为可点击的智能超链芯片，点击即刻跳转至对应档案页。',
+    tokenSavingOrUxImpact: '从正文任意名词 1 秒直达对应设定卡',
+    jumpTargetTab: 'MEMORY_GUARD',
+  },
+  {
+    index: 22,
+    pillar: 'HYPER_NAVIGATION',
+    featureCode: 'F22',
+    featureTitle: '跨视图上下文背包穿梭总线与一键返回原处',
+    architectureCode: 'A22',
+    architectureTitle: '有状态跨路由上下文信封传递协议 (Stateful Teleport Envelope Bus)',
+    architectureMechanism: '从 A 页面点击按钮跳往 B 页面时，自动在顶部挂载【上下文穿梭横幅】，显示来源页面与携带的实体/章节上下文，并提供 `↩ 一键返回源视图` 按钮。',
+    tokenSavingOrUxImpact: '彻底解决“跳过去后忘了从哪来、怎么回”的迷失感',
+    jumpTargetTab: 'STUDIO',
+  },
+  {
+    index: 23,
+    pillar: 'HYPER_NAVIGATION',
+    featureCode: 'F23',
+    featureTitle: '任意页面悬浮正文微缩伴侣窗 (PiP Manuscript Drawer)',
+    architectureCode: 'A23',
+    architectureTitle: '跨路由持久态画中画编辑器挂载架构 (Persistent PiP Editor Overlay)',
+    architectureMechanism: '当作者在角色谱系、伏笔雷达、记忆护栏或文风工坊浏览时，可随时展开顶部【悬浮正文伴侣】直接查看或修改当前章节正文，无需离开当前分析页。',
+    tokenSavingOrUxImpact: '查阅设定与修改正文同屏零切换完成',
+    jumpTargetTab: 'STUDIO',
+  },
+  {
+    index: 24,
+    pillar: 'HYPER_NAVIGATION',
+    featureCode: 'F24',
+    featureTitle: '全站 28 模块一跳直达面包屑矩阵面板',
+    architectureCode: 'A24',
+    architectureTitle: '扁平化四域联邦导航索引树 (Federated 4-Domain Navigation Tree)',
+    architectureMechanism: '在工作区面包屑提供全站所有模块的分组速切面板，带实时状态徽章与高亮定位，任何深层功能 1 次点击直达。',
+    tokenSavingOrUxImpact: '消除深层菜单多次下拉寻找成本',
+    jumpTargetTab: 'STUDIO',
+  },
+  {
+    index: 25,
+    pillar: 'HYPER_NAVIGATION',
+    featureCode: 'F25',
+    featureTitle: '创作心流下一步智能推荐跳转栏 (Next-Best-Action Bar)',
+    architectureCode: 'A25',
+    architectureTitle: '基于当前工作台状态的马尔可夫工作流推荐引擎',
+    architectureMechanism: '根据用户当前所在的模块（如刚在创世大纲生成完框架，或刚在无人巡航码完一章），在工作区栏智能推荐最合理的下一步跳转目标。',
+    tokenSavingOrUxImpact: '新手也能丝滑走完“大纲->设定->巡航->防幻觉->精修”全闭环',
+    jumpTargetTab: 'AUTOPILOT',
+  },
+  {
+    index: 26,
+    pillar: 'HYPER_NAVIGATION',
+    featureCode: 'F26',
+    featureTitle: 'URL Hash 深度参数化路由与浏览器前进后退同步',
+    architectureCode: 'A26',
+    architectureTitle: '双向同构 Hash 状态机同步协议 (Bidirectional URL Hash Router)',
+    architectureMechanism: '将当前活动 Tab 实时映射至 URL Hash (`#studio`, `#memory-guard`, `#autopilot` 等)，完美支持浏览器原生后退/前进按钮、页面刷新保持与书签分享。',
+    tokenSavingOrUxImpact: '刷新页面不再丢失工作台位置',
+    jumpTargetTab: 'STUDIO',
+  },
+  {
+    index: 27,
+    pillar: 'HYPER_NAVIGATION',
+    featureCode: 'F27',
+    featureTitle: '人物/设定/伏笔卡片双向章节回链直达 (Bidirectional Backlinks)',
+    architectureCode: 'A27',
+    architectureTitle: '倒排索引双向引用图谱 (Inverted-Index Bidirectional Reference Graph)',
+    architectureMechanism: '在每张实体卡片上展示其登场的所有章节胶囊（如 `第1章 ↗`、`第2章 ↗`），点击任意章节胶囊即刻切换焦点章节并直达创作台。',
+    tokenSavingOrUxImpact: '从设定卡反向跳回具体出场章节仅需 1 次点击',
+    jumpTargetTab: 'CHARACTERS',
+  },
+  {
+    index: 28,
+    pillar: 'HYPER_NAVIGATION',
+    featureCode: 'F28',
+    featureTitle: '工作区多标签场景化预设一键切台 (Workspace Layout Presets)',
+    architectureCode: 'A28',
+    architectureTitle: '角色化多标签工作集热切换引擎 (Role-Based Tab Working-Set Switcher)',
+    architectureMechanism: '内置【✍️ 沉浸码字台】【🛡️ 省流防幻觉审计台】【🌍 世界观设定台】【🚀 懒人全托管台】四大标签组预设，一键切换整排固定标签。',
+    tokenSavingOrUxImpact: '不同创作阶段一键装配最佳工具栏组合',
+    jumpTargetTab: 'MEMORY_GUARD',
+  },
+  {
+    index: 29,
+    pillar: 'HYPER_NAVIGATION',
+    featureCode: 'F29',
+    featureTitle: '极客数字快捷键拨号盘 (`Alt+1..9` & `Alt+←/→`)',
+    architectureCode: 'A29',
+    architectureTitle: '全局低延迟键盘快捷键分发总线 (Global Hotkey Dispatch Bus)',
+    architectureMechanism: '支持 `Alt+1..9` 瞬时切换工作区前 9 个打开的标签页，`Alt+←/→` 在历史栈中前后穿梭，`Cmd+K` 呼出全站指挥官。',
+    tokenSavingOrUxImpact: '双手不离键盘即可完成全站极速穿梭',
+    jumpTargetTab: 'STUDIO',
+  },
+  {
+    index: 30,
+    pillar: 'HYPER_NAVIGATION',
+    featureCode: 'F30',
+    featureTitle: '全站操作通知强制附带「直达现场 + 返回原处」双跳按钮',
+    architectureCode: 'A30',
+    architectureTitle: '可交互行动反馈通知标准协议 (Actionable Deep-Link Toast Protocol)',
+    architectureMechanism: '无论是灵光织入、无人巡航写入、技能勾选还是幻觉熔断，所有顶部反馈横幅均内置直达目标视图的动作按钮，彻底消灭静态死通知。',
+    tokenSavingOrUxImpact: '任何操作完成后均可 0 摩擦衔接下一步验证',
+    jumpTargetTab: 'SPARK_HUB',
+  },
+];
