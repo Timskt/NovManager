@@ -32,6 +32,8 @@ interface CommandPaletteProps {
   onOpenGraph?: () => void;
   onOpenTension?: () => void;
   onOpenSelfIteration?: () => void;
+  onOpenGodsEye?: () => void;
+  onOpenInScene?: () => void;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
@@ -43,6 +45,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onOpenGraph,
   onOpenTension,
   onOpenSelfIteration,
+  onOpenGodsEye,
+  onOpenInScene,
 }) => {
   const { novel, volumes, characters, worldSettings, foreshadowings, setActiveChapterId, setActiveSceneIndex } = useNovel();
   const { settings, setTheme } = useTheme();
@@ -68,39 +72,114 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const quickActions = useMemo(() => {
     return [
       {
+        id: 'action-video-studio',
+        title: '🎬 AI 视频多机位分镜工坊 (Storyboard Studio)',
+        category: '影视视界',
+        icon: Sparkles,
+        action: () => {
+          onNavigateTab('VIDEO_STUDIO');
+          onClose();
+        },
+      },
+      {
+        id: 'action-gods-eye',
+        title: '👁️ 全景上帝视角与宏观危机时钟 (God\'s Eye HUD)',
+        category: '宏观推演',
+        icon: Compass,
+        action: () => {
+          onClose();
+          onOpenGodsEye?.();
+        },
+      },
+      {
+        id: 'action-in-scene',
+        title: '👥 当前场次登场人物心境与暗线检视 (In-Scene Inspector)',
+        category: '角色研判',
+        icon: Users,
+        action: () => {
+          onClose();
+          onOpenInScene?.();
+        },
+      },
+      {
+        id: 'action-workflow',
+        title: '⚡ 智能体流程编排与流水线管控 (Workflow Orchestrator)',
+        category: '智能工程',
+        icon: Activity,
+        action: () => {
+          onNavigateTab('WORKFLOW');
+          onClose();
+        },
+      },
+      {
+        id: 'action-progress-pulse',
+        title: '📊 创作执行大盘与宏观张力节拍 (Progress Pulse)',
+        category: '工程看板',
+        icon: Activity,
+        action: () => {
+          onNavigateTab('PROGRESS_PULSE');
+          onClose();
+        },
+      },
+      {
+        id: 'action-dungeons',
+        title: '⚔️ 副本推演轨迹与产出掉落经济 (Dungeon & Arc Progression)',
+        category: '世界构筑',
+        icon: Flame,
+        action: () => {
+          onNavigateTab('DUNGEONS');
+          onClose();
+        },
+      },
+      {
         id: 'action-zen',
         title: '🧘 进入作家禅定专注模式 (Zen Mode)',
         category: '沉浸工具',
         icon: Sparkles,
-        action: () => onOpenZen?.(),
+        action: () => {
+          onClose();
+          onOpenZen?.();
+        },
       },
       {
         id: 'action-evolution',
         title: '🧠 智能体质量自评与反思进化舱 (Self-Iteration)',
         category: '自我迭代',
         icon: Activity,
-        action: () => onOpenSelfIteration?.(),
+        action: () => {
+          onClose();
+          onOpenSelfIteration?.();
+        },
       },
       {
         id: 'action-tension',
         title: '📈 剧情张力与节奏心电图分析 (Tension Curve)',
         category: '分析研判',
         icon: Activity,
-        action: () => onOpenTension?.(),
+        action: () => {
+          onClose();
+          onOpenTension?.();
+        },
       },
       {
         id: 'action-graph',
         title: '🕸️ 人物关系羁绊拓扑星图 (Relationship Graph)',
         category: '角色研判',
         icon: Users,
-        action: () => onOpenGraph?.(),
+        action: () => {
+          onClose();
+          onOpenGraph?.();
+        },
       },
       {
         id: 'action-export',
         title: '📦 出版级排版导出工坊 (EPUB / PDF / TXT)',
         category: '发布出版',
         icon: FileDown,
-        action: () => onOpenExport?.(),
+        action: () => {
+          onClose();
+          onOpenExport?.();
+        },
       },
       {
         id: 'action-theme-ink',
@@ -131,7 +210,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         action: () => setTheme('pure'),
       },
     ];
-  }, [onOpenZen, onOpenSelfIteration, onOpenTension, onOpenGraph, onOpenExport, setTheme]);
+  }, [
+    onNavigateTab,
+    onOpenGodsEye,
+    onOpenInScene,
+    onOpenZen,
+    onOpenSelfIteration,
+    onOpenTension,
+    onOpenGraph,
+    onOpenExport,
+    setTheme,
+    onClose,
+  ]);
 
   const filteredActions = useMemo(() => {
     if (!query.trim()) return quickActions;

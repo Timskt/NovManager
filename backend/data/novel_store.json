@@ -6,7 +6,7 @@
       "subtitle": "青铜残片现世，天道断绝三万年后的人间绝响",
       "genre": "修真玄幻 / 仙侠智斗",
       "target_word_count": 1500000,
-      "current_word_count": 68675,
+      "current_word_count": 68777,
       "default_pov": "THIRD_LIMITED",
       "style_guide": {
         "tone": "冷峻克制，重智斗博弈，重因果逻辑，严谨无口水话",
@@ -59,8 +59,8 @@
           "倒吸一口凉气"
         ]
       },
-      "created_at": "2026-10-11T18:19:46.134246",
-      "updated_at": "2026-10-11T18:19:46.134246"
+      "created_at": "2026-10-12T01:15:52.437855",
+      "updated_at": "2026-10-12T01:15:52.437855"
     }
   },
   "world_settings": {
@@ -377,6 +377,70 @@
       ],
       "state_summary": "施展合击剑招逼退夜枭后跌入地渊",
       "updated_at": "2026-10-11T18:19:46.126537"
+    },
+    {
+      "id": "cs-1791738379455",
+      "character_id": "char-001",
+      "chapter_id": "chap-012",
+      "chapter_index": 12,
+      "location": "坠星崖底古遗迹地渊",
+      "combat_power": "筑基后期（真元近乎枯竭）",
+      "health_status": "CRITICAL",
+      "status_tags": [
+        "左肩贯穿伤",
+        "真元枯竭",
+        "获得古阵图"
+      ],
+      "state_summary": "硬撼夜枭后坠入地渊，真元几乎消耗殆尽。",
+      "updated_at": "2026-10-12T01:06:19.455440"
+    },
+    {
+      "id": "cs-1791738389873",
+      "character_id": "char-001",
+      "chapter_id": "chap-012",
+      "chapter_index": 12,
+      "location": "地脉古阵残台",
+      "combat_power": "筑基后期（气血两亏）",
+      "health_status": "CRITICAL",
+      "status_tags": [
+        "真元枯竭",
+        "左肩贯穿伤",
+        "坠入地渊"
+      ],
+      "state_summary": "施展合击剑招逼退夜枭后跌入地渊",
+      "updated_at": "2026-10-12T01:06:29.873628"
+    },
+    {
+      "id": "cs-1791738941854",
+      "character_id": "char-001",
+      "chapter_id": "chap-012",
+      "chapter_index": 12,
+      "location": "坠星崖底古遗迹地渊",
+      "combat_power": "筑基后期（真元近乎枯竭）",
+      "health_status": "CRITICAL",
+      "status_tags": [
+        "左肩贯穿伤",
+        "真元枯竭",
+        "获得古阵图"
+      ],
+      "state_summary": "硬撼夜枭后坠入地渊，真元几乎消耗殆尽。",
+      "updated_at": "2026-10-12T01:15:41.854971"
+    },
+    {
+      "id": "cs-1791738952430",
+      "character_id": "char-001",
+      "chapter_id": "chap-012",
+      "chapter_index": 12,
+      "location": "地脉古阵残台",
+      "combat_power": "筑基后期（气血两亏）",
+      "health_status": "CRITICAL",
+      "status_tags": [
+        "真元枯竭",
+        "左肩贯穿伤",
+        "坠入地渊"
+      ],
+      "state_summary": "施展合击剑招逼退夜枭后跌入地渊",
+      "updated_at": "2026-10-12T01:15:52.430085"
     }
   ],
   "volumes": {
@@ -1999,6 +2063,50 @@
       "inspection_score": 95,
       "inspection_report": [],
       "created_at": "2026-10-11T18:19:46.123298"
+    },
+    {
+      "id": "ver-1791738379461",
+      "chapter_id": "chap-012",
+      "version_number": 81,
+      "full_text": "秋泓剑气纵横，苏青瑶如仙子凌波踏风而至...",
+      "created_by": "Agent:Claude-Desktop",
+      "change_summary": "第 3 幕由 Agent:Claude-Desktop 提交草稿",
+      "inspection_score": 95,
+      "inspection_report": [],
+      "created_at": "2026-10-12T01:06:19.461881"
+    },
+    {
+      "id": "ver-1791738389870",
+      "chapter_id": "chap-012",
+      "version_number": 82,
+      "full_text": "秋泓剑芒撕裂夜空，苏青瑶如神女降世，与林越背靠背御敌...",
+      "created_by": "Agent:ExternalClaude",
+      "change_summary": "第 3 幕由 Agent:ExternalClaude 提交草稿",
+      "inspection_score": 95,
+      "inspection_report": [],
+      "created_at": "2026-10-12T01:06:29.870820"
+    },
+    {
+      "id": "ver-1791738941861",
+      "chapter_id": "chap-012",
+      "version_number": 83,
+      "full_text": "秋泓剑气纵横，苏青瑶如仙子凌波踏风而至...",
+      "created_by": "Agent:Claude-Desktop",
+      "change_summary": "第 3 幕由 Agent:Claude-Desktop 提交草稿",
+      "inspection_score": 95,
+      "inspection_report": [],
+      "created_at": "2026-10-12T01:15:41.861673"
+    },
+    {
+      "id": "ver-1791738952426",
+      "chapter_id": "chap-012",
+      "version_number": 84,
+      "full_text": "秋泓剑芒撕裂夜空，苏青瑶如神女降世，与林越背靠背御敌...",
+      "created_by": "Agent:ExternalClaude",
+      "change_summary": "第 3 幕由 Agent:ExternalClaude 提交草稿",
+      "inspection_score": 95,
+      "inspection_report": [],
+      "created_at": "2026-10-12T01:15:52.426963"
     }
   ],
   "active_novel_id": "nov-001",
@@ -2015,9 +2123,9 @@
       "before_snippet": "风吹过洞穴。",
       "after_snippet": "阴风如刮骨钢刀，自裂隙深处呼啸穿堂而过。",
       "applicable_scene": "探秘潜入",
-      "applied_count": 11,
+      "applied_count": 15,
       "created_at": "2026-09-05T12:18:18.849608",
-      "updated_at": "2026-10-11T18:19:46.103073"
+      "updated_at": "2026-10-12T01:15:52.409622"
     },
     "tech-1791712806015-1": {
       "id": "tech-1791712806015-1",
@@ -2030,9 +2138,9 @@
       "before_snippet": "他站起来拿起剑防备。",
       "after_snippet": "他猛地睁开双眼，右手本能地握住腰间残剑，整个人瞬间翻滚戒备。",
       "applicable_scene": "突发遭遇、警觉戒备",
-      "applied_count": 5,
+      "applied_count": 7,
       "created_at": "2026-10-11T18:00:06.014942",
-      "updated_at": "2026-10-11T18:19:46.086980"
+      "updated_at": "2026-10-12T01:15:52.397223"
     }
   }
 }

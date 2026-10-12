@@ -4,11 +4,12 @@ use crate::git_vcs::GitVcsManager;
 use crate::models::*;
 use crate::self_iteration::{AutonomousReflector, AutonomousWritingEvaluator, PromptSelfTuner};
 use crate::storage::SqliteStorage;
+use crate::video_exporter::VideoExporter;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
     response::{sse::Event, IntoResponse, Json, Sse},
-    routing::{delete, get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 use futures_util::StreamExt;
@@ -65,6 +66,20 @@ pub fn create_router(state: Arc<AppState>) -> Router {
             get(list_polish_techniques).post(save_polish_techniques),
         )
         .route("/api/novels/{id}/techniques/stats", get(get_polish_techniques_stats))
+        // Video Storyboards
+        .route("/api/novels/{id}/storyboards", get(list_video_storyboards))
+        .route("/api/storyboards/{id}", get(get_video_storyboard))
+        .route("/api/storyboards", post(create_or_update_video_storyboard))
+        .route("/api/storyboards/{id}/shots", post(add_video_shot))
+        .route("/api/shots/{id}", put(update_video_shot).delete(delete_video_shot))
+        .route("/api/storyboards/{id}/export", post(export_video_storyboard))
+        // Workflow Pipelines
+        .route("/api/novels/{id}/workflow", get(get_workflow_pipeline))
+        .route("/api/novels/{id}/workflow/step", post(advance_workflow_step))
+        // Gods Eye State HUD
+        .route("/api/novels/{id}/gods-eye", get(get_gods_eye_state).post(save_gods_eye_state))
+        // Dungeon Arcs
+        .route("/api/novels/{id}/dungeons", get(list_dungeon_arcs).post(save_dungeon_arc))
         // Git VCS
         .route("/api/git/{id}/history", get(get_git_history))
         .route("/api/git/snapshot", post(create_git_snapshot))
@@ -92,6 +107,7 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/llm/stream", post(stream_llm))
         .with_state(state)
 }
+
 
 // ----------------- Handlers -----------------
 
@@ -832,3 +848,165 @@ async fn stream_llm(
 
     Sse::new(stream)
 }
+
+// ----------------- Video Storyboard Handlers -----------------
+
+async fn list_video_storyboards(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.list_video_storyboards(&id) {
+        Ok(list) => Json(list).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn get_video_storyboard(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.get_video_storyboard(&id) {
+        Ok(Some(sb)) => Json(sb).into_response(),
+        Ok(None) => (StatusCode::NOT_FOUND, Json(json!({"detail": "分镜母本不存在"}))).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn create_or_update_video_storyboard(
+    State(state): State<Arc<AppState>>,
+    Json(sb): Json<VideoStoryboard>,
+) -> impl IntoResponse {
+    match state.storage.create_or_update_video_storyboard(sb) {
+        Ok(saved) => Json(saved).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn add_video_shot(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Json(shot): Json<VideoShot>,
+) -> impl IntoResponse {
+    match state.storage.add_video_shot(&id, shot) {
+        Ok(saved) => Json(saved).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn update_video_shot(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Json(mut shot): Json<VideoShot>,
+) -> impl IntoResponse {
+    shot.id = id;
+    match state.storage.update_video_shot(shot) {
+        Ok(Some(saved)) => Json(saved).into_response(),
+        Ok(None) => (StatusCode::NOT_FOUND, Json(json!({"detail": "镜头不存在"}))).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn delete_video_shot(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.delete_video_shot(&id) {
+        Ok(true) => Json(json!({"status": "success", "deleted_shot_id": id})).into_response(),
+        Ok(false) => (StatusCode::NOT_FOUND, Json(json!({"detail": "镜头不存在"}))).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn export_video_storyboard(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Json(mut req): Json<ExportVideoPromptRequest>,
+) -> impl IntoResponse {
+    req.storyboard_id = Some(id.clone());
+    match state.storage.get_video_storyboard(&id) {
+        Ok(Some(sb)) => {
+            let res = VideoExporter::export_prompts(&sb, &req);
+            Json(res).into_response()
+        }
+        Ok(None) => (StatusCode::NOT_FOUND, Json(json!({"detail": "分镜母本不存在"}))).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+// ----------------- Workflow Pipeline Handlers -----------------
+
+async fn get_workflow_pipeline(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.get_workflow_pipeline(&id) {
+        Ok(pipe) => Json(pipe).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn advance_workflow_step(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<AdvanceWorkflowStepRequest>,
+) -> impl IntoResponse {
+    match state.storage.advance_workflow_step(
+        &id,
+        req.node_id.as_deref(),
+        req.status.as_deref(),
+        req.output_summary.as_deref(),
+        req.agent_role.as_deref(),
+    ) {
+        Ok(pipe) => Json(pipe).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+// ----------------- Gods Eye State Handlers -----------------
+
+async fn get_gods_eye_state(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.get_gods_eye_state(&id) {
+        Ok(ge) => Json(ge).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn save_gods_eye_state(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Json(mut ge): Json<GodsEyeState>,
+) -> impl IntoResponse {
+    ge.novel_id = id;
+    match state.storage.save_gods_eye_state(ge) {
+        Ok(saved) => Json(saved).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+// ----------------- Dungeon Arcs Handlers -----------------
+
+async fn list_dungeon_arcs(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.list_dungeon_arcs(&id) {
+        Ok(list) => Json(list).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn save_dungeon_arc(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Json(mut arc): Json<DungeonArc>,
+) -> impl IntoResponse {
+    arc.novel_id = id;
+    match state.storage.create_or_update_dungeon_arc(arc) {
+        Ok(saved) => Json(saved).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+

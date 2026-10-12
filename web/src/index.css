@@ -148,3 +148,54 @@
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
+
+/* ==============================================================================
+   企业商业级宽屏呼吸感与自适应排版类 (Enterprise Spacious & Fluid Layouts)
+   彻底杜绝拥挤紧促与粗糙廉价感
+   ============================================================================== */
+
+.studio-container {
+  max-width: 1560px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 1.5rem 1rem;
+}
+@media (min-width: 640px) {
+  .studio-container {
+    padding: 2rem 1.75rem;
+  }
+}
+@media (min-width: 1024px) {
+  .studio-container {
+    padding: 2.5rem 2.25rem;
+  }
+}
+
+.literary-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.literary-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.06);
+}
+
+.cinema-card {
+  background: linear-gradient(180deg, rgba(24, 26, 32, 0.98) 0%, rgba(15, 16, 20, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 12px 36px -6px rgba(0, 0, 0, 0.45);
+  color: #f1f3f5;
+}
+
+.hud-panel {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background-color: color-mix(in srgb, var(--bg-surface) 88%, transparent);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-warm);
+}

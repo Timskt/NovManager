@@ -5,3 +5,5 @@ pub mod git_vcs;
 pub mod models;
 pub mod self_iteration;
 pub mod storage;
+pub mod video_exporter;
+

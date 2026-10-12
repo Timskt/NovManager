@@ -582,3 +582,213 @@ pub struct LLMProxyRequest {
     #[serde(default, alias = "maxTokens")]
     pub max_tokens: Option<i64>,
 }
+
+// ----------------- Video Storyboard & Cine-AI Models -----------------
+
+fn default_shot_duration() -> f32 {
+    5.0
+}
+fn default_shot_type() -> String {
+    "MEDIUM".to_string()
+}
+fn default_camera_movement() -> String {
+    "STATIC".to_string()
+}
+fn default_aspect_ratio() -> String {
+    "16:9".to_string()
+}
+fn default_target_platform() -> String {
+    "SORA".to_string()
+}
+fn default_true() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VideoShot {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default, alias = "sceneId")]
+    pub scene_id: String,
+    #[serde(default, alias = "storyboardId")]
+    pub storyboard_id: Option<String>,
+    #[serde(default = "default_one", alias = "shotNumber")]
+    pub shot_number: i64,
+    #[serde(default = "default_shot_duration", alias = "durationSeconds")]
+    pub duration_seconds: f32,
+    #[serde(default = "default_shot_type", alias = "shotType")]
+    pub shot_type: String, // CLOSE_UP, MEDIUM, WIDE, EXTREME_CLOSE_UP, AERIAL
+    #[serde(default = "default_camera_movement", alias = "cameraMovement")]
+    pub camera_movement: String, // DOLLY_IN, DOLLY_OUT, PAN_LEFT, PAN_RIGHT, TRACKING, ORBIT, VERTIGO_ZOOM, STATIC
+    #[serde(default, alias = "visualPrompt")]
+    pub visual_prompt: String,
+    #[serde(default, alias = "motionPrompt")]
+    pub motion_prompt: String,
+    #[serde(default, alias = "negativePrompt")]
+    pub negative_prompt: String,
+    #[serde(default)]
+    pub lighting: String,
+    #[serde(default, alias = "characterReferences")]
+    pub character_references: Vec<String>,
+    #[serde(default, alias = "soundCue")]
+    pub sound_cue: String,
+    #[serde(default, alias = "dialogueCue")]
+    pub dialogue_cue: String,
+    #[serde(default = "default_iso_now", alias = "createdAt")]
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VideoStoryboard {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default, alias = "novelId")]
+    pub novel_id: String,
+    #[serde(default, alias = "chapterId")]
+    pub chapter_id: String,
+    #[serde(default, alias = "sceneId")]
+    pub scene_id: String,
+    pub title: String,
+    #[serde(default = "default_aspect_ratio", alias = "aspectRatio")]
+    pub aspect_ratio: String, // 16:9, 9:16, 2.39:1
+    #[serde(default = "default_target_platform", alias = "targetPlatform")]
+    pub target_platform: String, // SORA, KLING, RUNWAY_GEN3, HAILUO_MINIMAX, MIDJOURNEY
+    #[serde(default)]
+    pub shots: Vec<VideoShot>,
+    #[serde(default, alias = "totalDurationSeconds")]
+    pub total_duration_seconds: f32,
+    #[serde(default = "default_iso_now", alias = "createdAt")]
+    pub created_at: String,
+    #[serde(default = "default_iso_now", alias = "updatedAt")]
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExportVideoPromptRequest {
+    #[serde(default, alias = "storyboardId")]
+    pub storyboard_id: Option<String>,
+    #[serde(default = "default_target_platform")]
+    pub platform: String, // SORA, KLING, RUNWAY_GEN3, HAILUO_MINIMAX, MIDJOURNEY, COMFYUI_JSON
+    #[serde(default = "default_true", alias = "includeCameraBrackets")]
+    pub include_camera_brackets: bool,
+    #[serde(default = "default_true", alias = "includeNegative")]
+    pub include_negative: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExportVideoPromptResponse {
+    pub platform: String,
+    #[serde(alias = "formattedContent")]
+    pub formatted_content: String,
+    #[serde(alias = "shotsCount")]
+    pub shots_count: i64,
+    #[serde(alias = "totalDuration")]
+    pub total_duration: f32,
+    pub metadata: serde_json::Value,
+}
+
+// ----------------- Narrative & Workflow Pipeline Models -----------------
+
+fn default_node_stage() -> String {
+    "WORLD_GENESIS".to_string()
+}
+fn default_node_status() -> String {
+    "PENDING".to_string()
+}
+fn default_agent_role() -> String {
+    "NarrativeArchitect".to_string()
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowNode {
+    pub id: String,
+    pub name: String,
+    #[serde(default = "default_node_stage")]
+    pub stage: String, // WORLD_GENESIS, OUTLINE, BEATS, DRAFT, CONSISTENCY_AUDIT, VIDEO_STORYBOARD
+    #[serde(default = "default_node_status")]
+    pub status: String, // PENDING, RUNNING, COMPLETED, FAILED
+    #[serde(default = "default_agent_role", alias = "agentRole")]
+    pub agent_role: String,
+    #[serde(default, alias = "outputSummary")]
+    pub output_summary: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowPipeline {
+    pub id: String,
+    #[serde(alias = "novelId")]
+    pub novel_id: String,
+    pub title: String,
+    #[serde(default)]
+    pub nodes: Vec<WorkflowNode>,
+    #[serde(default, alias = "activeNodeId")]
+    pub active_node_id: Option<String>,
+    #[serde(default = "default_iso_now", alias = "updatedAt")]
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdvanceWorkflowStepRequest {
+    #[serde(default, alias = "novelId")]
+    pub novel_id: Option<String>,
+    #[serde(default, alias = "nodeId")]
+    pub node_id: Option<String>,
+    pub status: Option<String>,
+    #[serde(default, alias = "outputSummary")]
+    pub output_summary: Option<String>,
+    #[serde(default, alias = "agentRole")]
+    pub agent_role: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GodsEyeState {
+    #[serde(default, alias = "novelId")]
+    pub novel_id: String,
+    #[serde(default, alias = "currentEra")]
+    pub current_era: String,
+    #[serde(default, alias = "celestialAnomalies")]
+    pub celestial_anomalies: Vec<String>,
+    #[serde(default, alias = "macroCrisisCountdownDays")]
+    pub macro_crisis_countdown_days: i64,
+    #[serde(default, alias = "offscreenFactions")]
+    pub offscreen_factions: Vec<serde_json::Value>,
+    #[serde(default, alias = "globalTensionIndex")]
+    pub global_tension_index: f32,
+    #[serde(default = "default_iso_now", alias = "updatedAt")]
+    pub updated_at: String,
+}
+
+fn default_dungeon_stage() -> String {
+    "ENTRANCE".to_string()
+}
+fn default_danger_level() -> i64 {
+    5
+}
+fn default_survival_rate() -> f32 {
+    0.5
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DungeonArc {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default, alias = "novelId")]
+    pub novel_id: String,
+    #[serde(alias = "arcName")]
+    pub arc_name: String,
+    pub location: String,
+    #[serde(default = "default_dungeon_stage")]
+    pub stage: String, // ENTRANCE, EXPLORATION, MID_CHAMBER, BOSS_BATTLE, EXTRACTION
+    #[serde(default = "default_danger_level", alias = "dangerLevel")]
+    pub danger_level: i64, // 1-10
+    #[serde(default, alias = "milestoneGates")]
+    pub milestone_gates: Vec<String>,
+    #[serde(default, alias = "lootEconomy")]
+    pub loot_economy: serde_json::Value,
+    #[serde(default = "default_survival_rate", alias = "survivalRate")]
+    pub survival_rate: f32,
+    #[serde(default = "default_iso_now", alias = "createdAt")]
+    pub created_at: String,
+}
+
+

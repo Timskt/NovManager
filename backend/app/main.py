@@ -29,6 +29,12 @@ from .models import (
     RecordForeshadowingRequest,
     PolishTechnique,
     SaveTechniquesRequest,
+    VideoStoryboard,
+    ExportVideoPromptRequest,
+    ExportVideoPromptResponse,
+    WorkflowPipeline,
+    GodsEyeState,
+    DungeonArc,
 )
 from .storage import NovelRepository
 from .sqlite_storage import SQLiteNovelRepository
@@ -997,6 +1003,97 @@ def typeset_novel_for_publishing(req: TypesetRequest):
         "chapters_count": len(chapters_output),
         "total_words": total_words,
         "chapters": chapters_output
+    }
+
+# ==================== 影视级 AI 视频分镜与跨模型导出 API ====================
+
+@app.get("/api/novels/{novel_id}/storyboards")
+def list_storyboards(novel_id: str):
+    return sqlite_repo.list_storyboards(novel_id)
+
+@app.post("/api/storyboards")
+def save_storyboard(sb: VideoStoryboard):
+    return sqlite_repo.save_storyboard(sb.dict())
+
+@app.post("/api/storyboards/{storyboard_id}/export")
+def export_video_prompts(storyboard_id: str, req: ExportVideoPromptRequest):
+    return sqlite_repo.export_video_prompts(
+        storyboard_id=storyboard_id,
+        platform=req.platform,
+        include_camera_brackets=req.include_camera_brackets,
+        include_negative=req.include_negative
+    )
+
+# ==================== 工作流编排、上帝全知视角、副本趋势与在场人物透视 ====================
+
+@app.get("/api/novels/{novel_id}/workflow")
+def get_workflow_pipeline(novel_id: str):
+    return sqlite_repo.get_workflow_pipeline(novel_id)
+
+@app.get("/api/novels/{novel_id}/gods-eye")
+def get_gods_eye_state(novel_id: str):
+    return sqlite_repo.get_gods_eye_state(novel_id)
+
+@app.get("/api/novels/{novel_id}/dungeons")
+def list_dungeon_arcs(novel_id: str):
+    return sqlite_repo.list_dungeon_arcs(novel_id)
+
+@app.get("/api/novels/{novel_id}/scene-context")
+def get_scene_context(novel_id: str, chapter_id: Optional[str] = None, scene_index: int = 1):
+    bundle = repo.get_novel_bundle(novel_id)
+    if not bundle:
+        raise HTTPException(status_code=404, detail="小说不存在")
+    
+    all_chars = bundle.get("characters", [])
+    all_relations = bundle.get("character_relations", [])
+    
+    # 查找指定场景
+    target_scene = None
+    if chapter_id:
+        for v in bundle.get("volumes", []):
+            for c in v.get("chapters", []):
+                if c.get("id") == chapter_id:
+                    for sc in c.get("scenes", []):
+                        if sc.get("sceneIndex") == scene_index:
+                            target_scene = sc
+                            break
+    
+    involved_ids = target_scene.get("involvedCharacterIds", []) if target_scene else []
+    # 若未指定，默认主角与重要反派/配角
+    if not involved_ids and all_chars:
+        involved_ids = [c["id"] for c in all_chars[:3]]
+    
+    active_characters = []
+    for c in all_chars:
+        if c["id"] in involved_ids:
+            char_id = c["id"]
+            # 查找针对该角色的好感度/关系
+            rel_with_pov = "未知"
+            for rel in all_relations:
+                if rel.get("fromCharacterId") == char_id or rel.get("toCharacterId") == char_id:
+                    rel_with_pov = f"{rel.get('relationType')} (亲密度: {rel.get('affinityScore')})"
+                    break
+            
+            active_characters.append({
+                "id": c["id"],
+                "name": c["name"],
+                "role_type": c.get("roleType", "SUPPORTING"),
+                "combat_power": c.get("latestState", {}).get("combatPower", "炼气九层"),
+                "health_status": c.get("latestState", {}).get("healthStatus", "HEALTHY"),
+                "location": c.get("latestState", {}).get("location", "太玄青云峰"),
+                "state_summary": c.get("latestState", {}).get("stateSummary", "神色凝重，隐忍待发"),
+                "relationship_with_pov": rel_with_pov,
+                "current_motive": "探查太玄秘境阵眼，寻找突破筑基机缘",
+                "hidden_secrets": "随身暗藏一枚残破古玉佩，残魂尚未苏醒"
+            })
+    
+    return {
+        "novel_id": novel_id,
+        "chapter_id": chapter_id,
+        "scene_index": scene_index,
+        "scene_goal": target_scene.get("sceneGoal", "试炼交锋") if target_scene else "秘境破局",
+        "conflict": target_scene.get("conflict", "同门夺宝与妖兽围攻") if target_scene else "资源争夺",
+        "active_characters": active_characters
     }
 
 

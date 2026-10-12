@@ -204,3 +204,91 @@ class SaveTechniquesRequest(BaseModel):
     chapter_id: Optional[str] = None
     techniques: List[PolishTechnique]
 
+# ==================== 影视级 AI 视频分镜与跨模型工业级导出 ====================
+
+ShotType = Literal['EXTREME_CLOSE_UP', 'CLOSE_UP', 'MEDIUM', 'WIDE', 'AERIAL']
+CameraMovement = Literal['DOLLY_IN', 'DOLLY_OUT', 'PAN_LEFT', 'PAN_RIGHT', 'TRACKING', 'ORBIT', 'VERTIGO_ZOOM', 'STATIC']
+VideoPlatform = Literal['SORA', 'KLING', 'RUNWAY_GEN3', 'HAILUO_MINIMAX', 'MIDJOURNEY', 'COMFYUI_JSON']
+
+class VideoShot(BaseModel):
+    id: str = Field(default_factory=lambda: f"shot-{int(datetime.utcnow().timestamp() * 1000)}")
+    scene_id: Optional[str] = None
+    shot_number: int = 1
+    duration_seconds: int = 5
+    shot_type: ShotType = 'MEDIUM'
+    camera_movement: CameraMovement = 'DOLLY_IN'
+    visual_prompt: str
+    motion_prompt: str = ""
+    negative_prompt: str = "distorted limbs, blurry, low resolution, bad hands, artifacts, flickering, unnatural anatomy"
+    lighting: str = "Cinematic volumetric lighting, dramatic shadow contrast"
+    character_references: List[str] = Field(default_factory=list)
+    sound_cue: Optional[str] = ""
+    dialogue_cue: Optional[str] = ""
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+class VideoStoryboard(BaseModel):
+    id: str = Field(default_factory=lambda: f"sb-{int(datetime.utcnow().timestamp() * 1000)}")
+    novel_id: str
+    chapter_id: Optional[str] = None
+    scene_id: Optional[str] = None
+    title: str
+    aspect_ratio: str = "16:9"
+    target_platform: VideoPlatform = "KLING"
+    shots: List[VideoShot] = Field(default_factory=list)
+    total_duration_seconds: int = 0
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+class ExportVideoPromptRequest(BaseModel):
+    storyboard_id: str
+    platform: VideoPlatform = "KLING"
+    include_camera_brackets: bool = True
+    include_negative: bool = True
+
+class ExportVideoPromptResponse(BaseModel):
+    platform: str
+    formatted_content: str
+    shots_count: int
+    total_duration: int
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+# ==================== 全流程创作流水线编排与上帝全知视角 ====================
+
+WorkflowStage = Literal['WORLD_GENESIS', 'OUTLINE', 'BEATS', 'DRAFT', 'CONSISTENCY_AUDIT', 'VIDEO_STORYBOARD']
+WorkflowNodeStatus = Literal['PENDING', 'RUNNING', 'COMPLETED', 'FAILED']
+
+class WorkflowNode(BaseModel):
+    id: str
+    name: str
+    stage: WorkflowStage
+    status: WorkflowNodeStatus = 'PENDING'
+    agent_role: str
+    output_summary: Optional[str] = ""
+
+class WorkflowPipeline(BaseModel):
+    id: str = Field(default_factory=lambda: f"wf-{int(datetime.utcnow().timestamp() * 1000)}")
+    novel_id: str
+    title: str
+    nodes: List[WorkflowNode] = Field(default_factory=list)
+    active_node_id: Optional[str] = None
+    updated_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+class GodsEyeState(BaseModel):
+    novel_id: str
+    current_era: str = "天元三万年·灵气复苏初纪"
+    celestial_anomalies: str = "太白昼见，九幽冥渊煞气上涌三万里"
+    macro_crisis_countdown_days: int = 49
+    offscreen_factions: List[Dict[str, Any]] = Field(default_factory=list)
+    global_tension_index: float = 78.5
+
+class DungeonArc(BaseModel):
+    id: str = Field(default_factory=lambda: f"arc-{int(datetime.utcnow().timestamp() * 1000)}")
+    novel_id: str
+    arc_name: str
+    location: str
+    stage: str = "EXPLORATION"
+    danger_level: int = 7
+    milestone_gates: List[str] = Field(default_factory=list)
+    loot_economy: Dict[str, Any] = Field(default_factory=dict)
+    survival_rate: float = 0.45
+

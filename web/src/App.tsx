@@ -28,6 +28,12 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import { CommandPalette } from './components/common/CommandPalette';
 import { ZenFocusModal } from './components/studio/ZenFocusModal';
 import { PublishingStudioModal } from './components/export/PublishingStudioModal';
+import { VideoStoryboardStudio } from './components/video/VideoStoryboardStudio';
+import { WorkflowOrchestratorView } from './components/workflow/WorkflowOrchestratorView';
+import { ProgressPulseView } from './components/narrative/ProgressPulseView';
+import { DungeonArcTrajectoryView } from './components/narrative/DungeonArcTrajectoryView';
+import { GodsEyeViewModal } from './components/narrative/GodsEyeViewModal';
+import { InSceneCharactersDrawer } from './components/narrative/InSceneCharactersDrawer';
 
 const AppContent: React.FC = () => {
   const {
@@ -39,6 +45,8 @@ const AppContent: React.FC = () => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isZenOpen, setIsZenOpen] = useState(false);
   const [isExportStudioOpen, setIsExportStudioOpen] = useState(false);
+  const [isGodsEyeOpen, setIsGodsEyeOpen] = useState(false);
+  const [isInSceneOpen, setIsInSceneOpen] = useState(false);
 
   // 全局 Cmd+K / Ctrl+K 监听
   useEffect(() => {
@@ -67,6 +75,8 @@ const AppContent: React.FC = () => {
         onOpenZen={() => setIsZenOpen(true)}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onOpenExportStudio={() => setIsExportStudioOpen(true)}
+        onOpenGodsEye={() => setIsGodsEyeOpen(true)}
+        onOpenInScene={() => setIsInSceneOpen(true)}
       />
 
       <div className="flex-1 flex overflow-hidden pb-16 md:pb-0">
@@ -77,6 +87,10 @@ const AppContent: React.FC = () => {
         {activeTab === 'CANVAS' && (
           <StudioView onNavigateTab={setActiveTab} defaultStudioTab="canvas" />
         )}
+        {activeTab === 'VIDEO_STUDIO' && <VideoStoryboardStudio />}
+        {activeTab === 'WORKFLOW' && <WorkflowOrchestratorView />}
+        {activeTab === 'PROGRESS_PULSE' && <ProgressPulseView onNavigateTab={setActiveTab} />}
+        {activeTab === 'DUNGEONS' && <DungeonArcTrajectoryView />}
         {activeTab === 'CHARACTERS' && <CharacterView />}
         {activeTab === 'RELATIONS' && <CharacterRelationGraph />}
         {activeTab === 'TIMELINE' && <TimelineMatrixView onNavigateTab={setActiveTab} />}
@@ -111,6 +125,8 @@ const AppContent: React.FC = () => {
         onOpenGraph={() => setActiveTab('RELATIONS')}
         onOpenTension={() => setActiveTab('TENSION')}
         onOpenSelfIteration={() => setActiveTab('EVOLUTION')}
+        onOpenGodsEye={() => setIsGodsEyeOpen(true)}
+        onOpenInScene={() => setIsInSceneOpen(true)}
       />
 
       {/* 作家禅定专注模式 */}
@@ -123,6 +139,18 @@ const AppContent: React.FC = () => {
       <PublishingStudioModal
         isOpen={isExportStudioOpen}
         onClose={() => setIsExportStudioOpen(false)}
+      />
+
+      {/* 宏观全景上帝视角 HUD */}
+      <GodsEyeViewModal
+        isOpen={isGodsEyeOpen}
+        onClose={() => setIsGodsEyeOpen(false)}
+      />
+
+      {/* 当前场次登场人物心境与暗线抽屉 */}
+      <InSceneCharactersDrawer
+        isOpen={isInSceneOpen}
+        onClose={() => setIsInSceneOpen(false)}
       />
     </div>
   );

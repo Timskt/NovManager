@@ -194,6 +194,68 @@ class SQLiteNovelRepository:
                 draft_preview TEXT DEFAULT '',
                 created_at TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS video_storyboards (
+                id TEXT PRIMARY KEY,
+                novel_id TEXT NOT NULL,
+                chapter_id TEXT,
+                scene_id TEXT,
+                title TEXT NOT NULL,
+                aspect_ratio TEXT DEFAULT '16:9',
+                target_platform TEXT DEFAULT 'KLING',
+                total_duration_seconds INTEGER DEFAULT 0,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS video_shots (
+                id TEXT PRIMARY KEY,
+                storyboard_id TEXT NOT NULL,
+                scene_id TEXT,
+                shot_number INTEGER NOT NULL,
+                duration_seconds INTEGER DEFAULT 5,
+                shot_type TEXT DEFAULT 'MEDIUM',
+                camera_movement TEXT DEFAULT 'DOLLY_IN',
+                visual_prompt TEXT NOT NULL,
+                motion_prompt TEXT DEFAULT '',
+                negative_prompt TEXT DEFAULT '',
+                lighting TEXT DEFAULT '',
+                character_references_json TEXT DEFAULT '[]',
+                sound_cue TEXT DEFAULT '',
+                dialogue_cue TEXT DEFAULT '',
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (storyboard_id) REFERENCES video_storyboards(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS workflow_pipelines (
+                id TEXT PRIMARY KEY,
+                novel_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                nodes_json TEXT DEFAULT '[]',
+                active_node_id TEXT,
+                updated_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS gods_eye_states (
+                novel_id TEXT PRIMARY KEY,
+                current_era TEXT NOT NULL,
+                celestial_anomalies TEXT NOT NULL,
+                macro_crisis_countdown_days INTEGER DEFAULT 49,
+                offscreen_factions_json TEXT DEFAULT '[]',
+                global_tension_index REAL DEFAULT 78.5
+            );
+
+            CREATE TABLE IF NOT EXISTS dungeon_arcs (
+                id TEXT PRIMARY KEY,
+                novel_id TEXT NOT NULL,
+                arc_name TEXT NOT NULL,
+                location TEXT NOT NULL,
+                stage TEXT DEFAULT 'EXPLORATION',
+                danger_level INTEGER DEFAULT 7,
+                milestone_gates_json TEXT DEFAULT '[]',
+                loot_economy_json TEXT DEFAULT '{}',
+                survival_rate REAL DEFAULT 0.45
+            );
             """)
 
     def get_database_status(self) -> Dict[str, Any]:
@@ -263,3 +325,338 @@ class SQLiteNovelRepository:
                     "created_at": r["created_at"]
                 })
             return results
+
+    # ==================== 影视级 AI 视频分镜管理 ====================
+
+    def list_storyboards(self, novel_id: str) -> List[Dict[str, Any]]:
+        with self._lock, self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM video_storyboards WHERE novel_id = ? ORDER BY created_at DESC", (novel_id,))
+            rows = cursor.fetchall()
+            results = []
+            for r in rows:
+                sb_id = r["id"]
+                cursor.execute("SELECT * FROM video_shots WHERE storyboard_id = ? ORDER BY shot_number ASC", (sb_id,))
+                shot_rows = cursor.fetchall()
+                shots = []
+                for s in shot_rows:
+                    shots.append({
+                        "id": s["id"],
+                        "scene_id": s["scene_id"],
+                        "shot_number": s["shot_number"],
+                        "duration_seconds": s["duration_seconds"],
+                        "shot_type": s["shot_type"],
+                        "camera_movement": s["camera_movement"],
+                        "visual_prompt": s["visual_prompt"],
+                        "motion_prompt": s["motion_prompt"],
+                        "negative_prompt": s["negative_prompt"],
+                        "lighting": s["lighting"],
+                        "character_references": json.loads(s["character_references_json"]),
+                        "sound_cue": s["sound_cue"],
+                        "dialogue_cue": s["dialogue_cue"],
+                        "created_at": s["created_at"]
+                    })
+                results.append({
+                    "id": r["id"],
+                    "novel_id": r["novel_id"],
+                    "chapter_id": r["chapter_id"],
+                    "scene_id": r["scene_id"],
+                    "title": r["title"],
+                    "aspect_ratio": r["aspect_ratio"],
+                    "target_platform": r["target_platform"],
+                    "total_duration_seconds": sum(s["duration_seconds"] for s in shots),
+                    "shots": shots,
+                    "created_at": r["created_at"],
+                    "updated_at": r["updated_at"]
+                })
+            return results
+
+    def save_storyboard(self, sb_data: Dict[str, Any]) -> Dict[str, Any]:
+        now_iso = datetime.now().isoformat()
+        sb_id = sb_data.get("id") or f"sb-{int(datetime.now().timestamp() * 1000)}"
+        with self._lock, self._get_connection() as conn:
+            conn.execute("""
+            INSERT OR REPLACE INTO video_storyboards (
+                id, novel_id, chapter_id, scene_id, title, aspect_ratio, target_platform,
+                total_duration_seconds, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                sb_id,
+                sb_data["novel_id"],
+                sb_data.get("chapter_id"),
+                sb_data.get("scene_id"),
+                sb_data.get("title", "未命名分镜"),
+                sb_data.get("aspect_ratio", "16:9"),
+                sb_data.get("target_platform", "KLING"),
+                sb_data.get("total_duration_seconds", 0),
+                sb_data.get("created_at", now_iso),
+                now_iso
+            ))
+            # 保存关联 shots
+            if "shots" in sb_data and isinstance(sb_data["shots"], list):
+                conn.execute("DELETE FROM video_shots WHERE storyboard_id = ?", (sb_id,))
+                for idx, s in enumerate(sb_data["shots"]):
+                    shot_id = s.get("id") or f"shot-{int(datetime.now().timestamp() * 1000)}-{idx}"
+                    conn.execute("""
+                    INSERT INTO video_shots (
+                        id, storyboard_id, scene_id, shot_number, duration_seconds, shot_type,
+                        camera_movement, visual_prompt, motion_prompt, negative_prompt, lighting,
+                        character_references_json, sound_cue, dialogue_cue, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        shot_id,
+                        sb_id,
+                        s.get("scene_id"),
+                        s.get("shot_number", idx + 1),
+                        s.get("duration_seconds", 5),
+                        s.get("shot_type", "MEDIUM"),
+                        s.get("camera_movement", "DOLLY_IN"),
+                        s.get("visual_prompt", ""),
+                        s.get("motion_prompt", ""),
+                        s.get("negative_prompt", "distorted limbs, blurry, bad anatomy"),
+                        s.get("lighting", "Cinematic dramatic lighting"),
+                        json.dumps(s.get("character_references", [])),
+                        s.get("sound_cue", ""),
+                        s.get("dialogue_cue", ""),
+                        s.get("created_at", now_iso)
+                    ))
+            return {**sb_data, "id": sb_id, "updated_at": now_iso}
+
+    def export_video_prompts(
+        self,
+        storyboard_id: str,
+        platform: str = "KLING",
+        include_camera_brackets: bool = True,
+        include_negative: bool = True
+    ) -> Dict[str, Any]:
+        with self._lock, self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM video_storyboards WHERE id = ?", (storyboard_id,))
+            sb = cursor.fetchone()
+            if not sb:
+                return {"error": "分镜工程不存在"}
+            cursor.execute("SELECT * FROM video_shots WHERE storyboard_id = ? ORDER BY shot_number ASC", (storyboard_id,))
+            shot_rows = cursor.fetchall()
+            
+            shots = []
+            for s in shot_rows:
+                shots.append({
+                    "shot_number": s["shot_number"],
+                    "duration": s["duration_seconds"],
+                    "shot_type": s["shot_type"],
+                    "camera": s["camera_movement"],
+                    "visual": s["visual_prompt"],
+                    "motion": s["motion_prompt"],
+                    "negative": s["negative_prompt"],
+                    "lighting": s["lighting"],
+                    "sound": s["sound_cue"],
+                    "dialogue": s["dialogue_cue"]
+                })
+
+            total_dur = sum(s["duration"] for s in shots)
+
+            if platform.upper() == "KLING":
+                # 快手可灵标准 JSON 批处理格式
+                payload = {
+                    "generator": "NovManager-Cinematic-Engine",
+                    "model_target": "Kling-v1.5-Pro",
+                    "aspect_ratio": sb["aspect_ratio"],
+                    "shots_sequence": [
+                        {
+                            "shot_index": s["shot_number"],
+                            "duration_sec": s["duration"],
+                            "camera_movement": s["camera"].lower(),
+                            "prompt": f"{s['visual']} | {s['motion']} | {s['lighting']}",
+                            "negative_prompt": s["negative"] if include_negative else ""
+                        }
+                        for s in shots
+                    ]
+                }
+                formatted = json.dumps(payload, ensure_ascii=False, indent=2)
+
+            elif platform.upper() == "SORA":
+                # OpenAI Sora 电影序列表格与时间轴格式
+                seq = []
+                cum_time = 0
+                for s in shots:
+                    start_t = f"{cum_time // 60:02d}:{cum_time % 60:02d}"
+                    cum_time += s["duration"]
+                    end_t = f"{cum_time // 60:02d}:{cum_time % 60:02d}"
+                    seq.append({
+                        "shot_id": f"Shot-{s['shot_number']:02d}",
+                        "timestamp": f"{start_t} - {end_t}",
+                        "visual_description": s["visual"],
+                        "camera_direction": s["camera"],
+                        "cinematography_lighting": s["lighting"],
+                        "audio_sfx_cue": s["sound"],
+                        "dialogue": s["dialogue"]
+                    })
+                formatted = json.dumps({"project": sb["title"], "sequence": seq}, ensure_ascii=False, indent=2)
+
+            elif platform.upper() == "RUNWAY_GEN3":
+                # Runway Gen-3 Alpha Bracket 语法
+                lines = []
+                for s in shots:
+                    cam_bracket = f"[Camera: {s['camera'].replace('_', ' ').title()}] " if include_camera_brackets else ""
+                    line = f"Shot {s['shot_number']} ({s['duration']}s): {cam_bracket}{s['visual']}. {s['motion']}. Lighting: {s['lighting']} --ar {sb['aspect_ratio']}"
+                    lines.append(line)
+                formatted = "\n\n".join(lines)
+
+            elif platform.upper() == "MIDJOURNEY":
+                # Midjourney / FLUX 关键帧原画提示词列表
+                lines = []
+                for s in shots:
+                    line = f"/imagine prompt: cinematic keyframe, shot {s['shot_number']}, {s['visual']}, {s['lighting']}, shot type: {s['shot_type'].lower()} --ar {sb['aspect_ratio']} --style raw --v 6.1 --s 250"
+                    lines.append(line)
+                formatted = "\n\n".join(lines)
+
+            else:
+                # 默认通用多模态批处理格式
+                lines = [f"【{sb['title']} - 影视分镜生成指令集】\n"]
+                for s in shots:
+                    lines.append(f"--- 镜头 {s['shot_number']} [{s['duration']}秒 | {s['shot_type']} | {s['camera']}] ---")
+                    lines.append(f"画面描述: {s['visual']}")
+                    if s['motion']:
+                        lines.append(f"动态演变: {s['motion']}")
+                    lines.append(f"光影视效: {s['lighting']}")
+                    if s['dialogue']:
+                        lines.append(f"对白台词: {s['dialogue']}")
+                    if s['sound']:
+                        lines.append(f"环境音效: {s['sound']}\n")
+                formatted = "\n".join(lines)
+
+            return {
+                "platform": platform,
+                "formatted_content": formatted,
+                "shots_count": len(shots),
+                "total_duration": total_dur,
+                "metadata": {
+                    "title": sb["title"],
+                    "aspect_ratio": sb["aspect_ratio"]
+                }
+            }
+
+    # ==================== 工作流编排、上帝全知视角与副本演进 ====================
+
+    def get_workflow_pipeline(self, novel_id: str) -> Dict[str, Any]:
+        with self._lock, self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM workflow_pipelines WHERE novel_id = ?", (novel_id,))
+            row = cursor.fetchone()
+            if row:
+                return {
+                    "id": row["id"],
+                    "novel_id": row["novel_id"],
+                    "title": row["title"],
+                    "nodes": json.loads(row["nodes_json"]),
+                    "active_node_id": row["active_node_id"],
+                    "updated_at": row["updated_at"]
+                }
+            # 默认企业级节点流水线
+            default_nodes = [
+                {"id": "node-1", "name": "天地初辟·世界观创生", "stage": "WORLD_GENESIS", "status": "COMPLETED", "agent_role": "WorldArchitect", "output_summary": "已构筑天元神域法则与三千秘境设定"},
+                {"id": "node-2", "name": "命运网络·人设图谱编织", "stage": "OUTLINE", "status": "COMPLETED", "agent_role": "Dramaturg", "output_summary": "16名核心主配角状态机与亲疏羁绊成型"},
+                {"id": "node-3", "name": "因果宏纲·卷章大纲解构", "stage": "OUTLINE", "status": "COMPLETED", "agent_role": "Director", "output_summary": "第一卷全13章三幕式戏剧节奏拟合完成"},
+                {"id": "node-4", "name": "视肉生香·正文逐幕执笔", "stage": "DRAFT", "status": "RUNNING", "agent_role": "LeadAuthor", "output_summary": "第13章决战幕草稿实时推演中"},
+                {"id": "node-5", "name": "道心鉴真·战力因果稽查", "stage": "CONSISTENCY_AUDIT", "status": "PENDING", "agent_role": "ContinuityGuard", "output_summary": "待正文完成后自动启动全量扫描"},
+                {"id": "node-6", "name": "光影造化·影视分镜生成", "stage": "VIDEO_STORYBOARD", "status": "PENDING", "agent_role": "Cinematographer", "output_summary": "生成可灵/Sora/Midjourney跨模型提示词"}
+            ]
+            pipe_id = f"wf-{novel_id}"
+            now_iso = datetime.now().isoformat()
+            conn.execute("""
+            INSERT INTO workflow_pipelines (id, novel_id, title, nodes_json, active_node_id, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """, (pipe_id, novel_id, "长篇创作全链路流水线", json.dumps(default_nodes), "node-4", now_iso))
+            return {
+                "id": pipe_id,
+                "novel_id": novel_id,
+                "title": "长篇创作全链路流水线",
+                "nodes": default_nodes,
+                "active_node_id": "node-4",
+                "updated_at": now_iso
+            }
+
+    def get_gods_eye_state(self, novel_id: str) -> Dict[str, Any]:
+        with self._lock, self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM gods_eye_states WHERE novel_id = ?", (novel_id,))
+            row = cursor.fetchone()
+            if row:
+                return {
+                    "novel_id": row["novel_id"],
+                    "current_era": row["current_era"],
+                    "celestial_anomalies": row["celestial_anomalies"],
+                    "macro_crisis_countdown_days": row["macro_crisis_countdown_days"],
+                    "offscreen_factions": json.loads(row["offscreen_factions_json"]),
+                    "global_tension_index": row["global_tension_index"]
+                }
+            # 默认宏观上帝视角状态
+            default_factions = [
+                {"name": "太玄天宗", "leader": "凌虚道尊", "action": "闭宗封锁山门，暗中炼制九阶乾坤戮仙剑阵", "threat_level": "极高"},
+                {"name": "九幽魔渊", "leader": "幽天煞祖", "action": "魔潮浸染南瞻部洲三万里，倒逼正道结盟", "threat_level": "灭世级"},
+                {"name": "星罗商盟", "leader": "万财金仙", "action": "暗中哄抬破境灵丹物价，囤积万年寒晶", "threat_level": "中立博弈"}
+            ]
+            conn.execute("""
+            INSERT INTO gods_eye_states (novel_id, current_era, celestial_anomalies, macro_crisis_countdown_days, offscreen_factions_json, global_tension_index)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """, (novel_id, "天元三万年·灵气复苏初纪", "太白昼见，九幽冥渊煞气上涌三万里", 49, json.dumps(default_factions), 84.5))
+            return {
+                "novel_id": novel_id,
+                "current_era": "天元三万年·灵气复苏初纪",
+                "celestial_anomalies": "太白昼见，九幽冥渊煞气上涌三万里",
+                "macro_crisis_countdown_days": 49,
+                "offscreen_factions": default_factions,
+                "global_tension_index": 84.5
+            }
+
+    def list_dungeon_arcs(self, novel_id: str) -> List[Dict[str, Any]]:
+        with self._lock, self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM dungeon_arcs WHERE novel_id = ?", (novel_id,))
+            rows = cursor.fetchall()
+            if rows:
+                return [{
+                    "id": r["id"],
+                    "novel_id": r["novel_id"],
+                    "arc_name": r["arc_name"],
+                    "location": r["location"],
+                    "stage": r["stage"],
+                    "danger_level": r["danger_level"],
+                    "milestone_gates": json.loads(r["milestone_gates_json"]),
+                    "loot_economy": json.loads(r["loot_economy_json"]),
+                    "survival_rate": r["survival_rate"]
+                } for r in rows]
+            # 默认样本副本演进
+            sample_arcs = [
+                {
+                    "id": f"arc-{novel_id}-1",
+                    "novel_id": novel_id,
+                    "arc_name": "万妖天窟·九层浮屠试炼",
+                    "location": "十万大山深处·天窟绝境",
+                    "stage": "MID_CHAMBER",
+                    "danger_level": 8,
+                    "milestone_gates": ["进入天窟外围瘴气沼泽", "破译浮屠古石碑禁制", "击溃镇魂金甲天尸", "夺取天道真灵残卷", "绝命逃离天窟坍塌"],
+                    "loot_economy": {"gained": ["玄阴幽水", "万年菩提子"], "pending": ["天道真灵残卷"]},
+                    "survival_rate": 0.35
+                },
+                {
+                    "id": f"arc-{novel_id}-2",
+                    "novel_id": novel_id,
+                    "arc_name": "九霄封神台·问鼎之战",
+                    "location": "天穹之巅·上古仙庭遗址",
+                    "stage": "ENTRANCE",
+                    "danger_level": 9,
+                    "milestone_gates": ["九大仙宗天骄聚首", "登天九万九千阶试炼", "太虚幻境斩心魔", "天命法相决战巅峰"],
+                    "loot_economy": {"gained": [], "pending": ["仙庭封神榜残页", "太苍真龙精血"]},
+                    "survival_rate": 0.15
+                }
+            ]
+            for a in sample_arcs:
+                conn.execute("""
+                INSERT INTO dungeon_arcs (id, novel_id, arc_name, location, stage, danger_level, milestone_gates_json, loot_economy_json, survival_rate)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    a["id"], novel_id, a["arc_name"], a["location"], a["stage"], a["danger_level"],
+                    json.dumps(a["milestone_gates"]), json.dumps(a["loot_economy"]), a["survival_rate"]
+                ))
+            return sample_arcs

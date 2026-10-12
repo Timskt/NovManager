@@ -589,3 +589,393 @@ async fn test_http_rest_api_endpoints() {
         .unwrap();
     assert_eq!(res.status(), StatusCode::OK);
 }
+
+#[tokio::test]
+async fn test_video_storyboard_and_multiplatform_export() {
+    let app = setup_test_app();
+    let storage = SqliteStorage::new().expect("Failed to init storage");
+
+    // 1. Storage check for seeded storyboard
+    let storyboards = storage.list_video_storyboards("nov-001").expect("list storyboards");
+    assert!(!storyboards.is_empty(), "Should have seeded storyboards for nov-001");
+    let sb = storyboards
+        .iter()
+        .find(|s| s.title.contains("太虚纪元") || s.title.contains("乱石林"))
+        .expect("Should find seeded storyboard for nov-001");
+    assert!(!sb.shots.is_empty(), "Storyboard should contain shots");
+    assert!(sb.total_duration_seconds > 0.0);
+
+    // 2. Multi-platform video prompt export unit verification
+    // Sora
+    let sora_req = ExportVideoPromptRequest {
+        storyboard_id: Some(sb.id.clone()),
+        platform: "SORA".to_string(),
+        include_camera_brackets: true,
+        include_negative: true,
+    };
+    let sora_res = nov_server::video_exporter::VideoExporter::export_prompts(sb, &sora_req);
+    assert_eq!(sora_res.platform, "SORA");
+    assert!(sora_res.formatted_content.contains("SORA"));
+    assert!(sora_res.formatted_content.contains("batch_tasks"));
+    assert!(sora_res.shots_count >= 1);
+
+    // Kling
+    let kling_req = ExportVideoPromptRequest {
+        storyboard_id: Some(sb.id.clone()),
+        platform: "KLING".to_string(),
+        include_camera_brackets: true,
+        include_negative: true,
+    };
+    let kling_res = nov_server::video_exporter::VideoExporter::export_prompts(sb, &kling_req);
+    assert_eq!(kling_res.platform, "KLING");
+    assert!(kling_res.formatted_content.contains("camera_control"));
+
+    // Runway Gen-3 bracketed syntax
+    let runway_req = ExportVideoPromptRequest {
+        storyboard_id: Some(sb.id.clone()),
+        platform: "RUNWAY_GEN3".to_string(),
+        include_camera_brackets: true,
+        include_negative: true,
+    };
+    let runway_res = nov_server::video_exporter::VideoExporter::export_prompts(sb, &runway_req);
+    assert_eq!(runway_res.platform, "RUNWAY_GEN3");
+    assert!(runway_res.formatted_content.contains("[Camera:"));
+
+    // Hailuo / MiniMax high-stability
+    let hailuo_req = ExportVideoPromptRequest {
+        storyboard_id: Some(sb.id.clone()),
+        platform: "HAILUO_MINIMAX".to_string(),
+        include_camera_brackets: true,
+        include_negative: true,
+    };
+    let hailuo_res = nov_server::video_exporter::VideoExporter::export_prompts(sb, &hailuo_req);
+    assert_eq!(hailuo_res.platform, "HAILUO_MINIMAX");
+    assert!(hailuo_res.formatted_content.contains("稳定动态"));
+
+    // Midjourney keyframe format
+    let mj_req = ExportVideoPromptRequest {
+        storyboard_id: Some(sb.id.clone()),
+        platform: "MIDJOURNEY".to_string(),
+        include_camera_brackets: true,
+        include_negative: true,
+    };
+    let mj_res = nov_server::video_exporter::VideoExporter::export_prompts(sb, &mj_req);
+    assert_eq!(mj_res.platform, "MIDJOURNEY");
+    assert!(mj_res.formatted_content.contains("/imagine prompt:"));
+    assert!(mj_res.formatted_content.contains("--style raw --v 6.1"));
+
+    // ComfyUI format
+    let comfy_req = ExportVideoPromptRequest {
+        storyboard_id: Some(sb.id.clone()),
+        platform: "COMFYUI_JSON".to_string(),
+        include_camera_brackets: true,
+        include_negative: true,
+    };
+    let comfy_res = nov_server::video_exporter::VideoExporter::export_prompts(sb, &comfy_req);
+    assert_eq!(comfy_res.platform, "COMFYUI_JSON");
+    assert!(comfy_res.formatted_content.contains("ComfyUI"));
+
+    // 3. HTTP REST API Endpoints Verification
+    // GET /api/novels/:id/storyboards
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/api/novels/nov-001/storyboards")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let sbs: Vec<Value> = serde_json::from_slice(&bytes).unwrap();
+    assert!(!sbs.is_empty());
+
+    // GET /api/storyboards/:id
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri(format!("/api/storyboards/{}", sb.id))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+
+    // POST /api/storyboards (Create new)
+    let new_sb = json!({
+        "novel_id": "nov-001",
+        "chapter_id": "chap-011",
+        "scene_id": "sc-11-1",
+        "title": "测试分镜母本B",
+        "aspect_ratio": "16:9",
+        "target_platform": "SORA",
+        "shots": []
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/storyboards")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&new_sb).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let created_sb: Value = serde_json::from_slice(&bytes).unwrap();
+    let created_sb_id = created_sb["id"].as_str().unwrap().to_string();
+
+    // POST /api/storyboards/:id/shots
+    let new_shot = json!({
+        "scene_id": "sc-11-1",
+        "shot_number": 1,
+        "duration_seconds": 6.0,
+        "shot_type": "CLOSE_UP",
+        "camera_movement": "DOLLY_IN",
+        "visual_prompt": "林越手握残剑，眼神坚定",
+        "motion_prompt": "镜头向前推至特写",
+        "negative_prompt": "模糊，残缺",
+        "lighting": "冷光侧照",
+        "character_references": ["林越"]
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri(format!("/api/storyboards/{}/shots", created_sb_id))
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&new_shot).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let created_shot: Value = serde_json::from_slice(&bytes).unwrap();
+    let created_shot_id = created_shot["id"].as_str().unwrap().to_string();
+
+    // PUT /api/shots/:id
+    let updated_shot = json!({
+        "id": created_shot_id,
+        "scene_id": "sc-11-1",
+        "storyboard_id": created_sb_id,
+        "shot_number": 1,
+        "duration_seconds": 7.5,
+        "shot_type": "EXTREME_CLOSE_UP",
+        "camera_movement": "STATIC",
+        "visual_prompt": "林越眼神如刀，残片散发青光",
+        "motion_prompt": "微小呼吸动态",
+        "negative_prompt": "失焦",
+        "lighting": "幽青色异宝辉光",
+        "character_references": ["林越"]
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("PUT")
+                .uri(format!("/api/shots/{}", created_shot_id))
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&updated_shot).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+
+    // POST /api/storyboards/:id/export
+    let export_req = json!({
+        "platform": "RUNWAY_GEN3",
+        "include_camera_brackets": true,
+        "include_negative": true
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri(format!("/api/storyboards/{}/export", created_sb_id))
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&export_req).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let export_val: Value = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(export_val["platform"], "RUNWAY_GEN3");
+    assert!(export_val["formatted_content"].as_str().unwrap().contains("[Camera:"));
+
+    // DELETE /api/shots/:id
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("DELETE")
+                .uri(format!("/api/shots/{}", created_shot_id))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let _ = storage.delete_video_storyboard(&created_sb_id);
+}
+
+
+#[tokio::test]
+async fn test_workflow_pipeline_gods_eye_and_dungeon_arcs() {
+    let app = setup_test_app();
+
+    // 1. GET /api/novels/:id/workflow
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/api/novels/nov-001/workflow")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let pipeline: Value = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(pipeline["nodes"].as_array().unwrap().len(), 6);
+
+    // 2. POST /api/novels/:id/workflow/step
+    let step_req = json!({
+        "node_id": "wf-04",
+        "status": "COMPLETED",
+        "output_summary": "正文起草第三版完成并已通过初步风格校验",
+        "agent_role": "ProseArtisan"
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/novels/nov-001/workflow/step")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&step_req).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let updated_pipeline: Value = serde_json::from_slice(&bytes).unwrap();
+    let nodes = updated_pipeline["nodes"].as_array().unwrap();
+    let wf04 = nodes.iter().find(|n| n["id"] == "wf-04").unwrap();
+    assert_eq!(wf04["status"], "COMPLETED");
+
+    // 3. GET /api/novels/:id/gods-eye
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/api/novels/nov-001/gods-eye")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let gods_eye: Value = serde_json::from_slice(&bytes).unwrap();
+    assert!(gods_eye["current_era"].as_str().unwrap().contains("天道"));
+    assert!(!gods_eye["celestial_anomalies"].as_array().unwrap().is_empty());
+    assert!(gods_eye["global_tension_index"].as_f64().unwrap() > 0.0);
+
+    // 4. POST /api/novels/:id/gods-eye
+    let update_ge = json!({
+        "current_era": "天道崩溃·浩劫降临前夕",
+        "celestial_anomalies": ["天裂万丈", "血月当空"],
+        "macro_crisis_countdown_days": 42,
+        "offscreen_factions": [
+            {
+                "faction": "九幽魔皇殿",
+                "activity": "破开封印，集结魔兵",
+                "threat_level": "EXTREME"
+            }
+        ],
+        "global_tension_index": 0.95
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/novels/nov-001/gods-eye")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&update_ge).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let saved_ge: Value = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(saved_ge["macro_crisis_countdown_days"], 42);
+    assert_eq!(saved_ge["global_tension_index"], 0.95);
+
+    // 5. GET /api/novels/:id/dungeons
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/api/novels/nov-001/dungeons")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+
+    // 6. POST /api/novels/:id/dungeons
+    let new_dungeon = json!({
+        "arc_name": "幽冥血海太虚禁地",
+        "location": "地底九万丈血渊",
+        "stage": "BOSS_BATTLE",
+        "danger_level": 9,
+        "milestone_gates": ["渡过血海死水", "诛杀地煞修罗", "斩灭血海魔魂"],
+        "loot_economy": {
+            "immortal_artifacts": ["血煞天魔珠"],
+            "spiritual_stones": 100000
+        },
+        "survival_rate": 0.15
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/novels/nov-001/dungeons")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&new_dungeon).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let saved_dng: Value = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(saved_dng["arc_name"], "幽冥血海太虚禁地");
+    assert_eq!(saved_dng["danger_level"], 9);
+}
+

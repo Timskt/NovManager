@@ -219,43 +219,316 @@ impl SqliteStorage {
                 key TEXT PRIMARY KEY,
                 val TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS video_storyboards (
+                id TEXT PRIMARY KEY,
+                novel_id TEXT NOT NULL,
+                chapter_id TEXT NOT NULL,
+                scene_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                aspect_ratio TEXT DEFAULT '16:9',
+                target_platform TEXT DEFAULT 'SORA',
+                total_duration_seconds REAL DEFAULT 0.0,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (novel_id) REFERENCES novels(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS video_shots (
+                id TEXT PRIMARY KEY,
+                storyboard_id TEXT NOT NULL,
+                scene_id TEXT NOT NULL,
+                shot_number INTEGER NOT NULL,
+                duration_seconds REAL DEFAULT 5.0,
+                shot_type TEXT DEFAULT 'MEDIUM',
+                camera_movement TEXT DEFAULT 'STATIC',
+                visual_prompt TEXT NOT NULL,
+                motion_prompt TEXT DEFAULT '',
+                negative_prompt TEXT DEFAULT '',
+                lighting TEXT DEFAULT '',
+                character_references_json TEXT DEFAULT '[]',
+                sound_cue TEXT DEFAULT '',
+                dialogue_cue TEXT DEFAULT '',
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (storyboard_id) REFERENCES video_storyboards(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS workflow_pipelines (
+                id TEXT PRIMARY KEY,
+                novel_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                nodes_json TEXT NOT NULL,
+                active_node_id TEXT,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (novel_id) REFERENCES novels(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS dungeon_arcs (
+                id TEXT PRIMARY KEY,
+                novel_id TEXT NOT NULL,
+                arc_name TEXT NOT NULL,
+                location TEXT NOT NULL,
+                stage TEXT NOT NULL,
+                danger_level INTEGER DEFAULT 5,
+                milestone_gates_json TEXT NOT NULL,
+                loot_economy_json TEXT NOT NULL,
+                survival_rate REAL DEFAULT 0.5,
+                created_at TEXT DEFAULT '',
+                FOREIGN KEY (novel_id) REFERENCES novels(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS gods_eye_states (
+                novel_id TEXT PRIMARY KEY,
+                current_era TEXT NOT NULL,
+                celestial_anomalies TEXT NOT NULL,
+                macro_crisis_countdown_days INTEGER DEFAULT 100,
+                offscreen_factions_json TEXT NOT NULL,
+                global_tension_index REAL DEFAULT 0.5,
+                updated_at TEXT DEFAULT '',
+                FOREIGN KEY (novel_id) REFERENCES novels(id) ON DELETE CASCADE
+            );
             "#,
         )?;
+
+        // Graceful column migrations for existing databases
+        let _ = conn.execute("ALTER TABLE dungeon_arcs ADD COLUMN created_at TEXT DEFAULT ''", []);
+        let _ = conn.execute("ALTER TABLE gods_eye_states ADD COLUMN updated_at TEXT DEFAULT ''", []);
+
         Ok(())
     }
 
+
     fn maybe_seed_data(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let count: i64 = {
+        let (novels_count, chars_count, states_count): (i64, i64, i64) = {
             let conn = self.conn.lock().unwrap();
-            conn.query_row("SELECT count(*) FROM novels", [], |row| row.get(0))?
+            let nc: i64 = conn.query_row("SELECT count(*) FROM novels", [], |row| row.get(0)).unwrap_or(0);
+            let cc: i64 = conn.query_row("SELECT count(*) FROM characters", [], |row| row.get(0)).unwrap_or(0);
+            let sc: i64 = conn.query_row("SELECT count(*) FROM character_states", [], |row| row.get(0)).unwrap_or(0);
+            (nc, cc, sc)
         };
 
-        if count > 0 {
-            info!("Database already contains {} novels, skipping seed.", count);
-            return Ok(());
-        }
+        if novels_count == 0 || chars_count == 0 || states_count == 0 {
+            info!("Database missing seed entities (novels: {}, chars: {}, states: {}). Checking seed sources...", novels_count, chars_count, states_count);
+            let candidates = [
+                PathBuf::from("data/novel_store.json"),
+                PathBuf::from("../backend/data/novel_store.json"),
+                PathBuf::from("backend/data/novel_store.json"),
+            ];
 
-        info!("Database is empty. Checking for novel_store.json to seed...");
-        let candidates = [
-            PathBuf::from("data/novel_store.json"),
-            PathBuf::from("../backend/data/novel_store.json"),
-            PathBuf::from("backend/data/novel_store.json"),
-        ];
-
-        for c in &candidates {
-            if c.exists() {
-                if let Ok(content) = fs::read_to_string(c) {
-                    if let Ok(val) = serde_json::from_str::<Value>(&content) {
-                        info!("Found seed JSON at {:?}, importing...", c);
-                        self.import_json_store(&val)?;
-                        return Ok(());
+            let mut imported = false;
+            for c in &candidates {
+                if c.exists() {
+                    if let Ok(content) = fs::read_to_string(c) {
+                        if let Ok(val) = serde_json::from_str::<Value>(&content) {
+                            info!("Found seed JSON at {:?}, importing...", c);
+                            if let Ok(()) = self.import_json_store(&val) {
+                                imported = true;
+                                break;
+                            }
+                        }
                     }
                 }
             }
+
+            if !imported {
+                info!("No valid seed file found, creating built-in sample novels.");
+                self.seed_sample_data()?;
+            }
         }
 
-        info!("No seed file found, creating built-in sample novels.");
-        self.seed_sample_data()?;
+        self.maybe_seed_video_and_workflow_data()?;
+        Ok(())
+    }
+
+    fn maybe_seed_video_and_workflow_data(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let conn = self.conn.lock().unwrap();
+
+        // 1. Seed video storyboard if empty
+        let sb_count: i64 = conn.query_row("SELECT count(*) FROM video_storyboards", [], |r| r.get(0)).unwrap_or(0);
+        if sb_count == 0 {
+            let sb_id = "sb-001";
+            let novel_id = "nov-001";
+            let chapter_id = "chap-011";
+            let scene_id = "sc-11-1";
+            let title = "《太虚纪元》第一幕：绝壁乱石林伏击战";
+            let aspect_ratio = "16:9";
+            let target_platform = "RUNWAY_GEN3";
+            let total_duration = 15.5;
+            let now = Utc::now().to_rfc3339();
+
+            conn.execute(
+                "INSERT OR REPLACE INTO video_storyboards (id, novel_id, chapter_id, scene_id, title, aspect_ratio, target_platform, total_duration_seconds, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                params![sb_id, novel_id, chapter_id, scene_id, title, aspect_ratio, target_platform, total_duration, now, now],
+            )?;
+
+            let shots = vec![
+                (
+                    "shot-001-1",
+                    sb_id,
+                    scene_id,
+                    1,
+                    4.5,
+                    "WIDE",
+                    "DOLLY_IN",
+                    "Dusk atmosphere, jagged black rocks against blood-red twilight sky. Wind howling across mist-covered canyon of Falling Star Cliff, ancient basalt cliffs with glowing faint spiritual runes.",
+                    "Slow push forward through the narrow stone gorge, wind blowing dust and withered grass.",
+                    "blurry, cartoon, modern buildings, oversaturated, deformed",
+                    "Golden hour rim light from setting sun contrasting with dark shadows of rocky crags",
+                    r#"["Lin Yue (char-001)"]"#,
+                    "Deep ominous howling canyon wind with distant ethereal bell chimes",
+                    "",
+                    &now,
+                ),
+                (
+                    "shot-001-2",
+                    sb_id,
+                    scene_id,
+                    2,
+                    5.0,
+                    "CLOSE_UP",
+                    "PAN_RIGHT",
+                    "Extreme close-up of Lin Yue's sharp eyes under dark grey Taoist hood. Cold restrained gaze, calm breathing, a bead of cold sweat running down his temple, calloused hand firmly gripping the hilt of his ancient bronze sword.",
+                    "Subtle breathing movement, camera pans slowly across his focused eyes to the reflection of approaching enemies in his pupils.",
+                    "cross-eyed, trembling, cartoon, soft focus",
+                    "Chiaroscuro, high contrast cinematic side light illuminating half his face",
+                    r#"["Lin Yue (char-001)"]"#,
+                    "Muffled heartbeat slowing down, breath holding",
+                    "林越暗忖：绝剑峰的探子……动作倒是挺快。",
+                    &now,
+                ),
+                (
+                    "shot-001-3",
+                    sb_id,
+                    scene_id,
+                    3,
+                    6.0,
+                    "MEDIUM",
+                    "TRACKING",
+                    "Three black-robed Blood Demon sect assassins moving in triangular formation with corpse-fire daggers glowing pale green. Suddenly spiritual formation arrays flare azure on the ground as Lin Yue draws his sword with blinding silver flash.",
+                    "Dynamic fast tracking shot following the sword arc piercing through the twilight, shattering corpse fire in explosive sparks.",
+                    "low quality, distorted hands, bad anatomy, jittery",
+                    "Explosive blue formation luminescence contrasting with sickly green corpse fire",
+                    r#"["Lin Yue (char-001)", "Ye Xiao (char-003) Assassins"]"#,
+                    "Sharp metallic sword unsheathing ringing sound, explosive spiritual blast",
+                    "",
+                    &now,
+                ),
+            ];
+
+            for s in shots {
+                conn.execute(
+                    "INSERT OR REPLACE INTO video_shots (id, storyboard_id, scene_id, shot_number, duration_seconds, shot_type, camera_movement, visual_prompt, motion_prompt, negative_prompt, lighting, character_references_json, sound_cue, dialogue_cue, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    params![s.0, s.1, s.2, s.3, s.4, s.5, s.6, s.7, s.8, s.9, s.10, s.11, s.12, s.13, s.14],
+                )?;
+            }
+        }
+
+        // 2. Seed workflow pipeline if empty
+        let pipe_count: i64 = conn.query_row("SELECT count(*) FROM workflow_pipelines", [], |r| r.get(0)).unwrap_or(0);
+        if pipe_count == 0 {
+            let now = Utc::now().to_rfc3339();
+            let nodes = json!([
+                {
+                    "id": "wf-01",
+                    "name": "世界观创生与法则推演",
+                    "stage": "WORLD_GENESIS",
+                    "status": "COMPLETED",
+                    "agent_role": "WorldArchon",
+                    "output_summary": "太虚五境修行法则及九渊青铜残片设定已完全固化并完成一致性校验"
+                },
+                {
+                    "id": "wf-02",
+                    "name": "卷宗宏观大纲设计",
+                    "stage": "OUTLINE",
+                    "status": "COMPLETED",
+                    "agent_role": "PlotGrandmaster",
+                    "output_summary": "第一卷潜龙出渊主线危机及坠星崖绝地血战高潮节拍已确立"
+                },
+                {
+                    "id": "wf-03",
+                    "name": "高张力场景节拍细化",
+                    "stage": "BEATS",
+                    "status": "COMPLETED",
+                    "agent_role": "BeatSculptor",
+                    "output_summary": "第11章乱石林伏击反杀三段式反转节拍已梳理"
+                },
+                {
+                    "id": "wf-04",
+                    "name": "正文深度自迭代草拟",
+                    "stage": "DRAFT",
+                    "status": "RUNNING",
+                    "agent_role": "ProseArtisan",
+                    "output_summary": "第11章正文正在结合冷峻克制风格指南执行第三轮润色"
+                },
+                {
+                    "id": "wf-05",
+                    "name": "世界观铁律与生理伤势审计",
+                    "stage": "CONSISTENCY_AUDIT",
+                    "status": "PENDING",
+                    "agent_role": "CanonInquisitor",
+                    "output_summary": null
+                },
+                {
+                    "id": "wf-06",
+                    "name": "AI电影级分镜母本合成",
+                    "stage": "VIDEO_STORYBOARD",
+                    "status": "PENDING",
+                    "agent_role": "CinematicDirector",
+                    "output_summary": null
+                }
+            ]);
+
+            conn.execute(
+                "INSERT OR REPLACE INTO workflow_pipelines (id, novel_id, title, nodes_json, active_node_id, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                params!["pipe-001", "nov-001", "《太虚纪元》创作工程流水线", nodes.to_string(), "wf-04", now],
+            )?;
+        }
+
+        // 3. Seed gods eye HUD if empty
+        let ge_count: i64 = conn.query_row("SELECT count(*) FROM gods_eye_states", [], |r| r.get(0)).unwrap_or(0);
+        if ge_count == 0 {
+            let now = Utc::now().to_rfc3339();
+            let anomalies = json!(["北域妖皇星逆行九度", "天道断绝壁垒暗生裂隙", "血煞魔宗护山大阵异动"]);
+            let factions = json!([
+                {
+                    "faction_name": "血煞魔宗",
+                    "leader": "夜枭",
+                    "current_plot": "调遣三路死士包围坠星崖，企图夺取林越身上青铜残片",
+                    "threat_level": "EXTREME",
+                    "distance_km": 12
+                },
+                {
+                    "faction_name": "太虚剑宗绝剑峰",
+                    "leader": "顾玄陵长老",
+                    "current_plot": "暗中派遣宗门密探探查林越动向，怀疑其私藏上古器物",
+                    "threat_level": "MODERATE",
+                    "distance_km": 45
+                }
+            ]);
+
+            conn.execute(
+                "INSERT OR REPLACE INTO gods_eye_states (novel_id, current_era, celestial_anomalies, macro_crisis_countdown_days, offscreen_factions_json, global_tension_index, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                params!["nov-001", "天道断绝三万年·末法大劫前夜", anomalies.to_string(), 84, factions.to_string(), 0.88, now],
+            )?;
+        }
+
+        // 4. Seed dungeon arcs if empty
+        let dng_count: i64 = conn.query_row("SELECT count(*) FROM dungeon_arcs", [], |r| r.get(0)).unwrap_or(0);
+        if dng_count == 0 {
+            let now = Utc::now().to_rfc3339();
+            let gates = json!(["突破崖顶罡风绝壁", "破解地脉绝灵困杀阵", "探索万年古溶洞地宫", "镇压狂化地煞血蟒", "开启青铜古门获取太虚真传承"]);
+            let loot = json!({
+                "guaranteed_drops": ["太阴玄冰髓", "地阶残破阵盘"],
+                "potential_artifact": "九渊青铜残片（其二）",
+                "risk_multiplier": "1.8x"
+            });
+
+            conn.execute(
+                "INSERT OR REPLACE INTO dungeon_arcs (id, novel_id, arc_name, location, stage, danger_level, milestone_gates_json, loot_economy_json, survival_rate, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                params!["dng-001", "nov-001", "坠星崖底远古神魔遗迹试炼", "坠星崖最深处断魂渊", "MID_CHAMBER", 8, gates.to_string(), loot.to_string(), 0.35, now],
+            )?;
+        }
+
         Ok(())
     }
 
@@ -1834,4 +2107,511 @@ impl SqliteStorage {
         }
         Ok(list)
     }
+
+    // ----------------- Video Storyboard & Cine-AI Repository -----------------
+
+    pub fn list_video_storyboards(&self, novel_id: &str) -> Result<Vec<VideoStoryboard>, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(novel_id));
+        let conn = self.conn.lock().unwrap();
+
+        let mut stmt = conn.prepare(
+            "SELECT id, novel_id, chapter_id, scene_id, title, aspect_ratio, target_platform, total_duration_seconds, created_at, updated_at FROM video_storyboards WHERE novel_id = ? ORDER BY created_at DESC"
+        )?;
+
+        let rows = stmt.query_map(params![resolved], |row| {
+            Ok(VideoStoryboard {
+                id: row.get(0)?,
+                novel_id: row.get(1)?,
+                chapter_id: row.get(2)?,
+                scene_id: row.get(3)?,
+                title: row.get(4)?,
+                aspect_ratio: row.get(5)?,
+                target_platform: row.get(6)?,
+                shots: Vec::new(),
+                total_duration_seconds: row.get(7)?,
+                created_at: row.get(8)?,
+                updated_at: row.get(9)?,
+            })
+        })?;
+
+        let mut storyboards = Vec::new();
+        for r in rows {
+            let mut sb = r?;
+            let mut shot_stmt = conn.prepare(
+                "SELECT id, scene_id, shot_number, duration_seconds, shot_type, camera_movement, visual_prompt, motion_prompt, negative_prompt, lighting, character_references_json, sound_cue, dialogue_cue, created_at FROM video_shots WHERE storyboard_id = ? ORDER BY shot_number ASC"
+            )?;
+            let shot_rows = shot_stmt.query_map(params![sb.id], |srow| {
+                let refs_str: String = srow.get(10)?;
+                Ok(VideoShot {
+                    id: srow.get(0)?,
+                    scene_id: srow.get(1)?,
+                    storyboard_id: Some(sb.id.clone()),
+                    shot_number: srow.get(2)?,
+                    duration_seconds: srow.get(3)?,
+                    shot_type: srow.get(4)?,
+                    camera_movement: srow.get(5)?,
+                    visual_prompt: srow.get(6)?,
+                    motion_prompt: srow.get(7)?,
+                    negative_prompt: srow.get(8)?,
+                    lighting: srow.get(9)?,
+                    character_references: serde_json::from_str(&refs_str).unwrap_or_default(),
+                    sound_cue: srow.get(11)?,
+                    dialogue_cue: srow.get(12)?,
+                    created_at: srow.get(13)?,
+                })
+            })?;
+            for s in shot_rows {
+                sb.shots.push(s?);
+            }
+            if sb.total_duration_seconds == 0.0 && !sb.shots.is_empty() {
+                sb.total_duration_seconds = sb.shots.iter().map(|s| s.duration_seconds).sum();
+            }
+            storyboards.push(sb);
+        }
+
+        Ok(storyboards)
+    }
+
+    pub fn get_video_storyboard(&self, id: &str) -> Result<Option<VideoStoryboard>, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, novel_id, chapter_id, scene_id, title, aspect_ratio, target_platform, total_duration_seconds, created_at, updated_at FROM video_storyboards WHERE id = ?"
+        )?;
+
+        let mut rows = stmt.query(params![id])?;
+        if let Some(row) = rows.next()? {
+            let mut sb = VideoStoryboard {
+                id: row.get(0)?,
+                novel_id: row.get(1)?,
+                chapter_id: row.get(2)?,
+                scene_id: row.get(3)?,
+                title: row.get(4)?,
+                aspect_ratio: row.get(5)?,
+                target_platform: row.get(6)?,
+                shots: Vec::new(),
+                total_duration_seconds: row.get(7)?,
+                created_at: row.get(8)?,
+                updated_at: row.get(9)?,
+            };
+
+            let mut shot_stmt = conn.prepare(
+                "SELECT id, scene_id, shot_number, duration_seconds, shot_type, camera_movement, visual_prompt, motion_prompt, negative_prompt, lighting, character_references_json, sound_cue, dialogue_cue, created_at FROM video_shots WHERE storyboard_id = ? ORDER BY shot_number ASC"
+            )?;
+            let shot_rows = shot_stmt.query_map(params![id], |srow| {
+                let refs_str: String = srow.get(10)?;
+                Ok(VideoShot {
+                    id: srow.get(0)?,
+                    scene_id: srow.get(1)?,
+                    storyboard_id: Some(id.to_string()),
+                    shot_number: srow.get(2)?,
+                    duration_seconds: srow.get(3)?,
+                    shot_type: srow.get(4)?,
+                    camera_movement: srow.get(5)?,
+                    visual_prompt: srow.get(6)?,
+                    motion_prompt: srow.get(7)?,
+                    negative_prompt: srow.get(8)?,
+                    lighting: srow.get(9)?,
+                    character_references: serde_json::from_str(&refs_str).unwrap_or_default(),
+                    sound_cue: srow.get(11)?,
+                    dialogue_cue: srow.get(12)?,
+                    created_at: srow.get(13)?,
+                })
+            })?;
+            for s in shot_rows {
+                sb.shots.push(s?);
+            }
+            if sb.total_duration_seconds == 0.0 && !sb.shots.is_empty() {
+                sb.total_duration_seconds = sb.shots.iter().map(|s| s.duration_seconds).sum();
+            }
+
+            Ok(Some(sb))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn create_or_update_video_storyboard(&self, mut sb: VideoStoryboard) -> Result<VideoStoryboard, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(&sb.novel_id));
+        sb.novel_id = resolved;
+
+        if sb.id.is_empty() {
+            sb.id = format!("sb-{}", Utc::now().timestamp_millis());
+        }
+        let now = Utc::now().to_rfc3339();
+        if sb.created_at.is_empty() {
+            sb.created_at = now.clone();
+        }
+        sb.updated_at = now.clone();
+
+        let total_duration: f32 = sb.shots.iter().map(|s| s.duration_seconds).sum();
+        if total_duration > 0.0 {
+            sb.total_duration_seconds = total_duration;
+        }
+
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT OR REPLACE INTO video_storyboards (id, novel_id, chapter_id, scene_id, title, aspect_ratio, target_platform, total_duration_seconds, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            params![sb.id, sb.novel_id, sb.chapter_id, sb.scene_id, sb.title, sb.aspect_ratio, sb.target_platform, sb.total_duration_seconds, sb.created_at, sb.updated_at],
+        )?;
+
+        for shot in &sb.shots {
+            let refs_json = serde_json::to_string(&shot.character_references).unwrap_or_else(|_| "[]".to_string());
+            let shot_created = if shot.created_at.is_empty() { &now } else { &shot.created_at };
+            conn.execute(
+                "INSERT OR REPLACE INTO video_shots (id, storyboard_id, scene_id, shot_number, duration_seconds, shot_type, camera_movement, visual_prompt, motion_prompt, negative_prompt, lighting, character_references_json, sound_cue, dialogue_cue, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                params![shot.id, sb.id, shot.scene_id, shot.shot_number, shot.duration_seconds, shot.shot_type, shot.camera_movement, shot.visual_prompt, shot.motion_prompt, shot.negative_prompt, shot.lighting, refs_json, shot.sound_cue, shot.dialogue_cue, shot_created],
+            )?;
+        }
+
+        Ok(sb)
+    }
+
+    pub fn delete_video_storyboard(&self, id: &str) -> Result<bool, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        let deleted = conn.execute("DELETE FROM video_storyboards WHERE id = ?", params![id])?;
+        conn.execute("DELETE FROM video_shots WHERE storyboard_id = ?", params![id])?;
+        Ok(deleted > 0)
+    }
+
+    pub fn add_video_shot(&self, storyboard_id: &str, mut shot: VideoShot) -> Result<VideoShot, rusqlite::Error> {
+        if shot.id.is_empty() {
+            shot.id = format!("shot-{}", Utc::now().timestamp_millis());
+        }
+        let now = Utc::now().to_rfc3339();
+        if shot.created_at.is_empty() {
+            shot.created_at = now;
+        }
+        shot.storyboard_id = Some(storyboard_id.to_string());
+
+        let conn = self.conn.lock().unwrap();
+        let refs_json = serde_json::to_string(&shot.character_references).unwrap_or_else(|_| "[]".to_string());
+
+        conn.execute(
+            "INSERT INTO video_shots (id, storyboard_id, scene_id, shot_number, duration_seconds, shot_type, camera_movement, visual_prompt, motion_prompt, negative_prompt, lighting, character_references_json, sound_cue, dialogue_cue, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            params![shot.id, storyboard_id, shot.scene_id, shot.shot_number, shot.duration_seconds, shot.shot_type, shot.camera_movement, shot.visual_prompt, shot.motion_prompt, shot.negative_prompt, shot.lighting, refs_json, shot.sound_cue, shot.dialogue_cue, shot.created_at],
+        )?;
+
+        let total_dur: f64 = conn.query_row(
+            "SELECT COALESCE(SUM(duration_seconds), 0.0) FROM video_shots WHERE storyboard_id = ?",
+            params![storyboard_id],
+            |r| r.get(0),
+        ).unwrap_or(0.0);
+
+        conn.execute(
+            "UPDATE video_storyboards SET total_duration_seconds = ?, updated_at = ? WHERE id = ?",
+            params![total_dur, Utc::now().to_rfc3339(), storyboard_id],
+        )?;
+
+        Ok(shot)
+    }
+
+    pub fn update_video_shot(&self, shot: VideoShot) -> Result<Option<VideoShot>, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        let sb_id: Option<String> = conn.query_row(
+            "SELECT storyboard_id FROM video_shots WHERE id = ?",
+            params![shot.id],
+            |r| r.get(0),
+        ).ok();
+
+        let target_sb_id = match (&shot.storyboard_id, &sb_id) {
+            (Some(s), _) => s.clone(),
+            (None, Some(s)) => s.clone(),
+            _ => return Ok(None),
+        };
+
+        let refs_json = serde_json::to_string(&shot.character_references).unwrap_or_else(|_| "[]".to_string());
+
+        let rows_affected = conn.execute(
+            "UPDATE video_shots SET scene_id = ?, shot_number = ?, duration_seconds = ?, shot_type = ?, camera_movement = ?, visual_prompt = ?, motion_prompt = ?, negative_prompt = ?, lighting = ?, character_references_json = ?, sound_cue = ?, dialogue_cue = ? WHERE id = ?",
+            params![shot.scene_id, shot.shot_number, shot.duration_seconds, shot.shot_type, shot.camera_movement, shot.visual_prompt, shot.motion_prompt, shot.negative_prompt, shot.lighting, refs_json, shot.sound_cue, shot.dialogue_cue, shot.id],
+        )?;
+
+        if rows_affected > 0 {
+            let total_dur: f64 = conn.query_row(
+                "SELECT COALESCE(SUM(duration_seconds), 0.0) FROM video_shots WHERE storyboard_id = ?",
+                params![target_sb_id],
+                |r| r.get(0),
+            ).unwrap_or(0.0);
+
+            conn.execute(
+                "UPDATE video_storyboards SET total_duration_seconds = ?, updated_at = ? WHERE id = ?",
+                params![total_dur, Utc::now().to_rfc3339(), target_sb_id],
+            )?;
+
+            let mut res = shot;
+            res.storyboard_id = Some(target_sb_id);
+            Ok(Some(res))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn delete_video_shot(&self, id: &str) -> Result<bool, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        let sb_id: Option<String> = conn.query_row(
+            "SELECT storyboard_id FROM video_shots WHERE id = ?",
+            params![id],
+            |r| r.get(0),
+        ).ok();
+
+        let rows_affected = conn.execute("DELETE FROM video_shots WHERE id = ?", params![id])?;
+        if rows_affected > 0 {
+            if let Some(target_sb_id) = sb_id {
+                let total_dur: f64 = conn.query_row(
+                    "SELECT COALESCE(SUM(duration_seconds), 0.0) FROM video_shots WHERE storyboard_id = ?",
+                    params![target_sb_id],
+                    |r| r.get(0),
+                ).unwrap_or(0.0);
+
+                conn.execute(
+                    "UPDATE video_storyboards SET total_duration_seconds = ?, updated_at = ? WHERE id = ?",
+                    params![total_dur, Utc::now().to_rfc3339(), target_sb_id],
+                )?;
+            }
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
+    // ----------------- Workflow Pipeline Repository -----------------
+
+    pub fn get_workflow_pipeline(&self, novel_id: &str) -> Result<WorkflowPipeline, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(novel_id));
+        let conn = self.conn.lock().unwrap();
+
+        let mut stmt = conn.prepare(
+            "SELECT id, novel_id, title, nodes_json, active_node_id, updated_at FROM workflow_pipelines WHERE novel_id = ? ORDER BY updated_at DESC LIMIT 1"
+        )?;
+
+        let mut rows = stmt.query(params![resolved])?;
+        if let Some(row) = rows.next()? {
+            let nodes_str: String = row.get(3)?;
+            let nodes: Vec<WorkflowNode> = serde_json::from_str(&nodes_str).unwrap_or_default();
+            Ok(WorkflowPipeline {
+                id: row.get(0)?,
+                novel_id: row.get(1)?,
+                title: row.get(2)?,
+                nodes,
+                active_node_id: row.get(4)?,
+                updated_at: row.get(5)?,
+            })
+        } else {
+            let now = Utc::now().to_rfc3339();
+            let default_nodes = vec![
+                WorkflowNode { id: "wf-01".to_string(), name: "世界观创生与法则推演".to_string(), stage: "WORLD_GENESIS".to_string(), status: "COMPLETED".to_string(), agent_role: "WorldArchon".to_string(), output_summary: Some("世界观与战力法则已推演".to_string()) },
+                WorkflowNode { id: "wf-02".to_string(), name: "卷宗宏观大纲设计".to_string(), stage: "OUTLINE".to_string(), status: "COMPLETED".to_string(), agent_role: "PlotGrandmaster".to_string(), output_summary: Some("卷宗高潮冲突结构已锁定".to_string()) },
+                WorkflowNode { id: "wf-03".to_string(), name: "高张力场景节拍细化".to_string(), stage: "BEATS".to_string(), status: "COMPLETED".to_string(), agent_role: "BeatSculptor".to_string(), output_summary: Some("场景起伏与情节点已排布".to_string()) },
+                WorkflowNode { id: "wf-04".to_string(), name: "正文深度自迭代草拟".to_string(), stage: "DRAFT".to_string(), status: "RUNNING".to_string(), agent_role: "ProseArtisan".to_string(), output_summary: Some("正文撰写中".to_string()) },
+                WorkflowNode { id: "wf-05".to_string(), name: "世界观铁律与生理伤势审计".to_string(), stage: "CONSISTENCY_AUDIT".to_string(), status: "PENDING".to_string(), agent_role: "CanonInquisitor".to_string(), output_summary: None },
+                WorkflowNode { id: "wf-06".to_string(), name: "AI电影级分镜母本合成".to_string(), stage: "VIDEO_STORYBOARD".to_string(), status: "PENDING".to_string(), agent_role: "CinematicDirector".to_string(), output_summary: None },
+            ];
+            let pipeline = WorkflowPipeline {
+                id: format!("pipe-{}", Utc::now().timestamp_millis()),
+                novel_id: resolved.clone(),
+                title: "智能小说创作工作流".to_string(),
+                nodes: default_nodes,
+                active_node_id: Some("wf-04".to_string()),
+                updated_at: now.clone(),
+            };
+            let nodes_json = serde_json::to_string(&pipeline.nodes).unwrap_or_else(|_| "[]".to_string());
+            conn.execute(
+                "INSERT OR REPLACE INTO workflow_pipelines (id, novel_id, title, nodes_json, active_node_id, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                params![pipeline.id, pipeline.novel_id, pipeline.title, nodes_json, pipeline.active_node_id, pipeline.updated_at],
+            )?;
+            Ok(pipeline)
+        }
+    }
+
+    pub fn save_workflow_pipeline(&self, mut pipeline: WorkflowPipeline) -> Result<WorkflowPipeline, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(&pipeline.novel_id));
+        pipeline.novel_id = resolved;
+        if pipeline.id.is_empty() {
+            pipeline.id = format!("pipe-{}", Utc::now().timestamp_millis());
+        }
+        pipeline.updated_at = Utc::now().to_rfc3339();
+
+        let conn = self.conn.lock().unwrap();
+        let nodes_json = serde_json::to_string(&pipeline.nodes).unwrap_or_else(|_| "[]".to_string());
+        conn.execute(
+            "INSERT OR REPLACE INTO workflow_pipelines (id, novel_id, title, nodes_json, active_node_id, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            params![pipeline.id, pipeline.novel_id, pipeline.title, nodes_json, pipeline.active_node_id, pipeline.updated_at],
+        )?;
+
+        Ok(pipeline)
+    }
+
+    pub fn advance_workflow_step(
+        &self,
+        novel_id: &str,
+        node_id: Option<&str>,
+        new_status: Option<&str>,
+        output_summary: Option<&str>,
+        agent_role: Option<&str>,
+    ) -> Result<WorkflowPipeline, rusqlite::Error> {
+        let mut pipeline = self.get_workflow_pipeline(novel_id)?;
+
+        let target_node_id = node_id
+            .map(|s| s.to_string())
+            .or_else(|| pipeline.active_node_id.clone())
+            .unwrap_or_else(|| "wf-01".to_string());
+
+        let mut node_idx_opt = None;
+        for (i, node) in pipeline.nodes.iter_mut().enumerate() {
+            if node.id == target_node_id {
+                if let Some(st) = new_status {
+                    node.status = st.to_string();
+                } else {
+                    node.status = "COMPLETED".to_string();
+                }
+                if let Some(sum) = output_summary {
+                    node.output_summary = Some(sum.to_string());
+                }
+                if let Some(role) = agent_role {
+                    node.agent_role = role.to_string();
+                }
+                node_idx_opt = Some(i);
+                break;
+            }
+        }
+
+        if let Some(idx) = node_idx_opt {
+            if pipeline.nodes[idx].status == "COMPLETED" {
+                if let Some(next_node) = pipeline.nodes.iter_mut().skip(idx + 1).find(|n| n.status != "COMPLETED") {
+                    if next_node.status == "PENDING" {
+                        next_node.status = "RUNNING".to_string();
+                    }
+                    pipeline.active_node_id = Some(next_node.id.clone());
+                }
+            }
+        }
+
+        self.save_workflow_pipeline(pipeline)
+    }
+
+    // ----------------- GodsEye State Repository -----------------
+
+    pub fn get_gods_eye_state(&self, novel_id: &str) -> Result<GodsEyeState, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(novel_id));
+        let conn = self.conn.lock().unwrap();
+
+        let mut stmt = conn.prepare(
+            "SELECT novel_id, current_era, celestial_anomalies, macro_crisis_countdown_days, offscreen_factions_json, global_tension_index, updated_at FROM gods_eye_states WHERE novel_id = ?"
+        )?;
+
+        let mut rows = stmt.query(params![resolved])?;
+        if let Some(row) = rows.next()? {
+            let anomalies_str: String = row.get(2)?;
+            let factions_str: String = row.get(4)?;
+            let anomalies = serde_json::from_str(&anomalies_str).unwrap_or_else(|_| {
+                if anomalies_str.is_empty() {
+                    vec![]
+                } else {
+                    vec![anomalies_str]
+                }
+            });
+            Ok(GodsEyeState {
+                novel_id: row.get(0)?,
+                current_era: row.get(1)?,
+                celestial_anomalies: anomalies,
+                macro_crisis_countdown_days: row.get(3)?,
+                offscreen_factions: serde_json::from_str(&factions_str).unwrap_or_default(),
+                global_tension_index: row.get(5)?,
+                updated_at: row.get(6)?,
+            })
+        } else {
+            let now = Utc::now().to_rfc3339();
+            let state = GodsEyeState {
+                novel_id: resolved.clone(),
+                current_era: "太虚断纪·天道初变".to_string(),
+                celestial_anomalies: vec!["妖皇星现世".to_string(), "灵气暗流涌动".to_string()],
+                macro_crisis_countdown_days: 100,
+                offscreen_factions: vec![json!({"faction": "暗流魔道", "threat": "HIGH"})],
+                global_tension_index: 0.75,
+                updated_at: now.clone(),
+            };
+            let anomalies_json = serde_json::to_string(&state.celestial_anomalies).unwrap_or_else(|_| "[]".to_string());
+            let factions_json = serde_json::to_string(&state.offscreen_factions).unwrap_or_else(|_| "[]".to_string());
+            conn.execute(
+                "INSERT OR REPLACE INTO gods_eye_states (novel_id, current_era, celestial_anomalies, macro_crisis_countdown_days, offscreen_factions_json, global_tension_index, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                params![state.novel_id, state.current_era, anomalies_json, state.macro_crisis_countdown_days, factions_json, state.global_tension_index, now],
+            )?;
+            Ok(state)
+        }
+    }
+
+    pub fn save_gods_eye_state(&self, mut state: GodsEyeState) -> Result<GodsEyeState, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(&state.novel_id));
+        state.novel_id = resolved;
+        let now = Utc::now().to_rfc3339();
+        state.updated_at = now.clone();
+
+        let conn = self.conn.lock().unwrap();
+        let anomalies_json = serde_json::to_string(&state.celestial_anomalies).unwrap_or_else(|_| "[]".to_string());
+        let factions_json = serde_json::to_string(&state.offscreen_factions).unwrap_or_else(|_| "[]".to_string());
+
+        conn.execute(
+            "INSERT OR REPLACE INTO gods_eye_states (novel_id, current_era, celestial_anomalies, macro_crisis_countdown_days, offscreen_factions_json, global_tension_index, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            params![state.novel_id, state.current_era, anomalies_json, state.macro_crisis_countdown_days, factions_json, state.global_tension_index, now],
+        )?;
+
+        Ok(state)
+    }
+
+    // ----------------- Dungeon Arcs Repository -----------------
+
+    pub fn list_dungeon_arcs(&self, novel_id: &str) -> Result<Vec<DungeonArc>, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(novel_id));
+        let conn = self.conn.lock().unwrap();
+
+        let mut stmt = conn.prepare(
+            "SELECT id, novel_id, arc_name, location, stage, danger_level, milestone_gates_json, loot_economy_json, survival_rate, created_at FROM dungeon_arcs WHERE novel_id = ? ORDER BY danger_level DESC"
+        )?;
+
+        let rows = stmt.query_map(params![resolved], |row| {
+            let gates_str: String = row.get(6)?;
+            let loot_str: String = row.get(7)?;
+            Ok(DungeonArc {
+                id: row.get(0)?,
+                novel_id: row.get(1)?,
+                arc_name: row.get(2)?,
+                location: row.get(3)?,
+                stage: row.get(4)?,
+                danger_level: row.get(5)?,
+                milestone_gates: serde_json::from_str(&gates_str).unwrap_or_default(),
+                loot_economy: serde_json::from_str(&loot_str).unwrap_or(json!({})),
+                survival_rate: row.get(8)?,
+                created_at: row.get(9)?,
+            })
+        })?;
+
+        let mut list = Vec::new();
+        for r in rows {
+            list.push(r?);
+        }
+        Ok(list)
+    }
+
+    pub fn create_or_update_dungeon_arc(&self, mut arc: DungeonArc) -> Result<DungeonArc, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(&arc.novel_id));
+        arc.novel_id = resolved;
+        if arc.id.is_empty() {
+            arc.id = format!("dng-{}", Utc::now().timestamp_millis());
+        }
+        if arc.created_at.is_empty() {
+            arc.created_at = Utc::now().to_rfc3339();
+        }
+
+        let conn = self.conn.lock().unwrap();
+        let gates_json = serde_json::to_string(&arc.milestone_gates).unwrap_or_else(|_| "[]".to_string());
+        let loot_json = serde_json::to_string(&arc.loot_economy).unwrap_or_else(|_| "{}".to_string());
+
+        conn.execute(
+            "INSERT OR REPLACE INTO dungeon_arcs (id, novel_id, arc_name, location, stage, danger_level, milestone_gates_json, loot_economy_json, survival_rate, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            params![arc.id, arc.novel_id, arc.arc_name, arc.location, arc.stage, arc.danger_level, gates_json, loot_json, arc.survival_rate, arc.created_at],
+        )?;
+
+        Ok(arc)
+    }
 }
+
