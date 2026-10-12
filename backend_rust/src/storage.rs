@@ -374,6 +374,54 @@ impl SqliteStorage {
                 timestamp TEXT NOT NULL,
                 FOREIGN KEY (novel_id) REFERENCES novels(id) ON DELETE CASCADE
             );
+
+            CREATE TABLE IF NOT EXISTS epiphany_sparks (
+                id TEXT PRIMARY KEY,
+                novel_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                spark_type TEXT DEFAULT 'PLOT_TWIST',
+                source TEXT DEFAULT 'AUTHOR_BRAINWAVE',
+                reader_username TEXT,
+                heat_score INTEGER DEFAULT 90,
+                status TEXT DEFAULT 'INBOX',
+                target_chapter_index INTEGER,
+                target_scene_note TEXT,
+                ai_weave_advice TEXT,
+                tags_json TEXT DEFAULT '[]',
+                created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS reader_discussions (
+                id TEXT PRIMARY KEY,
+                novel_id TEXT NOT NULL,
+                chapter_index INTEGER DEFAULT 1,
+                paragraph_snippet TEXT DEFAULT '',
+                reader_name TEXT NOT NULL,
+                platform TEXT DEFAULT '起点本章说',
+                comment_text TEXT NOT NULL,
+                likes INTEGER DEFAULT 0,
+                sentiment TEXT DEFAULT 'THEORY_CRAFTING',
+                extracted_hook TEXT,
+                converted_spark_id TEXT,
+                created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS creation_skills (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                category TEXT NOT NULL,
+                source_novel_title TEXT DEFAULT '',
+                description TEXT NOT NULL,
+                prompt_directive TEXT DEFAULT '',
+                example_snippet TEXT DEFAULT '',
+                trigger_keywords_json TEXT DEFAULT '[]',
+                is_enabled INTEGER DEFAULT 1,
+                auto_match_eligible INTEGER DEFAULT 1,
+                reused_count INTEGER DEFAULT 1,
+                effectiveness_rating INTEGER DEFAULT 92,
+                created_at TEXT NOT NULL
+            );
             "#,
         )?;
 
@@ -425,6 +473,7 @@ impl SqliteStorage {
 
         self.maybe_seed_video_and_workflow_data()?;
         self.maybe_seed_enterprise_engines()?;
+        self.maybe_seed_sparks_and_skills_data()?;
         Ok(())
     }
 
@@ -4239,6 +4288,551 @@ impl SqliteStorage {
 
         Ok(event)
     }
+
+    // =========================================================================
+    // Epiphany Sparks, Reader Discussions, Central Skill Vault & Autopilot
+    // =========================================================================
+
+    fn maybe_seed_sparks_and_skills_data(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let novel_id = self.resolve_novel_id(None);
+        let conn = self.conn.lock().unwrap();
+        let now = Utc::now().to_rfc3339();
+
+        let spark_count: i64 = conn.query_row("SELECT count(*) FROM epiphany_sparks", [], |r| r.get(0)).unwrap_or(0);
+        if spark_count == 0 {
+            let sparks = vec![
+                (
+                    "spark-seed-1",
+                    novel_id.as_str(),
+                    "藏经阁扫地盲僧实为上代自斩道果的剑祖",
+                    "平时只用竹扫帚划地，其实每一道扫痕都是失传的太虚剑意残纹，主角某次雨夜悟道时偶然踩中两道扫痕触发共鸣。",
+                    "PLOT_TWIST",
+                    "AUTHOR_BRAINWAVE",
+                    None::<&str>,
+                    96,
+                    "ANCHORED",
+                    Some(3i64),
+                    Some("第三章末尾主角雨夜踏入藏经阁外院时埋入"),
+                    Some("先描写雨水顺着竹扫帚滴落却不溅起水花，侧面暗示重剑无锋的法则控制力。"),
+                    json!(["扫地僧", "反转伏笔", "太虚剑意"]).to_string(),
+                ),
+                (
+                    "spark-seed-2",
+                    novel_id.as_str(),
+                    "读者本章说高赞脑洞：反派给的毒丹其实是本命母蛊钥匙",
+                    "起点书友@剑来熬夜王 评论：如果主角不吃下这枚蚀心丹反而打不开秘境第三层石门，把计就计用太虚古镜剥离毒素只留药引岂不是绝杀？",
+                    "READER_SUGGESTION",
+                    "READER_COMMENT",
+                    Some("剑来熬夜王"),
+                    94,
+                    "INBOX",
+                    Some(4i64),
+                    Some("秘境石门开启前"),
+                    Some("极佳的反套路将计就计桥段，让主角智商碾压反派。"),
+                    json!(["读者听劝", "将计就计", "秘境破局"]).to_string(),
+                ),
+            ];
+
+            for sp in sparks {
+                let _ = conn.execute(
+                    "INSERT INTO epiphany_sparks (id, novel_id, title, content, spark_type, source, reader_username, heat_score, status, target_chapter_index, target_scene_note, ai_weave_advice, tags_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    params![sp.0, sp.1, sp.2, sp.3, sp.4, sp.5, sp.6, sp.7, sp.8, sp.9, sp.10, sp.11, sp.12, now],
+                );
+            }
+        }
+
+        let disc_count: i64 = conn.query_row("SELECT count(*) FROM reader_discussions", [], |r| r.get(0)).unwrap_or(0);
+        if disc_count == 0 {
+            let discussions = vec![
+                (
+                    "disc-seed-1",
+                    novel_id.as_str(),
+                    2i64,
+                    "黑袍执事冷笑一声，取出一枚血色丹丸掷在地上……",
+                    "剑来熬夜王",
+                    "起点本章说",
+                    "卧槽！我猜这枚血丹根本不是普通毒药，而是打开青铜古门必须的血脉引子！主角千万别直接毁了，用古镜提纯反手坑死执事啊！",
+                    1280i64,
+                    "THEORY_CRAFTING",
+                    Some("将毒丹改写为秘境钥匙引子，主角提纯药力反坑执事"),
+                ),
+                (
+                    "disc-seed-2",
+                    novel_id.as_str(),
+                    2i64,
+                    "林越沉默片刻，将断剑收入鞘中……",
+                    "白金老书虫",
+                    "番茄段评",
+                    "这一段节奏稍微有点平，建议直接让断剑吸收一缕天雷震碎对方的传音玉简，别让这小喽啰把消息传回总坛！",
+                    642i64,
+                    "COMPLAINT_WARNING",
+                    Some("立即斩断传音玉简防止过早引出元婴老怪，保持爽感闭环"),
+                ),
+            ];
+
+            for d in discussions {
+                let _ = conn.execute(
+                    "INSERT INTO reader_discussions (id, novel_id, chapter_index, paragraph_snippet, reader_name, platform, comment_text, likes, sentiment, extracted_hook, converted_spark_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)",
+                    params![d.0, d.1, d.2, d.3, d.4, d.5, d.6, d.7, d.8, d.9, now],
+                );
+            }
+        }
+
+        let skill_count: i64 = conn.query_row("SELECT count(*) FROM creation_skills", [], |r| r.get(0)).unwrap_or(0);
+        if skill_count == 0 {
+            let skills = vec![
+                (
+                    "skill-trope-001",
+                    "【爽点套路】黑市低调捡漏 · 荒野尾随反杀连环局",
+                    "TROPE",
+                    "凡人修仙流黄金典范",
+                    "主角在拍卖会以不起眼代价拍下蒙尘至宝，故意示弱引诱贪婪强敌出城尾随，在预设阵法中雷霆越阶反杀并反舔全套身家。",
+                    "【技能挂载：黑市捡漏与荒野反杀】先抑后扬，拍卖时通过微表情暗示宝物不凡，出城后三息内动用底牌干脆利落灭口，严禁圣母放虎归山。",
+                    "林越指尖在布满铜锈的残片上轻轻一划，神识深处的古镜骤然炽热，面上却不动声色地摇头叹息将其丢回木盘。",
+                    json!(["黑市", "拍卖", "尾随", "反杀", "截胡", "荒林"]).to_string(),
+                    1,
+                    1,
+                    38,
+                    96,
+                ),
+                (
+                    "skill-tier-001",
+                    "【战力等级】太虚九阶道印与神魂污染代价体系",
+                    "POWER_TIER",
+                    "诡秘修真融合体系",
+                    "淬骨→凝煞→筑基→金丹→元婴→化神。每次越阶动用高维力量必须承受定量的因果反噬或诡异低语，杜绝战力通货膨胀。",
+                    "【技能挂载：代价型战力约束】描写越阶战斗时，必须同步展现主角经脉负荷与巧妙借力破局，禁止无脑数值碾压。",
+                    "强行引动第三道金丹剑气后，林越左眼角渗出一缕淡金色血迹，耳畔仿佛有万千古神同时低语。",
+                    json!(["突破", "境界", "筑基", "金丹", "越阶", "反噬"]).to_string(),
+                    1,
+                    1,
+                    52,
+                    95,
+                ),
+                (
+                    "skill-arch-001",
+                    "【章节架构】黄金断章钩子 · 三段式情绪心电图",
+                    "ARCHITECTURE",
+                    "起点万订追读架构",
+                    "开篇300字承接上章悬念正面碰撞，中段1800字推进冲突与意外转折，末尾300字抛出更大危机或身份揭秘，强制拉满次日追读。",
+                    "【技能挂载：万订三段式断章】章末最后一行必须停留在真相揭晓或强敌降临的最高张力瞬间。",
+                    "然而就在他翻转令箭背面的一刹那，瞳孔骤然收缩——那上面镌刻的暗记，竟指向了三日前与他把酒言欢的故人！",
+                    json!(["断章", "悬念", "钩子", "高潮", "反转"]).to_string(),
+                    1,
+                    1,
+                    84,
+                    98,
+                ),
+                (
+                    "skill-style-001",
+                    "【文风范式】冷冽电影感五感动作白描",
+                    "STYLE",
+                    "新派武侠与古典仙侠熔炉",
+                    "摒弃形容词堆砌与AI感叹词，用环境声响、金属刮擦、气流冷暖与极简短句展现生死一线的快节奏搏杀。",
+                    "【技能挂载：冷冽五感动作白描】多用动词与名词，长短句交替，战斗关键帧采用0.5倍速微距特写。",
+                    "雨水悬停。刀锋擦过铁枪杆溅起一串刺目火星，顺着统领微缩的瞳孔倒影一寸寸没入咽喉。",
+                    json!(["战斗", "厮杀", "剑气", "雨夜", "对决"]).to_string(),
+                    1,
+                    1,
+                    41,
+                    94,
+                ),
+            ];
+
+            for sk in skills {
+                let _ = conn.execute(
+                    "INSERT INTO creation_skills (id, name, category, source_novel_title, description, prompt_directive, example_snippet, trigger_keywords_json, is_enabled, auto_match_eligible, reused_count, effectiveness_rating, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    params![sk.0, sk.1, sk.2, sk.3, sk.4, sk.5, sk.6, sk.7, sk.8, sk.9, sk.10, sk.11, now],
+                );
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn list_epiphany_sparks(&self, novel_id: &str) -> Result<Vec<EpiphanySpark>, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(novel_id));
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, novel_id, title, content, spark_type, source, reader_username, heat_score, status, target_chapter_index, target_scene_note, ai_weave_advice, tags_json, created_at FROM epiphany_sparks WHERE novel_id = ? ORDER BY created_at DESC"
+        )?;
+
+        let rows = stmt.query_map(params![resolved], |row| {
+            let tags_str: String = row.get(12)?;
+            let tags: Vec<String> = serde_json::from_str(&tags_str).unwrap_or_default();
+            Ok(EpiphanySpark {
+                id: row.get(0)?,
+                novel_id: row.get(1)?,
+                title: row.get(2)?,
+                content: row.get(3)?,
+                spark_type: row.get(4)?,
+                source: row.get(5)?,
+                reader_username: row.get(6)?,
+                heat_score: row.get(7)?,
+                status: row.get(8)?,
+                target_chapter_index: row.get(9)?,
+                target_scene_note: row.get(10)?,
+                ai_weave_advice: row.get(11)?,
+                tags,
+                created_at: row.get(13)?,
+            })
+        })?;
+
+        let mut list = Vec::new();
+        for r in rows {
+            list.push(r?);
+        }
+        Ok(list)
+    }
+
+    pub fn save_epiphany_spark(&self, mut spark: EpiphanySpark) -> Result<EpiphanySpark, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(&spark.novel_id));
+        spark.novel_id = resolved;
+        if spark.id.is_empty() {
+            spark.id = format!("spark-{}", Utc::now().timestamp_millis());
+        }
+        if spark.created_at.is_empty() {
+            spark.created_at = Utc::now().to_rfc3339();
+        }
+        if spark.status.is_empty() {
+            spark.status = "INBOX".to_string();
+        }
+        if spark.spark_type.is_empty() {
+            spark.spark_type = "PLOT_TWIST".to_string();
+        }
+        if spark.source.is_empty() {
+            spark.source = "AUTHOR_BRAINWAVE".to_string();
+        }
+
+        let tags_json = serde_json::to_string(&spark.tags).unwrap_or_else(|_| "[]".to_string());
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT OR REPLACE INTO epiphany_sparks (id, novel_id, title, content, spark_type, source, reader_username, heat_score, status, target_chapter_index, target_scene_note, ai_weave_advice, tags_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            params![
+                spark.id,
+                spark.novel_id,
+                spark.title,
+                spark.content,
+                spark.spark_type,
+                spark.source,
+                spark.reader_username,
+                spark.heat_score,
+                spark.status,
+                spark.target_chapter_index,
+                spark.target_scene_note,
+                spark.ai_weave_advice,
+                tags_json,
+                spark.created_at,
+            ],
+        )?;
+        Ok(spark)
+    }
+
+    pub fn delete_epiphany_spark(&self, id: &str) -> Result<bool, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        let affected = conn.execute("DELETE FROM epiphany_sparks WHERE id = ?", params![id])?;
+        Ok(affected > 0)
+    }
+
+    pub fn list_reader_discussions(&self, novel_id: &str) -> Result<Vec<ReaderDiscussionComment>, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(novel_id));
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, novel_id, chapter_index, paragraph_snippet, reader_name, platform, comment_text, likes, sentiment, extracted_hook, converted_spark_id, created_at FROM reader_discussions WHERE novel_id = ? ORDER BY likes DESC"
+        )?;
+
+        let rows = stmt.query_map(params![resolved], |row| {
+            Ok(ReaderDiscussionComment {
+                id: row.get(0)?,
+                novel_id: row.get(1)?,
+                chapter_index: row.get(2)?,
+                paragraph_snippet: row.get(3)?,
+                reader_name: row.get(4)?,
+                platform: row.get(5)?,
+                comment_text: row.get(6)?,
+                likes: row.get(7)?,
+                sentiment: row.get(8)?,
+                extracted_hook: row.get(9)?,
+                converted_spark_id: row.get(10)?,
+                created_at: row.get(11)?,
+            })
+        })?;
+
+        let mut list = Vec::new();
+        for r in rows {
+            list.push(r?);
+        }
+        Ok(list)
+    }
+
+    pub fn save_reader_discussion(&self, mut comment: ReaderDiscussionComment) -> Result<ReaderDiscussionComment, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(&comment.novel_id));
+        comment.novel_id = resolved;
+        if comment.id.is_empty() {
+            comment.id = format!("disc-{}", Utc::now().timestamp_millis());
+        }
+        if comment.created_at.is_empty() {
+            comment.created_at = Utc::now().to_rfc3339();
+        }
+        if comment.extracted_hook.is_none() {
+            comment.extracted_hook = Some(format!("读者【{}】高赞衍生钩子：{}", comment.reader_name, comment.comment_text.chars().take(36).collect::<String>()));
+        }
+
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT OR REPLACE INTO reader_discussions (id, novel_id, chapter_index, paragraph_snippet, reader_name, platform, comment_text, likes, sentiment, extracted_hook, converted_spark_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            params![
+                comment.id,
+                comment.novel_id,
+                comment.chapter_index,
+                comment.paragraph_snippet,
+                comment.reader_name,
+                comment.platform,
+                comment.comment_text,
+                comment.likes,
+                comment.sentiment,
+                comment.extracted_hook,
+                comment.converted_spark_id,
+                comment.created_at,
+            ],
+        )?;
+        Ok(comment)
+    }
+
+    pub fn collide_sparks(&self, req: SparkCollideRequest) -> SparkCollisionResult {
+        let title_a = req.spark_a_title.unwrap_or_else(|| "核心脑洞 A".to_string());
+        let title_b = req.spark_b_title.unwrap_or_else(|| "读者热议 B".to_string());
+
+        SparkCollisionResult {
+            spark_a_id: req.spark_a_id,
+            spark_b_id: req.spark_b_id,
+            fusion_title: format!("【双灵感聚变】{} × {}", title_a, title_b),
+            combined_plot_twist: format!(
+                "将「{}」与「{}」进行因果交叉：原本看似独立的危机实则是同一幕后布局的正反两面，主角借力打力，在揭晓底牌的瞬间同时引爆双重反转！",
+                title_a, title_b
+            ),
+            dramatic_tension_bonus: 28,
+            recommended_chapter_placement: "建议埋入下一章中段转折点，并在章末最后三行完成回收爆发".to_string(),
+            scene_beat_preview: "【节拍1】表面危机逼近 → 【节拍2】触发第一层灵感伏线 → 【节拍3】第二层读者脑洞逆转乾坤 → 【节拍4】全场死寂断章留钩".to_string(),
+        }
+    }
+
+    pub fn list_creation_skills(&self) -> Result<Vec<CreationSkillItem>, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, name, category, source_novel_title, description, prompt_directive, example_snippet, trigger_keywords_json, is_enabled, auto_match_eligible, reused_count, effectiveness_rating, created_at FROM creation_skills ORDER BY effectiveness_rating DESC"
+        )?;
+
+        let rows = stmt.query_map([], |row| {
+            let kw_str: String = row.get(7)?;
+            let trigger_keywords: Vec<String> = serde_json::from_str(&kw_str).unwrap_or_default();
+            let is_en: i64 = row.get(8)?;
+            let auto_el: i64 = row.get(9)?;
+            Ok(CreationSkillItem {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                category: row.get(2)?,
+                source_novel_title: row.get(3)?,
+                description: row.get(4)?,
+                prompt_directive: row.get(5)?,
+                example_snippet: row.get(6)?,
+                trigger_keywords,
+                is_enabled: is_en != 0,
+                auto_match_eligible: auto_el != 0,
+                reused_count: row.get(10)?,
+                effectiveness_rating: row.get(11)?,
+                created_at: row.get(12)?,
+            })
+        })?;
+
+        let mut list = Vec::new();
+        for r in rows {
+            list.push(r?);
+        }
+        Ok(list)
+    }
+
+    pub fn save_creation_skill(&self, mut skill: CreationSkillItem) -> Result<CreationSkillItem, rusqlite::Error> {
+        if skill.id.is_empty() {
+            skill.id = format!("skill-{}", Utc::now().timestamp_millis());
+        }
+        if skill.created_at.is_empty() {
+            skill.created_at = Utc::now().to_rfc3339();
+        }
+        let kw_json = serde_json::to_string(&skill.trigger_keywords).unwrap_or_else(|_| "[]".to_string());
+
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT OR REPLACE INTO creation_skills (id, name, category, source_novel_title, description, prompt_directive, example_snippet, trigger_keywords_json, is_enabled, auto_match_eligible, reused_count, effectiveness_rating, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            params![
+                skill.id,
+                skill.name,
+                skill.category,
+                skill.source_novel_title,
+                skill.description,
+                skill.prompt_directive,
+                skill.example_snippet,
+                kw_json,
+                if skill.is_enabled { 1 } else { 0 },
+                if skill.auto_match_eligible { 1 } else { 0 },
+                skill.reused_count,
+                skill.effectiveness_rating,
+                skill.created_at,
+            ],
+        )?;
+        Ok(skill)
+    }
+
+    pub fn delete_creation_skill(&self, id: &str) -> Result<bool, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        let affected = conn.execute("DELETE FROM creation_skills WHERE id = ?", params![id])?;
+        Ok(affected > 0)
+    }
+
+    pub fn auto_match_skills(&self, req: SkillAutoMatchRequest) -> Result<SkillAutoMatchResult, rusqlite::Error> {
+        let all_skills = self.list_creation_skills()?;
+        let mut matched_ids = Vec::new();
+        let mut reasons = std::collections::HashMap::new();
+
+        for sk in &all_skills {
+            if !sk.auto_match_eligible {
+                continue;
+            }
+            let hits: Vec<String> = sk
+                .trigger_keywords
+                .iter()
+                .filter(|kw| req.scene_context.contains(kw.as_str()))
+                .cloned()
+                .collect();
+            if !hits.is_empty() || sk.category == "ARCHITECTURE" {
+                matched_ids.push(sk.id.clone());
+                let reason = if !hits.is_empty() {
+                    format!("场景语义命中触发词【{}】，自动勾选挂载该技能", hits.join("、"))
+                } else {
+                    format!("长篇追读留存保障：自动挂载【{}】锁定章末钩子", sk.name)
+                };
+                reasons.insert(sk.id.clone(), reason);
+            }
+        }
+
+        if matched_ids.len() < 2 {
+            for sk in all_skills.iter().take(2) {
+                if !matched_ids.contains(&sk.id) {
+                    matched_ids.push(sk.id.clone());
+                    reasons.insert(
+                        sk.id.clone(),
+                        format!("AI 叙事张力推荐：自动挂载【{}】提升本幕爽点密度", sk.name),
+                    );
+                }
+            }
+        }
+
+        Ok(SkillAutoMatchResult {
+            scene_context_summary: req.scene_context.chars().take(100).collect(),
+            matched_skill_ids: matched_ids,
+            match_reasons: reasons,
+        })
+    }
+
+    pub fn extract_skill_from_manuscript(&self, req: ExtractSkillRequest) -> Result<CreationSkillItem, rusqlite::Error> {
+        let cat = if req.preferred_category.is_empty() {
+            "TROPE".to_string()
+        } else {
+            req.preferred_category
+        };
+        let snippet: String = req.manuscript_text.chars().take(160).collect();
+        let name = req.custom_name.unwrap_or_else(|| {
+            format!("【{}】从《{}》萃取的高光范式", cat, req.source_novel_title)
+        });
+
+        let item = CreationSkillItem {
+            id: format!("skill-ext-{}", Utc::now().timestamp_millis()),
+            name: name.clone(),
+            category: cat,
+            source_novel_title: req.source_novel_title,
+            description: format!("从正文片段「{}...」逆向解构沉淀的可复用技能模块。", snippet.chars().take(40).collect::<String>()),
+            prompt_directive: format!("【技能挂载：{}】复刻该段落的节奏控制、信息差铺垫与五感白描张力。", name),
+            example_snippet: snippet,
+            trigger_keywords: vec!["反杀".to_string(), "破局".to_string(), "悬念".to_string()],
+            is_enabled: true,
+            auto_match_eligible: true,
+            reused_count: 1,
+            effectiveness_rating: 93,
+            created_at: Utc::now().to_rfc3339(),
+        };
+
+        self.save_creation_skill(item)
+    }
+
+    pub fn subvert_trope_skill(&self, req: SubvertSkillRequest) -> Vec<TropeSubversionVariant> {
+        let skill_name = if req.skill_name.is_empty() {
+            "经典网文爽点套路".to_string()
+        } else {
+            req.skill_name
+        };
+
+        vec![
+            TropeSubversionVariant {
+                id: format!("subv-{}-1", Utc::now().timestamp_millis()),
+                original_skill_name: skill_name.clone(),
+                subversion_title: "反套路变异 A：猎手与猎物的三重镜像伪装".to_string(),
+                classic_expectation: "读者以为是主角单方面扮猪吃虎，敌人全是无脑贪婪的送宝童子。".to_string(),
+                subverted_twist: "尾随者实为宿敌派来用苦肉计卧底的死士，而主角拍下的残宝早被种下因果追踪印；主角将计就计把追踪印嫁接到敌对宗门太上长老的灵舟上，引发两虎相争。".to_string(),
+                dramatic_payoff: "智商博弈连升三级，彻底摆脱机械送快递套路！".to_string(),
+            },
+            TropeSubversionVariant {
+                id: format!("subv-{}-2", Utc::now().timestamp_millis()),
+                original_skill_name: skill_name,
+                subversion_title: "反套路变异 B：场外第三方密探复盘视角".to_string(),
+                classic_expectation: "正面平铺直叙描写主角如何出招秒杀对手。".to_string(),
+                subverted_twist: "直接跳过正面交手，从半柱香后赶到现场的朝廷镇抚司密探视角切入，通过满地结霜的雷火残痕倒推刚才那场惊世骇俗的一剑，把主角脑补成隐世千年的绝巅老怪。".to_string(),
+                dramatic_payoff: "侧面留白烘托逼格拉满，迪化与幕后爽感翻倍！".to_string(),
+            },
+        ]
+    }
+
+    pub fn generate_autopilot_segment(&self, req: AutopilotSegmentRequest) -> AutopilotGeneratedSegment {
+        let skill_names: Vec<String> = req.active_skills.iter().map(|s| s.name.clone()).collect();
+        let spark_titles: Vec<String> = req.anchored_sparks.iter().map(|sp| sp.title.clone()).collect();
+
+        let ref_note = match req.reference_data_text {
+            Some(ref t) if !t.trim().is_empty() && req.mode == "REFERENCE_GUIDED_AUTO" => {
+                format!("\n（已融合投喂参考资料：「{}」）", t.chars().take(50).collect::<String>())
+            }
+            _ => String::new(),
+        };
+
+        let spark_paragraph = if let Some(first_spark) = spark_titles.first() {
+            format!(
+                "\n\n电光石火之间，林越心头掠过那道早已埋藏多时的灵光伏线——【{}】。长街尽头的雨幕仿佛凝固了一瞬，那名平日里毫不起眼的扫地盲僧竟缓缓抬起竹帚，在青石地上轻轻一划，整座护山大阵顿时发出万剑臣服般的铮鸣！",
+                first_spark
+            )
+        } else {
+            "\n\n暴雨如注，青铜古钟的余音在十丈之内荡开一圈肉眼可见的真空涟漪。林越左手袖中的破禁残符悄然燃尽，整个人借着雷光掩护掠入暗巷深处。".to_string()
+        };
+
+        let content = format!(
+            "【第 {} 章 · 第 {} 幕：无人巡航推演 · 夜雨惊变】{}\n\n残烛在穿堂冷风中剧烈摇晃，将破庙四壁的斑驳神像拉扯出无数张牙舞爪的暗影。\n\n林越背靠着冰冷刺骨的青石断柱，指腹轻轻摩挲着怀中那面布满裂纹的太虚铜镜。铜镜背面的古老铭文正随着他急促的心跳微微发烫，每一道血色丝线都在预示着十步之外那三名九黎暗卫即将发动的合击死角。\n\n“事不可为，且退一步；既退无可退，便借尔等性命一用。”\n\n他左足猛然踏碎湿滑青砖，碎石激射封死左侧刀客视线，右手残剑则贴着铁枪杆一路刮擦出刺目火星，精准刺入统领气机交汇的半寸滞涩之处！{}\n\n当最后一具黑衣尸首重重栽倒在积水潭中时，林越俯身拾起对方腰间那枚尚带余温的玄铁令箭。然而就在他翻转令箭背面的一刹那，瞳孔骤然收缩——那上面镌刻的暗记，竟指向了三日前与他把酒言欢的故人！",
+            req.chapter_index, req.scene_index, ref_note, spark_paragraph
+        );
+
+        let word_count = content.chars().count();
+
+        AutopilotGeneratedSegment {
+            id: format!("auto-seg-{}-{}", Utc::now().timestamp_millis(), req.scene_index),
+            chapter_index: req.chapter_index,
+            chapter_title: format!("第 {} 章：暗流涌动与宿命破局", req.chapter_index),
+            scene_index: req.scene_index,
+            scene_title: format!("第 {} 幕：雨夜推演与反杀留钩", req.scene_index),
+            content,
+            word_count,
+            quality_score: 95,
+            applied_skills: skill_names,
+            incorporated_sparks: spark_titles,
+            created_at: Utc::now().to_rfc3339(),
+        }
+    }
 }
+
 
 

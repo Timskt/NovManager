@@ -1129,5 +1129,210 @@ pub struct OffscreenNewsEvent {
     pub timestamp: String,
 }
 
+// ----------------- Epiphany Sparks & Reader Co-Creation Hub Models -----------------
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EpiphanySpark {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default, alias = "novel_id")]
+    pub novel_id: String,
+    pub title: String,
+    pub content: String,
+    #[serde(default, alias = "spark_type")]
+    pub spark_type: String,
+    #[serde(default)]
+    pub source: String,
+    #[serde(default, alias = "reader_username")]
+    pub reader_username: Option<String>,
+    #[serde(default, alias = "heat_score")]
+    pub heat_score: i64,
+    #[serde(default)]
+    pub status: String,
+    #[serde(default, alias = "target_chapter_index")]
+    pub target_chapter_index: Option<i64>,
+    #[serde(default, alias = "target_scene_note")]
+    pub target_scene_note: Option<String>,
+    #[serde(default, alias = "ai_weave_advice")]
+    pub ai_weave_advice: Option<String>,
+    #[serde(default)]
+    pub tags: Vec<String>,
+    #[serde(default = "default_iso_now", alias = "created_at")]
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReaderDiscussionComment {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default, alias = "novel_id")]
+    pub novel_id: String,
+    #[serde(default = "default_one", alias = "chapter_index")]
+    pub chapter_index: i64,
+    #[serde(default, alias = "paragraph_snippet")]
+    pub paragraph_snippet: String,
+    #[serde(default, alias = "reader_name")]
+    pub reader_name: String,
+    #[serde(default)]
+    pub platform: String,
+    #[serde(default, alias = "comment_text")]
+    pub comment_text: String,
+    #[serde(default)]
+    pub likes: i64,
+    #[serde(default)]
+    pub sentiment: String,
+    #[serde(default, alias = "extracted_hook")]
+    pub extracted_hook: Option<String>,
+    #[serde(default, alias = "converted_spark_id")]
+    pub converted_spark_id: Option<String>,
+    #[serde(default = "default_iso_now", alias = "created_at")]
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SparkCollideRequest {
+    #[serde(default, alias = "spark_a_id")]
+    pub spark_a_id: String,
+    #[serde(default, alias = "spark_b_id")]
+    pub spark_b_id: String,
+    #[serde(default, alias = "spark_a_title")]
+    pub spark_a_title: Option<String>,
+    #[serde(default, alias = "spark_b_title")]
+    pub spark_b_title: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SparkCollisionResult {
+    pub spark_a_id: String,
+    pub spark_b_id: String,
+    pub fusion_title: String,
+    pub combined_plot_twist: String,
+    pub dramatic_tension_bonus: i64,
+    pub recommended_chapter_placement: String,
+    pub scene_beat_preview: String,
+}
+
+// ----------------- Central Skill & Reusable Asset Vault Models -----------------
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreationSkillItem {
+    #[serde(default)]
+    pub id: String,
+    pub name: String,
+    pub category: String,
+    #[serde(default, alias = "source_novel_title")]
+    pub source_novel_title: String,
+    pub description: String,
+    #[serde(default, alias = "prompt_directive")]
+    pub prompt_directive: String,
+    #[serde(default, alias = "example_snippet")]
+    pub example_snippet: String,
+    #[serde(default, alias = "trigger_keywords")]
+    pub trigger_keywords: Vec<String>,
+    #[serde(default = "default_true", alias = "is_enabled")]
+    pub is_enabled: bool,
+    #[serde(default = "default_true", alias = "auto_match_eligible")]
+    pub auto_match_eligible: bool,
+    #[serde(default, alias = "reused_count")]
+    pub reused_count: i64,
+    #[serde(default, alias = "effectiveness_rating")]
+    pub effectiveness_rating: i64,
+    #[serde(default = "default_iso_now", alias = "created_at")]
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SkillAutoMatchRequest {
+    #[serde(default, alias = "scene_context")]
+    pub scene_context: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SkillAutoMatchResult {
+    pub scene_context_summary: String,
+    pub matched_skill_ids: Vec<String>,
+    pub match_reasons: std::collections::HashMap<String, String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExtractSkillRequest {
+    #[serde(default, alias = "manuscript_text")]
+    pub manuscript_text: String,
+    #[serde(default, alias = "preferred_category")]
+    pub preferred_category: String,
+    #[serde(default, alias = "source_novel_title")]
+    pub source_novel_title: String,
+    #[serde(default, alias = "custom_name")]
+    pub custom_name: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubvertSkillRequest {
+    #[serde(default, alias = "skill_id")]
+    pub skill_id: String,
+    #[serde(default, alias = "skill_name")]
+    pub skill_name: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TropeSubversionVariant {
+    pub id: String,
+    pub original_skill_name: String,
+    pub subversion_title: String,
+    pub classic_expectation: String,
+    pub subverted_twist: String,
+    pub dramatic_payoff: String,
+}
+
+// ----------------- Autonomous Marathon Autopilot Models -----------------
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AutopilotSegmentRequest {
+    #[serde(default, alias = "novel_id")]
+    pub novel_id: String,
+    #[serde(default, alias = "novel_title")]
+    pub novel_title: String,
+    #[serde(default)]
+    pub mode: String,
+    #[serde(default, alias = "reference_data_text")]
+    pub reference_data_text: Option<String>,
+    #[serde(default = "default_one", alias = "chapter_index")]
+    pub chapter_index: i64,
+    #[serde(default = "default_one", alias = "scene_index")]
+    pub scene_index: i64,
+    #[serde(default, alias = "active_skills")]
+    pub active_skills: Vec<CreationSkillItem>,
+    #[serde(default, alias = "anchored_sparks")]
+    pub anchored_sparks: Vec<EpiphanySpark>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AutopilotGeneratedSegment {
+    pub id: String,
+    pub chapter_index: i64,
+    pub chapter_title: String,
+    pub scene_index: i64,
+    pub scene_title: String,
+    pub content: String,
+    pub word_count: usize,
+    pub quality_score: i64,
+    pub applied_skills: Vec<String>,
+    pub incorporated_sparks: Vec<String>,
+    pub created_at: String,
+}
+
+
 
 

@@ -19,6 +19,18 @@ import {
   OffscreenNewsEvent,
   VideoStoryboard,
   VideoExportPlatform,
+  EpiphanySpark,
+  EpiphanySparkType,
+  ReaderDiscussionComment,
+  SparkCollisionResult,
+  AutopilotSessionConfig,
+  AutopilotStageLog,
+  AutopilotGeneratedSegment,
+  AutopilotCruiseReport,
+  CreationSkillCategory,
+  CreationSkillItem,
+  SkillAutoMatchResult,
+  TropeSubversionVariant,
 } from '../types/novel';
 
 const API_BASE = 'http://localhost:8000/api';
@@ -844,3 +856,531 @@ export async function fetchOffscreenNews(novelId: string): Promise<OffscreenNews
     fallbackNews
   );
 }
+
+// ==============================================================================
+// 5. 灵光一现与读者热议共创中枢接口 (Epiphany Spark & Reader Co-Creation Hub)
+// ==============================================================================
+
+export const defaultEpiphanySparks: EpiphanySpark[] = [
+  {
+    id: 'spark-001',
+    novelId: 'nov-001',
+    title: '藏经阁扫地瞎眼老仆实为三百年前初代剑首的斩出恶尸',
+    content: '平时老仆唯唯诺诺给众人递扫帚，但在宗门阵法破碎的一瞬，他随手用枯竹扫帚在地上画了一道剑痕，十万魔门大军竟无人敢越雷池一步。',
+    sparkType: 'PLOT_TWIST',
+    source: 'READER_COMMENT',
+    readerUsername: '剑来夜归人_起点本章说',
+    heatScore: 96,
+    status: 'ANCHORED',
+    targetChapterIndex: 12,
+    targetSceneNote: '第十二章·山门大阵濒临破碎的高潮转折点',
+    aiWeaveAdvice: '建议在第4章和第8章先埋设两次老仆“对剑气毫无反应但瞎眼微动”的草蛇灰线细节，第12章再引爆。',
+    tags: ['隐藏大佬', '扫地僧变体', '读者神脑洞'],
+    createdAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+  },
+  {
+    id: 'spark-002',
+    novelId: 'nov-001',
+    title: '雨夜断剑铭文台词：“我这一剑，借的是三百年后你坟头的一捧雪”',
+    content: '主角动用因果逆转杀招时的宿命感台词，不喊口号，只用极其平静森寒的语调说出死期。',
+    sparkType: 'DIALOGUE_GOLD',
+    source: 'AUTHOR_BRAINWAVE',
+    heatScore: 92,
+    status: 'INBOX',
+    targetChapterIndex: 3,
+    aiWeaveAdvice: '适合置入绝境反杀收剑入鞘的刹那，配合四周雨滴静止半息的画面描写。',
+    tags: ['装逼金句', '宿命感', '冷冽台词'],
+    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+  },
+  {
+    id: 'spark-003',
+    novelId: 'nov-001',
+    title: '反派大长老有个反差怪癖：每次下达灭门令前都要亲手给灵宠剥松子',
+    content: '越是谈论血腥屠戮的计划，手指剥松子壳的动作越是轻柔完整，一旦松子仁碎了，说明他动了真杀心。',
+    sparkType: 'CHARACTER_QUIRK',
+    source: 'AUTHOR_BRAINWAVE',
+    heatScore: 89,
+    status: 'ANCHORED',
+    targetChapterIndex: 5,
+    aiWeaveAdvice: '极佳的希区柯克式悬念道具！以后只要描写松子仁碎裂，读者就会立刻意识到有人要惨死。',
+    tags: ['反派压迫感', '细节道具', '人物弧光'],
+    createdAt: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+  },
+  {
+    id: 'spark-004',
+    novelId: 'nov-001',
+    title: '黑市交易不用灵石，改用“封存的正面记忆”作为硬通货',
+    content: '越珍贵的法宝，越需要修士割舍一段自己最幸福的记忆（如初恋、慈母、师恩）。修为越高的人越冷血，因为美好记忆全花光了。',
+    sparkType: 'LORE_FRAGMENT',
+    source: 'AI_COLLISION',
+    heatScore: 98,
+    status: 'INBOX',
+    aiWeaveAdvice: '可作为地下诡市的核心交易法则，直接解释为什么高阶修士普遍六亲不认。',
+    tags: ['世界观神设定', '等价交换', '黑暗修真'],
+    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+  },
+];
+
+export const defaultReaderDiscussions: ReaderDiscussionComment[] = [
+  {
+    id: 'disc-001',
+    novelId: 'nov-001',
+    chapterIndex: 1,
+    paragraphSnippet: '“林越擦去嘴角血迹，目光落向山神庙神像背后那道不起眼的抓痕……”',
+    readerName: '太虚课代表_老书虫',
+    platform: '起点本章说',
+    commentText: '卧槽！细节怪！神像后面的抓痕该不会是当年失踪的二师兄留下的求救摩斯密码吧？如果二师兄没死而是被炼成了护山灵傀，后面师兄弟相残绝对虐爆！',
+    likes: 1420,
+    sentiment: 'THEORY_CRAFTING',
+    extractedHook: '失踪二师兄实为神像下被炼制的守山灵傀，抓痕乃清醒瞬间的求救暗记',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
+  },
+  {
+    id: 'disc-002',
+    novelId: 'nov-001',
+    chapterIndex: 2,
+    paragraphSnippet: '“掌柜笑眯眯地递过那瓶九转回春丹，眼底深处掠过一抹幽绿。”',
+    readerName: '苟道中人9527',
+    platform: '番茄段评',
+    commentText: '按主角这谨慎性格，绝对不可能当场吃！我赌五毛钱主角会把丹药悄悄喂给跟踪他的那个黑衣刺客试毒，既鉴毒又借刀杀人！',
+    likes: 892,
+    sentiment: 'EXCITED',
+    extractedHook: '借毒丹反喂追踪刺客，实现双杀鉴定',
+    createdAt: new Date(Date.now() - 1000 * 60 * 110).toISOString(),
+  },
+  {
+    id: 'disc-003',
+    novelId: 'nov-001',
+    chapterIndex: 2,
+    paragraphSnippet: '“林越站在长街尽头，思索着九大皇朝近三百年的疆域变迁……”',
+    readerName: '熬夜追更人',
+    platform: '书友群',
+    commentText: '大大，第二章中段这段地理历史科普稍微有点干巴，刺客都在后面追杀了，主角还在脑补三百年前的疆域图，建议改成一边跑路一边利用地形机关阴人！',
+    likes: 340,
+    sentiment: 'COMPLAINT_WARNING',
+    extractedHook: '【防雷预警】删减静态历史说明文，转化为追逃过程中的古建筑地形杀与机关博弈',
+    createdAt: new Date(Date.now() - 1000 * 60 * 150).toISOString(),
+  },
+];
+
+export async function fetchEpiphanySparks(novelId: string): Promise<EpiphanySpark[]> {
+  return safeFetch<EpiphanySpark[]>(`/novels/${novelId}/sparks`, undefined, defaultEpiphanySparks);
+}
+
+export async function saveEpiphanySpark(spark: EpiphanySpark): Promise<EpiphanySpark> {
+  return safeFetch<EpiphanySpark>(
+    `/novels/${spark.novelId}/sparks`,
+    {
+      method: 'POST',
+      body: JSON.stringify(spark),
+    },
+    spark
+  );
+}
+
+export async function deleteEpiphanySpark(novelId: string, sparkId: string): Promise<boolean> {
+  return safeFetch<{ success: boolean }>(
+    `/novels/${novelId}/sparks/${sparkId}`,
+    { method: 'DELETE' },
+    { success: true }
+  ).then((r) => r.success);
+}
+
+export async function fetchReaderDiscussions(novelId: string): Promise<ReaderDiscussionComment[]> {
+  return safeFetch<ReaderDiscussionComment[]>(
+    `/novels/${novelId}/reader-discussions`,
+    undefined,
+    defaultReaderDiscussions
+  );
+}
+
+export async function collideSparks(
+  sparkA: EpiphanySpark,
+  sparkB: EpiphanySpark
+): Promise<SparkCollisionResult> {
+  const fallbackCollision: SparkCollisionResult = {
+    sparkAId: sparkA.id,
+    sparkBId: sparkB.id,
+    fusionTitle: `【灵感聚变】${sparkA.title.slice(0, 10)} × ${sparkB.title.slice(0, 10)}`,
+    combinedPlotTwist: `将“${sparkA.title}”与“${sparkB.title}”强行交织：当主角踏入交易场所试图探寻线索时，发现对方索要的代价恰恰与那位隐藏身份的宿命人物息息相关，两根原本平行的暗线在同一场雨夜死局中轰然相撞！`,
+    dramaticTensionBonus: 34,
+    recommendedChapterPlacement: '建议作为当前卷中段（第 6-8 章）的破局反转高潮',
+    sceneBeatPreview: '【起】线索中断陷入僵局 -> 【承】偶遇特殊规则触发旧物异动 -> 【转】双线重合揭露惊天隐秘 -> 【合】留下更大悬念全身而退',
+  };
+
+  return safeFetch<SparkCollisionResult>(
+    '/sparks/collide',
+    {
+      method: 'POST',
+      body: JSON.stringify({ spark_a: sparkA, spark_b: sparkB }),
+    },
+    fallbackCollision
+  );
+}
+
+// ==============================================================================
+// 6. 跨作品创作技能与套路中心库接口 (Central Skill & Reusable Asset Vault)
+// ==============================================================================
+
+export const defaultCreationSkills: CreationSkillItem[] = [
+  {
+    id: 'skill-trope-001',
+    name: '【套路模版】拍卖会压轴盲盒·低调截胡与反钓鱼执法',
+    category: 'TROPE',
+    sourceNovelTitle: '《凡人修仙传》/《太虚纪元》实战沉淀',
+    description: '主角在大型拍卖会绝不与世家公子正面竞价结仇，而是通过神识异动锁定流拍废铁/不起眼添头，并在出城后反手布置困杀阵，将尾随截杀的贪婪修士变成移动提款机。',
+    promptDirective:
+      '【技能挂载：拍卖会反钓鱼截胡法则】1. 严禁主角在包厢内大喊大叫高调竞拍拉仇恨；2. 重点描写宝物表面的残损伪装与主角金手指独有的微弱共鸣；3. 必须配套一段“出城三十里荒林故意露怯引蛇出洞”的反杀舔包爽点闭环。',
+    exampleSnippet:
+      '台下世家子弟为了一枚筑基丹争得面红耳赤，林越却只是拢着袖口，在角落里用三十块下品灵石拍下了那卷无人问津的焦黑兽皮。待走出坊市百里，他故意放慢遁速，听着身后破空而来的三道衣袂声，指尖阵旗悄然滑入泥土。',
+    triggerKeywords: ['拍卖', '黑市', '坊市', '夺宝', '竞价', '截杀', '灵石'],
+    isEnabled: true,
+    autoMatchEligible: true,
+    reusedCount: 28,
+    effectivenessRating: 95,
+    structuredMeta: {
+      stages: ['低调入场易容', '金手指识破蒙尘至宝', '放弃正面竞价暗中交割', '出城荒野反杀尾随者'],
+      dopamineScore: 94,
+    },
+    createdAt: '2026-03-01T08:00:00Z',
+  },
+  {
+    id: 'skill-power-001',
+    name: '【等级体系】九重因果命途·越阶反杀代价与法则克制表',
+    category: 'POWER_TIER',
+    sourceNovelTitle: '《太虚纪元》核心战力母本',
+    description: '摒弃纯数值碾压，每一重境界晋升都伴随严格的“寿元/人性代价”与“五行/因果克制链”，使低境界主角能凭借情报差与环境阵法合理越阶反杀，绝不战力崩坏。',
+    promptDirective:
+      '【技能挂载：因果命途战力硬约束】1. 每次越阶战斗必须明确说明高境界敌人的法则护体弱点；2. 主角动用底牌必须支付具体可见的肉身或神魂代价（如右臂经脉龟裂、三日失明、折损阳寿）；3. 严禁无铺垫爆发秒杀高两个大境界的敌人。',
+    exampleSnippet:
+      '金丹修士的护体罡气固若金汤，寻常飞剑难伤分毫。但林越早已算准对方每逢子时功法运转必有半息滞涩于膻中穴，他不惜震碎左手三根指骨强行催动破禁残符，一剑精准刺入那缕微不可查的灵力漩涡！',
+    triggerKeywords: ['突破', '境界', '越阶', '反杀', '金丹', '筑基', '渡劫', '战力'],
+    isEnabled: true,
+    autoMatchEligible: true,
+    reusedCount: 42,
+    effectivenessRating: 97,
+    structuredMeta: {
+      tiers: ['淬骨境', '凝煞境', '筑基境', '金丹境', '元婴境', '化神境', '洞虚境', '大乘境', '太虚渡劫'],
+      scalingRule: '每跨一大境界正面战力差距10倍，需靠阵法、毒丹、信息差弥补',
+    },
+    createdAt: '2026-03-02T08:00:00Z',
+  },
+  {
+    id: 'skill-conflict-001',
+    name: '【戏剧冲突】三方罗生门死局·借刀杀人祸水东引公式',
+    category: 'CONFLICT',
+    sourceNovelTitle: '《诡秘之主》/ 权谋智斗沉淀库',
+    description: '当主角面临不可力敌的强敌A追杀时，绝不硬拼，而是伪造强敌B的独门信物或功法痕迹，将追杀者A引入强敌B的禁地，促成两大庞然大物火并，主角在混乱中浑水摸鱼。',
+    promptDirective:
+      '【技能挂载：三方罗生门祸水东引】1. 必须在场景中引入第三方潜伏势力；2. 详细描写主角如何利用细节伪造嫁祸线索（如残留功法气息、特制暗器、密信印鉴）；3. 营造双方误判火并时的戏剧讽刺张力。',
+    exampleSnippet:
+      '林越并未直接逃向城门，而是反身掠入万毒门驻地后巷，将从九黎卫队长身上夺来的玄铁令箭故意钉在万毒门少主的灵兽颅骨上。半柱香后，两拨煞气冲天的人马在雨夜长街迎面撞上，一言不合便祭出了本命杀招。',
+    triggerKeywords: ['追杀', '死局', '强敌', '嫁祸', '借刀杀人', '潜伏', '混战', '绝境'],
+    isEnabled: true,
+    autoMatchEligible: true,
+    reusedCount: 35,
+    effectivenessRating: 96,
+    createdAt: '2026-03-03T08:00:00Z',
+  },
+  {
+    id: 'skill-dungeon-001',
+    name: '【副本模版】规则怪谈型上古仙墓·认知污染与倒计时逃生',
+    category: 'DUNGEON',
+    sourceNovelTitle: '《宿命之环》× 古典秘境融合库',
+    description: '将传统打怪掉宝秘境升级为“三条必死禁忌规则 + 时辰沙漏倒计时”的高压悬疑副本。唯有勘破墓主人留下的文字陷阱，才能在全员团灭前夺取核心传承。',
+    promptDirective:
+      '【技能挂载：规则怪谈秘境机制】1. 进入副本前先通过残碑或前人遗骸立下三条看似矛盾的生存禁忌；2. 安排一名莽撞配角因违反第一条禁忌而瞬间异化惨死，拉满恐怖压迫感；3. 主角利用逆向推理找出规则漏洞破局。',
+    exampleSnippet:
+      '石碑上用干涸的黑血刻着三行字：【一、听见哭声必须熄灭魂灯；二、魂灯熄灭超过三息将被影子吞噬；三、绝不可相信穿白衣的同门。】林越目光微凛，缓缓看向身旁正准备吹熄魂灯的白衣师妹。',
+    triggerKeywords: ['秘境', '副本', '遗迹', '古墓', '荒冢', '禁地', '试炼', '石碑'],
+    isEnabled: false,
+    autoMatchEligible: true,
+    reusedCount: 19,
+    effectivenessRating: 93,
+    createdAt: '2026-03-04T08:00:00Z',
+  },
+  {
+    id: 'skill-arch-001',
+    name: '【章节架构】黄金断章钩子三连击·欲扬先抑悬念收尾法',
+    category: 'ARCHITECTURE',
+    sourceNovelTitle: '起点百订飙升万订实战模型',
+    description: '每章最后300字严禁平淡收尾或倒头大睡！必须采用“刚解决眼下危机 -> 清点战利品发现惊天异常 -> 门外/天际突然传来不可思议的异响”三步断章法，锁死读者追读率。',
+    promptDirective:
+      '【技能挂载：黄金断章钩子法则】本章结尾最后两段必须严格执行断章悬念：在主角刚刚松一口气或收获宝物的瞬间，立刻抛出一个违背常理的视觉/听觉异象或身份反转，将悬念留在最高潮处戛然而止。',
+    exampleSnippet:
+      '林越长吐一口浊气，将那枚温热的储物戒收入怀中。然而当他神识探入戒内空间的一刹那，呼吸骤然停滞——戒指角落里静静躺着的，赫然是他三年前亲手埋进祖坟的自己的牌位！与此同时，门外寂静的雨夜里，响起了三声沉重而熟悉的叩门声。',
+    triggerKeywords: ['断章', '结尾', '悬念', '黄金三章', '高潮', '反转'],
+    isEnabled: true,
+    autoMatchEligible: true,
+    reusedCount: 64,
+    effectivenessRating: 99,
+    createdAt: '2026-03-05T08:00:00Z',
+  },
+  {
+    id: 'skill-style-001',
+    name: '【文风范式】电影级冷兵器动作分镜·肌肉发力与环境互动白描',
+    category: 'STYLE',
+    sourceNovelTitle: '新派硬核武侠/仙侠动作指导库',
+    description: '拒绝“两人大战三百回合、霞光万道”的敷衍水字数描写，强制细化到“足尖碾碎青砖、刀锋擦过铁甲迸出火星、雨水被剑气蒸干成白雾”的物理打击感。',
+    promptDirective:
+      '【技能挂载：硬核动作物理分镜】描写战斗时，必须包含：1. 重心转换与地面物理破坏；2. 兵器交击的金铁震颤与虎口痛感；3. 周边环境（雨水、落叶、烛火、断柱）被气劲波及的实时动态反馈。',
+    exampleSnippet:
+      '他左足猛然踏裂湿滑青砖，泥水飞溅间，整个人如一张拉满的铁胎硬弓骤然崩弦！窄刃短刀贴着对方横扫而来的铁枪杆一路刮擦向前，刺目火星连成一线，在枪尖回防不及的半寸死角，刀柄重重撞碎对方喉骨！',
+    triggerKeywords: ['战斗', '挥剑', '拔剑', '伏击', '厮杀', '交锋', '出手', '杀招'],
+    isEnabled: true,
+    autoMatchEligible: true,
+    reusedCount: 51,
+    effectivenessRating: 96,
+    createdAt: '2026-03-06T08:00:00Z',
+  },
+  {
+    id: 'skill-idea-001',
+    name: '【脑洞设定】寿元借贷钱庄·向未来的自己预支满级修为',
+    category: 'IDEA',
+    sourceNovelTitle: '高概念金手指创意工坊',
+    description: '主角可向天道钱庄预支自己未来巅峰期的三息修为来秒杀强敌，但必须在规定期限内把修为练到对应境界完成“还贷”，否则将遭受天道连本带利的抹杀催收。',
+    promptDirective:
+      '【技能挂载：未来修为借贷与催收紧迫感】在主角陷入绝境时允许启用修为预支，但每次预支后必须立刻更新“天道还款倒计时”，利用还款期限倒逼主角主动闯秘境夺机缘。',
+    exampleSnippet:
+      '【契约成立：您已成功预支十年后“元婴大圆满”巅峰一剑（体验时长：三息）。警告：请于九十日内晋升筑基中期偿还首期利息，逾期将剥夺双目视觉。】',
+    triggerKeywords: ['金手指', '底牌', '绝境', '代价', '倒计时', '外挂'],
+    isEnabled: false,
+    autoMatchEligible: true,
+    reusedCount: 15,
+    effectivenessRating: 91,
+    createdAt: '2026-03-07T08:00:00Z',
+  },
+  {
+    id: 'skill-char-001',
+    name: '【人设原型】悲情宿命型秩序反派·“我若入魔，天下无人需脏手”',
+    category: 'CHARACTER_ARCHETYPE',
+    sourceNovelTitle: '群像神作反派塑造法则',
+    description: '摒弃无脑嘲讽主角的降智反派。反派同样智商极高、心怀苍生大义，只是与主角在“牺牲少数人拯救世界”还是“一人不弃逆天改命”的底层道心上发生不可调和的宿命碰撞。',
+    promptDirective:
+      '【技能挂载：高智商宿命反派塑造】反派登场时严禁使用无脑鄙视台词；赋予反派克制有礼的谈吐、令人信服的救世逻辑，以及在私下里独自背负骂名与伤痛的立体侧面。',
+    exampleSnippet:
+      '苏清寒轻轻拭去剑锋上的血迹，目光平静地望着满城火光：“林越，你恨我冷血屠城，可你若见过三十年前天渊魔潮吞没十九州的惨状，便会明白——今日这三万人的性命，是我替这人间苍生交出的唯一买命钱。”',
+    triggerKeywords: ['反派', '圣女', '师尊', '首领', '对峙', '道心', '宿敌'],
+    isEnabled: true,
+    autoMatchEligible: true,
+    reusedCount: 23,
+    effectivenessRating: 95,
+    createdAt: '2026-03-08T08:00:00Z',
+  },
+];
+
+export async function fetchCreationSkills(): Promise<CreationSkillItem[]> {
+  return safeFetch<CreationSkillItem[]>('/skills/vault', undefined, defaultCreationSkills);
+}
+
+export async function saveCreationSkill(skill: CreationSkillItem): Promise<CreationSkillItem> {
+  return safeFetch<CreationSkillItem>(
+    '/skills/vault',
+    {
+      method: 'POST',
+      body: JSON.stringify(skill),
+    },
+    skill
+  );
+}
+
+export async function deleteCreationSkill(skillId: string): Promise<boolean> {
+  return safeFetch<{ success: boolean }>(
+    `/skills/vault/${skillId}`,
+    { method: 'DELETE' },
+    { success: true }
+  ).then((r) => r.success);
+}
+
+export async function autoMatchSkillsForScene(
+  sceneContextText: string,
+  allSkills: CreationSkillItem[]
+): Promise<SkillAutoMatchResult> {
+  const matchedIds: string[] = [];
+  const reasons: Record<string, string> = {};
+
+  for (const sk of allSkills) {
+    if (!sk.autoMatchEligible) continue;
+    const hitKeywords = sk.triggerKeywords.filter((kw) => sceneContextText.includes(kw));
+    if (hitKeywords.length > 0 || sk.category === 'ARCHITECTURE') {
+      matchedIds.push(sk.id);
+      reasons[sk.id] =
+        hitKeywords.length > 0
+          ? `检测到场景语义命中触发词【${hitKeywords.join('、')}】，自动挂载该${sk.category}技能以强化戏剧张力。`
+          : `全局长篇追读保障：自动挂载【${sk.name}】以确保章末悬念钩子闭合。`;
+    }
+  }
+
+  // 保底至少匹配3项核心技能
+  if (matchedIds.length < 3) {
+    for (const sk of allSkills.slice(0, 3)) {
+      if (!matchedIds.includes(sk.id)) {
+        matchedIds.push(sk.id);
+        reasons[sk.id] = `AI 剧情拓扑分析推荐：当前场次适合引入【${sk.name}】提升爽点兑现率。`;
+      }
+    }
+  }
+
+  const fallbackResult: SkillAutoMatchResult = {
+    sceneContextSummary: sceneContextText.slice(0, 120),
+    matchedSkillIds: matchedIds,
+    matchReasons: reasons,
+  };
+
+  return safeFetch<SkillAutoMatchResult>(
+    '/skills/auto-match',
+    {
+      method: 'POST',
+      body: JSON.stringify({ scene_context: sceneContextText }),
+    },
+    fallbackResult
+  );
+}
+
+export async function extractSkillFromManuscript(input: {
+  manuscriptText: string;
+  preferredCategory: CreationSkillCategory;
+  sourceNovelTitle: string;
+  customName?: string;
+}): Promise<CreationSkillItem> {
+  const categoryLabels: Record<CreationSkillCategory, string> = {
+    IDEA: '脑洞设定',
+    TROPE: '爽点套路',
+    POWER_TIER: '等级体系',
+    ARCHITECTURE: '叙事架构',
+    STYLE: '文风范式',
+    DUNGEON: '副本机制',
+    CONFLICT: '冲突公式',
+    CHARACTER_ARCHETYPE: '人设原型',
+  };
+
+  const label = categoryLabels[input.preferredCategory] || '核心技能';
+  const fallbackExtracted: CreationSkillItem = {
+    id: `skill-ext-${Date.now()}`,
+    name: input.customName || `【${label}】从《${input.sourceNovelTitle}》萃取的高光范式`,
+    category: input.preferredCategory,
+    sourceNovelTitle: input.sourceNovelTitle,
+    description: `基于正文中“${input.manuscriptText.slice(0, 45)}...”逆向解构提炼的可复用创作技能模块。`,
+    promptDirective: `【技能挂载：${input.customName || label}】请严格复刻该技能的结构张力：以环境压迫感起笔，通过信息差与动作细节推进矛盾，并在收尾处完成情绪或战利品的超预期兑现。`,
+    exampleSnippet: input.manuscriptText.slice(0, 180),
+    triggerKeywords: ['反杀', '悬念', '突破', '博弈', '秘境'],
+    isEnabled: true,
+    autoMatchEligible: true,
+    reusedCount: 1,
+    effectivenessRating: 92,
+    createdAt: new Date().toISOString(),
+  };
+
+  return safeFetch<CreationSkillItem>(
+    '/skills/extract',
+    {
+      method: 'POST',
+      body: JSON.stringify(input),
+    },
+    fallbackExtracted
+  );
+}
+
+export async function subvertTropeSkill(
+  skill: CreationSkillItem
+): Promise<TropeSubversionVariant[]> {
+  const fallbackVariants: TropeSubversionVariant[] = [
+    {
+      id: `subv-${Date.now()}-1`,
+      originalSkillName: skill.name,
+      subversionTitle: '变异方案 A：猎人与猎物的双重伪装反转',
+      classicExpectation: '读者以为是主角单方面扮猪吃虎，尾随者全是贪婪蠢货。',
+      subvertedTwist: '尾随者表面上是贪图宝物的散修，实则是主角宿敌故意派来用苦肉计向主角投诚的死士；而主角拍下的宝物本身就是宿敌设下的因果信标，主角将计就计把信标反绑在了第三方的灵舟上。',
+      dramaticPayoff: '三层智商博弈叠加，打破常规无脑舔包的审美疲劳，爽感升维！',
+    },
+    {
+      id: `subv-${Date.now()}-2`,
+      originalSkillName: skill.name,
+      subversionTitle: '变异方案 B：规则代价反噬与道德困境破局',
+      classicExpectation: '主角毫无代价地全歼敌人并顺利拿走全部战利品。',
+      subvertedTwist: '至宝激活需要献祭在场最高修为者的毕生修为，敌人临死前竟然主动狂笑自爆修为强行污染至宝，试图拉主角一起堕入魔道，主角必须在三息内斩断宝物一半灵性来自救。',
+      dramaticPayoff: '敌人不再是送快递的工具人，惨烈决绝的博弈让来之不易的收获更具分量！',
+    },
+    {
+      id: `subv-${Date.now()}-3`,
+      originalSkillName: skill.name,
+      subversionTitle: '变异方案 C：场外观众视角与江湖传闻错位',
+      classicExpectation: '正面平铺直叙描写主角如何打赢。',
+      subvertedTwist: '不写战斗正面过程，而是通过半个时辰后赶到现场的朝廷密探视角，看着满地诡异结冰的火焰与一击必杀的剑痕，层层倒推还原刚才那场惊世骇俗的秒杀，把主角脑补成隐世千年的老怪。',
+      dramaticPayoff: '侧面烘托装逼效果拉满，极大满足读者的幕后大佬爽感！',
+    },
+  ];
+
+  return safeFetch<TropeSubversionVariant[]>(
+    '/skills/subvert',
+    {
+      method: 'POST',
+      body: JSON.stringify({ skill_id: skill.id, skill_name: skill.name }),
+    },
+    fallbackVariants
+  );
+}
+
+// ==============================================================================
+// 7. 全自动无人值守巡航码字机接口 (Autonomous Marathon Autopilot Engine)
+// ==============================================================================
+
+export async function runAutopilotSegmentGeneration(params: {
+  novelId: string;
+  novelTitle: string;
+  mode: 'ZERO_INPUT_PURE_AUTO' | 'REFERENCE_GUIDED_AUTO';
+  referenceDataText?: string;
+  chapterIndex: number;
+  sceneIndex: number;
+  activeSkills: CreationSkillItem[];
+  anchoredSparks: EpiphanySpark[];
+}): Promise<AutopilotGeneratedSegment> {
+  const skillNames = params.activeSkills.map((s) => s.name);
+  const sparkTitles = params.anchoredSparks.map((sp) => sp.title);
+
+  const refHint =
+    params.mode === 'REFERENCE_GUIDED_AUTO' && params.referenceDataText?.trim()
+      ? `\n（已深度融汇作者投喂参考资料：“${params.referenceDataText.slice(0, 60)}...”）`
+      : '';
+
+  const sparkHint =
+    sparkTitles.length > 0
+      ? `\n\n恰在此时，林越脑海中掠过那道早已埋藏多时的伏线——${sparkTitles[0]}。长街尽头的雨幕仿佛静止了一瞬，那名平日里毫不起眼的瞎眼老仆竟缓缓抬起了浑浊的眼眸，枯瘦的指尖在青竹扫帚上轻轻一叩，整座护山残阵顿时发出万剑悲鸣般的嗡响！`
+      : `\n\n风雪愈发急促，青石板上的血水顺着排水石槽蜿蜒流淌。林越没有在原地多做哪怕一息的停留，左手袖中的破禁残符悄然化作飞灰，整个人借着夜色与阵雾的掩护，如一缕幽魂般掠入了千机阁最深处的暗巷。`;
+
+  const generatedProse = `【第 ${params.chapterIndex} 章 · 第 ${params.sceneIndex} 幕：夜雨惊变与因果落子】${refHint}
+
+残烛在穿堂冷风中剧烈摇晃，将破庙四壁的斑驳神像拉扯出无数张牙舞爪的暗影。
+
+林越背靠着冰冷刺骨的青石断柱，指腹轻轻摩挲着怀中那面布满裂纹的太虚铜镜。铜镜背面的古老铭文正随着他急促的心跳微微发烫，每一道血色丝线都在预示着十步之外那三名九黎暗卫即将发动的合击死角。
+
+“事不可为，且退一步；既退无可退，便借尔等性命一用。”
+
+他声音极轻，几乎被窗外震耳欲聋的雷鸣彻底吞没。下一瞬，他左足猛然踏碎脚下湿滑的青砖，碎石飞溅如暗器般封死左侧刀客的视线，右手残剑则沿着铜镜推演出的那唯一一线生机，贴着铁枪杆一路刮擦出刺目火星，精准无比地刺入为首统领膻中穴半寸滞涩之处！${sparkHint}
+
+当最后一具黑衣尸首重重栽倒在积水潭中时，林越俯身拾起对方腰间那枚尚带余温的玄铁令箭。然而就在他翻转令箭背面的一刹那，瞳孔骤然收缩——那上面镌刻的暗记，竟然指向了三日前刚刚与他把酒言欢的故人！`;
+
+  const fallbackSegment: AutopilotGeneratedSegment = {
+    id: `auto-seg-${Date.now()}-${params.sceneIndex}`,
+    chapterIndex: params.chapterIndex,
+    chapterTitle: `第 ${params.chapterIndex} 章：暗流涌动与宿命反杀`,
+    sceneIndex: params.sceneIndex,
+    sceneTitle: `第 ${params.sceneIndex} 幕：因果推演与雨夜破局`,
+    content: generatedProse,
+    wordCount: generatedProse.length,
+    qualityScore: 94,
+    appliedSkills: skillNames.slice(0, 3),
+    incorporatedSparks: sparkTitles.slice(0, 2),
+    createdAt: new Date().toISOString(),
+  };
+
+  return safeFetch<AutopilotGeneratedSegment>(
+    '/autopilot/generate-segment',
+    {
+      method: 'POST',
+      body: JSON.stringify(params),
+    },
+    fallbackSegment
+  );
+}
+

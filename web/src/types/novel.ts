@@ -582,3 +582,175 @@ export interface VideoStoryboard {
   updatedAt: string;
 }
 
+// ==============================================================================
+// 6. 灵光一现与读者热议共创中枢 (Epiphany Spark Vault & Reader Co-Creation Hub)
+// ==============================================================================
+
+export type EpiphanySparkType =
+  | 'PLOT_TWIST'         // 神转折脑洞
+  | 'DIALOGUE_GOLD'      // 金句台词
+  | 'CHARACTER_QUIRK'    // 人设闪光点/反差萌
+  | 'LORE_FRAGMENT'      // 世界观设定碎片
+  | 'SCENE_IMAGE'        // 极具画面感名场面
+  | 'READER_SUGGESTION'; // 读者神评论/听劝脑洞
+
+export type SparkStatus = 'INBOX' | 'ANCHORED' | 'WOVEN' | 'ARCHIVED';
+
+export interface EpiphanySpark {
+  id: string;
+  novelId: string;
+  title: string;
+  content: string;
+  sparkType: EpiphanySparkType;
+  source: 'AUTHOR_BRAINWAVE' | 'READER_COMMENT' | 'AI_COLLISION';
+  readerUsername?: string;
+  heatScore: number; // 热度/惊艳值 0 - 100
+  status: SparkStatus;
+  targetChapterIndex?: number;
+  targetSceneNote?: string;
+  aiWeaveAdvice?: string;
+  tags: string[];
+  createdAt: string;
+}
+
+export interface ReaderDiscussionComment {
+  id: string;
+  novelId: string;
+  chapterIndex: number;
+  paragraphSnippet: string;
+  readerName: string;
+  platform: '起点本章说' | '番茄段评' | '贴吧热议' | '书友群' | 'B站漫评';
+  commentText: string;
+  likes: number;
+  sentiment: 'EXCITED' | 'THEORY_CRAFTING' | 'COMPLAINT_WARNING' | 'MEME_JOKE';
+  extractedHook?: string;
+  convertedSparkId?: string;
+  createdAt: string;
+}
+
+export interface SparkCollisionResult {
+  sparkAId: string;
+  sparkBId: string;
+  fusionTitle: string;
+  combinedPlotTwist: string;
+  dramaticTensionBonus: number;
+  recommendedChapterPlacement: string;
+  sceneBeatPreview: string;
+}
+
+// ==============================================================================
+// 7. 全自动无人值守巡航码字机 (Autonomous Marathon Autopilot & Cruise Engine)
+// ==============================================================================
+
+export type AutopilotMode =
+  | 'ZERO_INPUT_PURE_AUTO'   // 零输入全托管懒人巡航（完全由 AI 根据现有大纲与状态自主续写）
+  | 'REFERENCE_GUIDED_AUTO'; // 参考数据投喂半托管巡航（根据作者随手丢入的参考资料/数据自动扩写）
+
+export type AutopilotPacingStrategy =
+  | 'HIGH_OCTANE_PAYOFF' // 爽点密集快节奏
+  | 'IMMERSIVE_SLOW_BURN'// 细腻铺陈稳健流
+  | 'CLIMAX_SHOWDOWN';   // 高潮决战爆发流
+
+export interface AutopilotSessionConfig {
+  id: string;
+  novelId: string;
+  mode: AutopilotMode;
+  targetDurationMinutes: number; // 例如 15, 60, 120, 180 分钟
+  targetWordCount: number;       // 例如 3000, 10000, 20000 字
+  targetChaptersCount: number;   // 连续推演生成章数
+  pacingStrategy: AutopilotPacingStrategy;
+  referenceDataText?: string;    // 作者提供的参考数据、资料片段或随手提纲（可为空）
+  autoUseSkillVault: boolean;    // 自动从技能中心库勾选匹配套路与设定
+  autoWeaveSparks: boolean;      // 自动将灵光一现收件箱中的点子织入正文
+  autoGitSnapshot: boolean;      // 每完成一幕自动创建 Git 快照
+  minQualityThreshold: number;   // 5D 自检最低放行分数 (如 82 分，低于则自动重写)
+}
+
+export interface AutopilotStageLog {
+  id: string;
+  timestamp: string;
+  stage: 'CONTEXT_SCAN' | 'SKILL_MATCH' | 'BEAT_PLAN' | 'PROSE_DRAFT' | 'SELF_AUDIT' | 'POLISH_COMMIT';
+  title: string;
+  detail: string;
+  wordsGenerated: number;
+  qualityScore?: number;
+  matchedSkills?: string[];
+  wovenSparks?: string[];
+}
+
+export interface AutopilotGeneratedSegment {
+  id: string;
+  chapterIndex: number;
+  chapterTitle: string;
+  sceneIndex: number;
+  sceneTitle: string;
+  content: string;
+  wordCount: number;
+  qualityScore: number;
+  appliedSkills: string[];
+  incorporatedSparks: string[];
+  createdAt: string;
+}
+
+export interface AutopilotCruiseReport {
+  sessionId: string;
+  novelId: string;
+  mode: AutopilotMode;
+  elapsedSeconds: number;
+  totalWordsWritten: number;
+  chaptersCompleted: number;
+  scenesCompleted: number;
+  averageQualityScore: number;
+  autoActivatedSkills: string[];
+  wovenSparksCount: number;
+  segments: AutopilotGeneratedSegment[];
+  morningBriefingSummary: string;
+}
+
+// ==============================================================================
+// 8. 跨作品创作技能与套路中心库 (Central Skill & Reusable Asset Vault)
+// ==============================================================================
+
+export type CreationSkillCategory =
+  | 'IDEA'                // 核心脑洞与高概念
+  | 'TROPE'               // 爽点套路与经典桥段
+  | 'POWER_TIER'          // 战力等级与晋升代价体系
+  | 'ARCHITECTURE'        // 叙事结构与黄金章节框架
+  | 'STYLE'               // 文风修辞与名家遣词范式
+  | 'DUNGEON'             // 秘境副本机制与规则怪谈
+  | 'CONFLICT'            // 戏剧冲突与两难反转公式
+  | 'CHARACTER_ARCHETYPE';// 立体人设与魅力反派原型
+
+export interface CreationSkillItem {
+  id: string;
+  name: string;
+  category: CreationSkillCategory;
+  sourceNovelTitle: string;
+  description: string;
+  promptDirective: string;       // 注入给 Agent 的结构化技能执行指令 (类似 SKILL.md 核心规则)
+  exampleSnippet: string;        // 黄金示范片段或结构模板
+  triggerKeywords: string[];     // AI 自动勾选匹配的语义触发词
+  isEnabled: boolean;            // 当前是否被手动/自动勾选用于创作参考
+  autoMatchEligible: boolean;    // 是否允许 AI 根据当前场景自动感知勾选
+  reusedCount: number;           // 累计跨章节/跨书复用次数
+  effectivenessRating: number;   // 效果评分 (0 - 100)
+  structuredMeta?: Record<string, any>; // 扩展结构（如等级表、副本阶段、冲突双方等）
+  createdAt: string;
+}
+
+export interface SkillAutoMatchResult {
+  sceneContextSummary: string;
+  matchedSkillIds: string[];
+  matchReasons: Record<string, string>; // skillId -> 为什么 AI 自动勾选了该技能
+}
+
+export interface TropeSubversionVariant {
+  id: string;
+  originalSkillName: string;
+  subversionTitle: string;
+  classicExpectation: string; // 读者以为的常规套路走向
+  subvertedTwist: string;     // 反套路神转折走向
+  dramaticPayoff: string;     // 带来的新鲜爽感与戏剧张力
+}
+
+

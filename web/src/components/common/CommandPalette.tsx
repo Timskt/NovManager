@@ -72,6 +72,36 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const quickActions = useMemo(() => {
     return [
       {
+        id: 'action-autopilot',
+        title: '🚀 全自动无人巡航码字舱：零输入码满整小时 / 参考数据投喂 (Autopilot)',
+        category: '全托管码字',
+        icon: Sparkles,
+        action: () => {
+          onNavigateTab('AUTOPILOT');
+          onClose();
+        },
+      },
+      {
+        id: 'action-spark-hub',
+        title: '💡 灵光一现与读者热议中枢：随时补充灵感 / 本章说听劝池 / 灵感对撞 (Spark Hub)',
+        category: '灵感与听劝',
+        icon: Sparkles,
+        action: () => {
+          onNavigateTab('SPARK_HUB');
+          onClose();
+        },
+      },
+      {
+        id: 'action-skill-vault',
+        title: '🧩 跨作品技能与套路中心库：套路/等级/文风/副本勾选与自动匹配 (Skill Vault)',
+        category: '中心技能库',
+        icon: Sparkles,
+        action: () => {
+          onNavigateTab('SKILL_VAULT');
+          onClose();
+        },
+      },
+      {
         id: 'action-genesis',
         title: '✨ 灵感创世大纲：一句话脑洞推演三卷与黄金三章 (Idea Genesis)',
         category: '创制中枢',

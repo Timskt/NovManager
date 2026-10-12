@@ -120,6 +120,19 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/novels/{id}/reader-psychology", get(get_reader_psychology_handler))
         .route("/api/novels/{id}/asymmetry", get(list_asymmetry_handler).post(save_asymmetry_handler))
         .route("/api/novels/{id}/offscreen-news", get(list_offscreen_news_handler))
+        // Epiphany Sparks & Reader Co-Creation Hub
+        .route("/api/novels/{id}/sparks", get(list_sparks_handler).post(save_spark_handler))
+        .route("/api/sparks/{id}", delete(delete_spark_handler))
+        .route("/api/novels/{id}/reader-discussions", get(list_reader_discussions_handler).post(save_reader_discussion_handler))
+        .route("/api/sparks/collide", post(collide_sparks_handler))
+        // Central Skill & Reusable Asset Vault
+        .route("/api/skills/vault", get(list_skills_vault_handler).post(save_skill_vault_handler))
+        .route("/api/skills/vault/{id}", delete(delete_skill_vault_handler))
+        .route("/api/skills/auto-match", post(auto_match_skills_handler))
+        .route("/api/skills/extract", post(extract_skill_handler))
+        .route("/api/skills/subvert", post(subvert_skill_handler))
+        // Autonomous Marathon Autopilot
+        .route("/api/autopilot/generate-segment", post(generate_autopilot_segment_handler))
         // LLM Proxy
         .route("/api/llm/test-connection", post(test_llm_connection))
         .route("/api/llm/proxy", post(proxy_llm))
@@ -1245,5 +1258,139 @@ async fn list_offscreen_news_handler(
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
     }
 }
+
+// ----------------- Epiphany Sparks & Reader Co-Creation Hub Handlers -----------------
+
+async fn list_sparks_handler(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.list_epiphany_sparks(&id) {
+        Ok(list) => Json(list).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn save_spark_handler(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Json(mut spark): Json<EpiphanySpark>,
+) -> impl IntoResponse {
+    spark.novel_id = id;
+    match state.storage.save_epiphany_spark(spark) {
+        Ok(saved) => (StatusCode::CREATED, Json(saved)).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn delete_spark_handler(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.delete_epiphany_spark(&id) {
+        Ok(deleted) => Json(json!({ "success": deleted })).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn list_reader_discussions_handler(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.list_reader_discussions(&id) {
+        Ok(list) => Json(list).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn save_reader_discussion_handler(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Json(mut comment): Json<ReaderDiscussionComment>,
+) -> impl IntoResponse {
+    comment.novel_id = id;
+    match state.storage.save_reader_discussion(comment) {
+        Ok(saved) => (StatusCode::CREATED, Json(saved)).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn collide_sparks_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<SparkCollideRequest>,
+) -> impl IntoResponse {
+    let result = state.storage.collide_sparks(req);
+    Json(result).into_response()
+}
+
+// ----------------- Central Skill & Reusable Asset Vault Handlers -----------------
+
+async fn list_skills_vault_handler(
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.list_creation_skills() {
+        Ok(list) => Json(list).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn save_skill_vault_handler(
+    State(state): State<Arc<AppState>>,
+    Json(skill): Json<CreationSkillItem>,
+) -> impl IntoResponse {
+    match state.storage.save_creation_skill(skill) {
+        Ok(saved) => (StatusCode::CREATED, Json(saved)).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn delete_skill_vault_handler(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.delete_creation_skill(&id) {
+        Ok(deleted) => Json(json!({ "success": deleted })).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn auto_match_skills_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<SkillAutoMatchRequest>,
+) -> impl IntoResponse {
+    match state.storage.auto_match_skills(req) {
+        Ok(res) => Json(res).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn extract_skill_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<ExtractSkillRequest>,
+) -> impl IntoResponse {
+    match state.storage.extract_skill_from_manuscript(req) {
+        Ok(saved) => (StatusCode::CREATED, Json(saved)).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn subvert_skill_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<SubvertSkillRequest>,
+) -> impl IntoResponse {
+    let variants = state.storage.subvert_trope_skill(req);
+    Json(variants).into_response()
+}
+
+// ----------------- Autonomous Marathon Autopilot Handler -----------------
+
+async fn generate_autopilot_segment_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<AutopilotSegmentRequest>,
+) -> impl IntoResponse {
+    let segment = state.storage.generate_autopilot_segment(req);
+    Json(segment).into_response()
+}
+
 
 

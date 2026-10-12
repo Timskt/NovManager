@@ -38,6 +38,10 @@ import { ModelHubView } from './components/models/ModelHubView';
 import { StyleDnaStudioView } from './components/style/StyleDnaStudioView';
 import { GenesisView } from './components/genesis/GenesisView';
 import { GodsEyeSandboxView } from './components/sandbox/GodsEyeSandboxView';
+import { AutopilotCockpitView } from './components/autopilot/AutopilotCockpitView';
+import { SparkAndReaderHubView } from './components/sparks/SparkAndReaderHubView';
+import { CentralSkillVaultView } from './components/skills/CentralSkillVaultView';
+import { FloatingSparkCapsule } from './components/sparks/FloatingSparkCapsule';
 
 const AppContent: React.FC = () => {
   const {
@@ -87,6 +91,9 @@ const AppContent: React.FC = () => {
         {activeTab === 'LIBRARY' && <LibraryView onNavigateTab={setActiveTab} />}
         {activeTab === 'ARCHITECT' && <ArchitectView onNavigateTab={setActiveTab} />}
         {activeTab === 'STUDIO' && <StudioView onNavigateTab={setActiveTab} />}
+        {activeTab === 'AUTOPILOT' && <AutopilotCockpitView />}
+        {activeTab === 'SPARK_HUB' && <SparkAndReaderHubView />}
+        {activeTab === 'SKILL_VAULT' && <CentralSkillVaultView />}
         {activeTab === 'OUTLINES' && <StudioView onNavigateTab={setActiveTab} />}
         {activeTab === 'CANVAS' && (
           <StudioView onNavigateTab={setActiveTab} defaultStudioTab="canvas" />
@@ -113,6 +120,9 @@ const AppContent: React.FC = () => {
         {activeTab === 'LORE' && <LoreView />}
         {activeTab === 'MCP' && <McpInspectorView />}
       </div>
+
+      {/* 全局悬浮灵光一现速记胶囊与技能库/无人巡航快捷入口 */}
+      <FloatingSparkCapsule onNavigateTab={setActiveTab} />
 
       {/* 移动端底部原生触控导航 */}
       <MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} />

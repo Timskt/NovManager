@@ -38,12 +38,17 @@ import {
   X,
   SlidersHorizontal,
   Cpu,
+  Rocket,
+  MessageSquare,
 } from 'lucide-react';
 
 export type NavTab =
   | 'LIBRARY'
   | 'ARCHITECT'
   | 'STUDIO'
+  | 'AUTOPILOT'
+  | 'SPARK_HUB'
+  | 'SKILL_VAULT'
   | 'OUTLINES'
   | 'CANVAS'
   | 'GENESIS'
@@ -89,7 +94,7 @@ export const DOMAIN_GROUPS: DomainGroup[] = [
     key: 'STUDIO_DOMAIN',
     title: '创制工坊',
     icon: '✍️',
-    description: '核心文字执笔、AI 视频多镜头运镜与宏观架构',
+    description: '核心文字执笔、无人巡航码字、灵光听劝与分镜架构',
     items: [
       {
         id: 'STUDIO',
@@ -97,6 +102,27 @@ export const DOMAIN_GROUPS: DomainGroup[] = [
         subtitle: '沉浸正文撰写 · 分镜节拍 · 战力微调',
         icon: <Feather className="w-4 h-4 text-amber-500" />,
         badge: '核心',
+      },
+      {
+        id: 'AUTOPILOT',
+        title: '全自动无人巡航码字舱',
+        subtitle: '零输入码满整小时 · 资料投喂 · 技能自动挂载',
+        icon: <Rocket className="w-4 h-4 text-emerald-500" />,
+        badge: '全托管',
+      },
+      {
+        id: 'SPARK_HUB',
+        title: '灵光一现与读者热议中枢',
+        subtitle: '随时补充灵感 · 本章说听劝池 · 双灵感对撞',
+        icon: <MessageSquare className="w-4 h-4 text-amber-500" />,
+        badge: '共创',
+      },
+      {
+        id: 'SKILL_VAULT',
+        title: '跨作品技能与套路中心库',
+        subtitle: '套路/等级/文风/副本勾选 · 智能匹配 · 反套路',
+        icon: <Layers className="w-4 h-4 text-indigo-500" />,
+        badge: 'Skill库',
       },
       {
         id: 'GENESIS',

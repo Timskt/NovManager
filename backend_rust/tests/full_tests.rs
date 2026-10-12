@@ -1425,4 +1425,144 @@ async fn test_reader_psychology_and_asymmetry_tracking() {
     assert!(news.iter().any(|ev| ev.region.contains("九疑山") || ev.region.contains("玄冥海") || ev.region.contains("天机阁")));
 }
 
+#[tokio::test]
+async fn test_sparks_skill_vault_and_autopilot_engines() {
+    let app = setup_test_app();
+
+    // 1. GET /api/novels/nov-001/sparks
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/api/novels/nov-001/sparks")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let sparks: Vec<EpiphanySpark> = serde_json::from_slice(&bytes).unwrap();
+    assert!(!sparks.is_empty());
+
+    // 2. POST /api/novels/nov-001/sparks
+    let new_spark = json!({
+        "title": "断剑剑鞘内部刻有逆转时空的三行太古神文",
+        "content": "只有在子夜月食之时以本命精血涂抹剑鞘内壁，才能显现出跨越三千年的求救遗言。",
+        "sparkType": "PLOT_TWIST",
+        "source": "AUTHOR_BRAINWAVE",
+        "heatScore": 98,
+        "status": "ANCHORED",
+        "targetChapterIndex": 5,
+        "tags": ["太古神文", "时空反转"]
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/novels/nov-001/sparks")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&new_spark).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::CREATED);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let saved_spark: EpiphanySpark = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(saved_spark.heat_score, 98);
+
+    // 3. POST /api/sparks/collide
+    let collide_req = json!({
+        "sparkAId": saved_spark.id,
+        "sparkBId": sparks[0].id,
+        "sparkATitle": saved_spark.title,
+        "sparkBTitle": sparks[0].title
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/sparks/collide")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&collide_req).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let collision: SparkCollisionResult = serde_json::from_slice(&bytes).unwrap();
+    assert!(collision.dramatic_tension_bonus > 0);
+
+    // 4. GET /api/skills/vault & POST /api/skills/auto-match
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/api/skills/vault")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let skills: Vec<CreationSkillItem> = serde_json::from_slice(&bytes).unwrap();
+    assert!(skills.len() >= 4);
+
+    let match_req = json!({
+        "sceneContext": "主角在黑市拍卖会拍下蒙尘断剑，出城后在荒林遭遇金丹期杀手尾随伏击，准备越阶反杀并断章留钩"
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/skills/auto-match")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&match_req).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let match_res: SkillAutoMatchResult = serde_json::from_slice(&bytes).unwrap();
+    assert!(!match_res.matched_skill_ids.is_empty());
+
+    // 5. POST /api/autopilot/generate-segment
+    let auto_req = json!({
+        "novelId": "nov-001",
+        "novelTitle": "太虚纪元",
+        "mode": "ZERO_INPUT_PURE_AUTO",
+        "chapterIndex": 6,
+        "sceneIndex": 1,
+        "activeSkills": skills,
+        "anchoredSparks": [saved_spark]
+    });
+    let res = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/autopilot/generate-segment")
+                .header("Content-Type", "application/json")
+                .body(Body::from(serde_json::to_vec(&auto_req).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let seg: AutopilotGeneratedSegment = serde_json::from_slice(&bytes).unwrap();
+    assert!(seg.word_count > 100);
+    assert!(seg.quality_score >= 90);
+}
+
+
 
