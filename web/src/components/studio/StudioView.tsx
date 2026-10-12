@@ -291,109 +291,95 @@ export const StudioView: React.FC<StudioViewProps> = ({
 
       {/* 中间主工作区：支持【✍️ 正文撰写】与【✨ 剧情推演幕布】Tab 切换 */}
       <div className="flex-1 flex flex-col overflow-hidden relative" style={{ backgroundColor: 'var(--bg-canvas)' }}>
-        {/* 顶部工作台全局模式切换与导航条 */}
-        <div
-          className="border-b px-3 sm:px-5 py-2 flex items-center justify-between gap-3 shrink-0 z-20 transition-colors"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            borderColor: 'var(--border-subtle)',
-          }}
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            {/* 手机端打开左侧抽屉按钮 */}
-            <button
-              onClick={() => setMobileDrawer('context')}
-              className="md:hidden p-1.5 rounded-lg border hover:opacity-80 transition"
-              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
-              title="打开大纲分镜目录"
-            >
-              <Compass className="w-4 h-4 text-indigo-400" />
-            </button>
-
-            {/* 架构定位指示 */}
-            <div className="flex items-center gap-1.5 text-xs truncate">
-              <button
-                onClick={() => {
-                  if (isLeftCollapsed) {
-                    setIsLeftCollapsed(false);
-                  }
-                  setIsFullOutlineModalOpen(true);
-                }}
-                className="font-medium flex items-center gap-1 hover:underline shrink-0 cursor-pointer"
-                style={{ color: 'var(--accent-primary)' }}
-                title="打开全景大纲分镜架构总览"
-              >
-                <Compass className="w-3.5 h-3.5" />
-                <span>大纲架构</span>
-              </button>
-              <span style={{ color: 'var(--text-faint)' }}>/</span>
-              <span className="font-semibold truncate" style={{ color: 'var(--text-main)' }}>
-                第 {activeChapter?.chapterIndex} 章 · {activeChapter?.title || '未命名'}
-              </span>
-              {activeChapter?.status && (
-                <span
-                  className="text-[10px] px-1.5 py-0.5 rounded font-medium hidden sm:inline"
-                  style={{
-                    backgroundColor: 'var(--bg-card)',
-                    color: 'var(--text-muted)',
-                  }}
-                >
-                  {activeChapter.status === 'PUBLISHED'
-                    ? '已发布'
-                    : activeChapter.status === 'REVIEWED'
-                    ? '已精修'
-                    : activeChapter.status === 'DRAFTED'
-                    ? '草稿'
-                    : activeChapter.status === 'SCENED'
-                    ? '已定分镜'
-                    : '构思中'}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* 核心双 Tab 切换：【✍️ 正文撰写】 vs 【✨ 剧情推演幕布】 */}
+        {/* 顶部工作台全局模式切换与导航条：仅当处于 canvas 幕布视图时在此展示，处于正文 editor 时由 ManuscriptEditor 内嵌一体化导演中控台承接，彻底告别三层工具栏地狱 */}
+        {studioTab === 'canvas' && (
           <div
-            className="flex items-center p-0.5 rounded-lg border shrink-0"
+            className="border-b px-3 sm:px-5 py-2 flex items-center justify-between gap-3 shrink-0 z-20 transition-colors backdrop-blur-md"
             style={{
-              backgroundColor: 'var(--bg-card)',
+              backgroundColor: 'var(--bg-surface)',
               borderColor: 'var(--border-subtle)',
             }}
           >
-            <button
-              onClick={() => switchStudioTab('editor')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
-                studioTab === 'editor'
-                  ? 'shadow-xs text-white'
-                  : 'hover:opacity-80'
-              }`}
-              style={
-                studioTab === 'editor'
-                  ? { backgroundColor: 'var(--accent-primary)' }
-                  : { color: 'var(--text-muted)' }
-              }
+            <div className="flex items-center gap-2 min-w-0">
+              {/* 手机端打开左侧抽屉按钮 */}
+              <button
+                onClick={() => setMobileDrawer('context')}
+                className="md:hidden p-1.5 rounded-lg border hover:opacity-80 transition cursor-pointer"
+                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+                title="打开大纲分镜目录"
+              >
+                <Compass className="w-4 h-4 text-indigo-400" />
+              </button>
+
+              {/* 架构定位指示 */}
+              <div className="flex items-center gap-1.5 text-xs truncate">
+                <button
+                  onClick={() => {
+                    if (isLeftCollapsed) {
+                      setIsLeftCollapsed(false);
+                    }
+                    setIsFullOutlineModalOpen(true);
+                  }}
+                  className="font-medium flex items-center gap-1 hover:underline shrink-0 cursor-pointer"
+                  style={{ color: 'var(--accent-primary)' }}
+                  title="打开全景大纲分镜架构总览"
+                >
+                  <Compass className="w-3.5 h-3.5" />
+                  <span>大纲架构</span>
+                </button>
+                <span style={{ color: 'var(--text-faint)' }}>/</span>
+                <span className="font-semibold truncate" style={{ color: 'var(--text-main)' }}>
+                  第 {activeChapter?.chapterIndex} 章 · {activeChapter?.title || '未命名'}
+                </span>
+                {activeChapter?.status && (
+                  <span
+                    className="text-[10px] px-1.5 py-0.5 rounded font-medium hidden sm:inline"
+                    style={{
+                      backgroundColor: 'var(--bg-card)',
+                      color: 'var(--text-muted)',
+                    }}
+                  >
+                    {activeChapter.status === 'PUBLISHED'
+                      ? '已发布'
+                      : activeChapter.status === 'REVIEWED'
+                      ? '已精修'
+                      : activeChapter.status === 'DRAFTED'
+                      ? '草稿'
+                      : activeChapter.status === 'SCENED'
+                      ? '已定分镜'
+                      : '构思中'}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* 核心双 Tab 切换：【✍️ 正文撰写】 vs 【✨ 剧情推演幕布】 */}
+            <div
+              className="flex items-center p-0.5 rounded-lg border shrink-0"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-subtle)',
+              }}
             >
-              <Feather className="w-3.5 h-3.5" />
-              <span>正文撰写</span>
-            </button>
-            <button
-              onClick={() => switchStudioTab('canvas')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
-                studioTab === 'canvas'
-                  ? 'shadow-xs text-white'
-                  : 'hover:opacity-80'
-              }`}
-              style={
-                studioTab === 'canvas'
-                  ? { backgroundColor: 'var(--accent-primary)' }
-                  : { color: 'var(--text-muted)' }
-              }
-            >
-              <GitFork className="w-3.5 h-3.5 text-amber-300" />
-              <span>剧情推演幕布</span>
-            </button>
+              <button
+                onClick={() => switchStudioTab('editor')}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer hover:opacity-80"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <Feather className="w-3.5 h-3.5" />
+                <span>正文撰写</span>
+              </button>
+              <button
+                onClick={() => switchStudioTab('canvas')}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer shadow-xs text-white"
+                style={{ backgroundColor: 'var(--accent-primary)' }}
+              >
+                <GitFork className="w-3.5 h-3.5 text-amber-300" />
+                <span>剧情推演幕布</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 区域内容 */}
         <div className="flex-1 flex flex-col overflow-hidden relative">
@@ -403,6 +389,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
               onOpenContext={() => setMobileDrawer('context')}
               onOpenAgent={() => setMobileDrawer('agent')}
               onSwitchToCanvas={() => switchStudioTab('canvas')}
+              onOpenOutlineModal={() => setIsFullOutlineModalOpen(true)}
             />
           ) : (
             <PlotCanvasView
