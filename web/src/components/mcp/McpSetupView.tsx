@@ -337,22 +337,31 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
   const sseUrl = serverConfigs?.sse_url || 'http://localhost:8000/mcp/sse';
 
   return (
-    <div className="flex-1 bg-slate-950 p-6 overflow-y-auto space-y-8 max-w-6xl mx-auto">
+    <div
+      className="flex-1 p-6 overflow-y-auto space-y-8 max-w-6xl mx-auto transition-colors"
+      style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-main)' }}
+    >
       {/* 顶部标题栏 */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-4 gap-4">
+      <div
+        className="flex flex-col md:flex-row md:items-center justify-between pb-4 gap-4 border-b"
+        style={{ borderColor: 'var(--border-subtle)' }}
+      >
         <div>
-          <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+          <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
             <ShieldCheck className="w-5 h-5 text-indigo-400" />
             <span>MCP 客户端标准安装与多端配置中心</span>
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
             支持 macOS、Linux 与 Windows 全平台适配，提供“终端直执命令”、“纯 JSON”与“自动脚本”三种配置形态。
           </p>
         </div>
 
         {/* 操作系统全局切换器 */}
-        <div className="flex items-center bg-slate-900 border border-slate-800 p-1 rounded-xl gap-1 self-start md:self-auto">
-          <span className="text-[10px] text-slate-500 px-2 font-medium">当前系统:</span>
+        <div
+          className="flex items-center p-1 rounded-xl gap-1 self-start md:self-auto border"
+          style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+        >
+          <span className="text-[10px] px-2 font-medium" style={{ color: 'var(--text-muted)' }}>当前系统:</span>
           {[
             { id: 'macos', label: 'macOS', icon: Apple },
             { id: 'linux', label: 'Linux', icon: Terminal },
@@ -365,10 +374,12 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
                 key={os.id}
                 onClick={() => setSelectedOS(os.id as SupportedOS)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${
-                  isSelected
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  isSelected ? 'text-white shadow-sm font-semibold' : 'hover:opacity-80'
                 }`}
+                style={{
+                  backgroundColor: isSelected ? 'var(--accent-primary)' : 'transparent',
+                  color: isSelected ? '#ffffff' : 'var(--text-muted)',
+                }}
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span>{os.label}</span>
@@ -380,32 +391,41 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
 
       {/* 步骤条流程指示器 (Stepper) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="bg-slate-900/90 border-l-4 border-indigo-500 border border-slate-800/80 rounded-xl p-3.5 space-y-1">
+        <div
+          className="border-l-4 border-indigo-500 border rounded-xl p-3.5 space-y-1"
+          style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+        >
           <div className="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
             <span className="w-5 h-5 rounded-full bg-indigo-950 text-indigo-300 flex items-center justify-center text-[11px] font-mono font-bold">1</span>
             <span>第一步：环境与程序安装</span>
           </div>
-          <p className="text-[11px] text-slate-400">
-            将启动器安装至系统的安装目录（如 <code className="text-indigo-300 font-mono">{getInstallPath()}</code>）。
+          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+            将启动器安装至系统的安装目录（如 <code className="text-indigo-400 font-mono">{getInstallPath()}</code>）。
           </p>
         </div>
 
-        <div className="bg-slate-900/90 border-l-4 border-emerald-500 border border-slate-800/80 rounded-xl p-3.5 space-y-1">
+        <div
+          className="border-l-4 border-emerald-500 border rounded-xl p-3.5 space-y-1"
+          style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+        >
           <div className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
             <span className="w-5 h-5 rounded-full bg-emerald-950 text-emerald-300 flex items-center justify-center text-[11px] font-mono font-bold">2</span>
             <span>第二步：配置客户端</span>
           </div>
-          <p className="text-[11px] text-slate-400">
-            按平台选择 Trae / Claude / Cursor 等，以 <code className="text-emerald-300">cat</code> 命令或纯 JSON 写入配置。
+          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+            按平台选择 Trae / Claude / Cursor 等，以 <code className="text-emerald-400">cat</code> 命令或纯 JSON 写入配置。
           </p>
         </div>
 
-        <div className="bg-slate-900/90 border-l-4 border-amber-500 border border-slate-800/80 rounded-xl p-3.5 space-y-1">
+        <div
+          className="border-l-4 border-amber-500 border rounded-xl p-3.5 space-y-1"
+          style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+        >
           <div className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
             <span className="w-5 h-5 rounded-full bg-amber-950 text-amber-300 flex items-center justify-center text-[11px] font-mono font-bold">3</span>
             <span>第三步：客户端验证与调试</span>
           </div>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
             重启对应 Agent，在 AI 对话框中直接调用 NovManager 资源与工具。
           </p>
         </div>
@@ -414,37 +434,58 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
       {/* ========================================================================= */}
       {/* 步骤一：安装服务端到系统目录 (Step 1: Install) */}
       {/* ========================================================================= */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800/80 pb-3 gap-2">
+      <div
+        className="border rounded-2xl p-5 space-y-4 shadow-sm"
+        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+      >
+        <div
+          className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 gap-2 border-b"
+          style={{ borderColor: 'var(--border-subtle)' }}
+        >
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-indigo-950 border border-indigo-800 flex items-center justify-center text-xs font-bold text-indigo-300 font-mono">
               1
             </div>
-            <h3 className="text-sm font-bold text-slate-100">
+            <h3 className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>
               步骤一：将 NovManager MCP 服务端安装到系统目录
             </h3>
           </div>
-          <span className="text-[11px] text-slate-400 font-mono bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
-            安装目标: <span className="text-indigo-300">{getInstallPath()}</span>
+          <span
+            className="text-[11px] font-mono px-2.5 py-1 rounded-lg border"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-subtle)',
+              color: 'var(--text-muted)',
+            }}
+          >
+            安装目标: <span className="text-indigo-400">{getInstallPath()}</span>
           </span>
         </div>
 
-        <div className="text-xs text-slate-300 space-y-3">
-          <p className="leading-relaxed text-slate-400">
+        <div className="text-xs space-y-3" style={{ color: 'var(--text-main)' }}>
+          <p className="leading-relaxed" style={{ color: 'var(--text-muted)' }}>
             安装脚本会自动部署 Python 运行环境、依赖库并建立全局可执行命令。各操作系统执行命令如下：
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
             {/* 远程直接安装 */}
-            <div className="bg-slate-950 border border-slate-800/90 rounded-xl p-3.5 space-y-2">
+            <div
+              className="border rounded-xl p-3.5 space-y-2"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+            >
               <div className="flex items-center justify-between">
-                <span className="font-semibold text-slate-200 text-xs flex items-center gap-1.5">
+                <span className="font-semibold text-xs flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
                   <Terminal className="w-3.5 h-3.5 text-indigo-400" />
                   <span>方式 A：终端一键命令安装 ({selectedOS.toUpperCase()})</span>
                 </span>
                 <button
                   onClick={() => copyToClipboard(getInstallCommand(), 'cmd-install')}
-                  className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] transition flex items-center gap-1"
+                  className="px-2 py-0.5 rounded text-[11px] transition flex items-center gap-1 border"
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
                 >
                   {copiedKey === 'cmd-install' ? (
                     <CheckCircle2 className="w-3 h-3 text-emerald-400" />
@@ -454,7 +495,7 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
                   <span>{copiedKey === 'cmd-install' ? '已复制' : '复制命令'}</span>
                 </button>
               </div>
-              <pre className="bg-slate-900 border border-slate-800 rounded-lg p-2.5 font-mono text-[11px] text-emerald-400 overflow-x-auto">
+              <pre className="border rounded-lg p-2.5 font-mono text-[11px] text-emerald-400 overflow-x-auto" style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}>
                 {getInstallCommand()}
               </pre>
               <span className="text-[10px] text-slate-500 block">
@@ -465,15 +506,23 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
             </div>
 
             {/* 本地仓库直接安装 */}
-            <div className="bg-slate-950 border border-slate-800/90 rounded-xl p-3.5 space-y-2">
+            <div
+              className="border rounded-xl p-3.5 space-y-2"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+            >
               <div className="flex items-center justify-between">
-                <span className="font-semibold text-slate-200 text-xs flex items-center gap-1.5">
+                <span className="font-semibold text-xs flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
                   <FolderCode className="w-3.5 h-3.5 text-indigo-400" />
                   <span>方式 B：本地工程源码目录直接执行</span>
                 </span>
                 <button
                   onClick={() => copyToClipboard(getLocalInstallCommand(), 'local-install')}
-                  className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] transition flex items-center gap-1"
+                  className="px-2 py-0.5 rounded text-[11px] transition flex items-center gap-1 border"
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
                 >
                   {copiedKey === 'local-install' ? (
                     <CheckCircle2 className="w-3 h-3 text-emerald-400" />
@@ -483,10 +532,13 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
                   <span>{copiedKey === 'local-install' ? '已复制' : '复制命令'}</span>
                 </button>
               </div>
-              <pre className="bg-slate-900 border border-slate-800 rounded-lg p-2.5 font-mono text-[11px] text-indigo-300 overflow-x-auto">
+              <pre
+                className="border rounded-lg p-2.5 font-mono text-[11px] overflow-x-auto text-indigo-400"
+                style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+              >
                 {getLocalInstallCommand()}
               </pre>
-              <span className="text-[10px] text-slate-500 block">
+              <span className="text-[10px] block" style={{ color: 'var(--text-muted)' }}>
                 若您当前已在本项目仓库目录中，直接运行该脚本即可。
               </span>
             </div>
@@ -497,26 +549,38 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
       {/* ========================================================================= */}
       {/* 步骤二：配置各 Agent 客户端 (Step 2: Configure) */}
       {/* ========================================================================= */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800/80 pb-3 gap-2">
+      <div
+        className="border rounded-2xl p-5 space-y-4 shadow-sm"
+        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+      >
+        <div
+          className="flex flex-col md:flex-row md:items-center justify-between pb-3 gap-2 border-b"
+          style={{ borderColor: 'var(--border-subtle)' }}
+        >
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-emerald-950 border border-emerald-800 flex items-center justify-center text-xs font-bold text-emerald-300 font-mono">
               2
             </div>
-            <h3 className="text-sm font-bold text-slate-100">
+            <h3 className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>
               步骤二：选择目标工具与配置方式 (支持 cat / 纯 JSON / TOML 自由切换)
             </h3>
           </div>
 
           {/* 配置形式切换器 Tab (终端命令 / 纯JSON / 路径说明) */}
-          <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+          <div
+            className="flex items-center p-1 rounded-xl border text-xs"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+          >
             <button
               onClick={() => setConfigMode('terminal_cmd')}
               className={`px-3 py-1 rounded-lg transition flex items-center gap-1.5 font-medium ${
                 configMode === 'terminal_cmd'
                   ? 'bg-emerald-600 text-white shadow-sm font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'hover:opacity-80'
               }`}
+              style={{
+                color: configMode === 'terminal_cmd' ? '#ffffff' : 'var(--text-muted)',
+              }}
             >
               <Terminal className="w-3 h-3" />
               <span>⚡ 终端直执命令 ({selectedOS === 'windows' ? 'PowerShell' : 'cat'})</span>
@@ -527,8 +591,11 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
               className={`px-3 py-1 rounded-lg transition flex items-center gap-1.5 font-medium ${
                 configMode === 'raw_json'
                   ? 'bg-emerald-600 text-white shadow-sm font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'hover:opacity-80'
               }`}
+              style={{
+                color: configMode === 'raw_json' ? '#ffffff' : 'var(--text-muted)',
+              }}
             >
               <FileJson className="w-3 h-3" />
               <span>📋 {selectedClient === 'codex' ? '纯 TOML 配置' : '纯 JSON 配置'}</span>
@@ -539,8 +606,11 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
               className={`px-3 py-1 rounded-lg transition flex items-center gap-1.5 font-medium ${
                 configMode === 'path_guide'
                   ? 'bg-emerald-600 text-white shadow-sm font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'hover:opacity-80'
               }`}
+              style={{
+                color: configMode === 'path_guide' ? '#ffffff' : 'var(--text-muted)',
+              }}
             >
               <FileCode className="w-3 h-3" />
               <span>📁 配置文件路径说明</span>
@@ -568,8 +638,13 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
                 className={`px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5 whitespace-nowrap border ${
                   isActive
                     ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
-                    : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200 hover:bg-slate-900'
+                    : 'hover:opacity-80'
                 }`}
+                style={{
+                  backgroundColor: isActive ? '#059669' : 'var(--bg-card)',
+                  borderColor: isActive ? '#10b981' : 'var(--border-subtle)',
+                  color: isActive ? '#ffffff' : 'var(--text-muted)',
+                }}
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span>{client.label}</span>
@@ -579,7 +654,10 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
         </div>
 
         {/* 核心配置内容展示区 */}
-        <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
+        <div
+          className="border rounded-xl p-4 space-y-3"
+          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+        >
           {/* 特殊平台 1: 腾讯 WorkBuddy */}
           {selectedClient === 'workbuddy' && (
             <div className="space-y-3">
@@ -605,17 +683,26 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
                 </button>
               </div>
 
-              <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg space-y-2 text-[11px] text-slate-300">
+              <div
+                className="p-3 border rounded-lg space-y-2 text-[11px]"
+                style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+              >
                 <p>
                   <strong>方式 1（企业工作台插件）：</strong>在 WorkBuddy 工具管理中点击「添加自定义工具 → 导入 OpenAPI」，填入规范地址：
                 </p>
-                <code className="block bg-slate-950 px-2.5 py-1.5 rounded border border-slate-800 text-emerald-400 font-mono">
+                <code
+                  className="block px-2.5 py-1.5 rounded border text-emerald-400 font-mono"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                >
                   {openapiUrl}
                 </code>
                 <p>
                   <strong>方式 2（MCP 远程流）：</strong>在 MCP 扩展中配置 Server-Sent Events 地址：
                 </p>
-                <code className="block bg-slate-950 px-2.5 py-1.5 rounded border border-slate-800 text-indigo-300 font-mono">
+                <code
+                  className="block px-2.5 py-1.5 rounded border text-indigo-400 font-mono"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                >
                   {sseUrl}
                 </code>
               </div>
@@ -627,10 +714,10 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-semibold text-slate-200 block">
+                  <span className="text-xs font-semibold block" style={{ color: 'var(--text-main)' }}>
                     智谱 ZCode / 智谱清言智能体平台
                   </span>
-                  <span className="text-[10px] text-slate-500">
+                  <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
                     基于 GLM-4 Function Calling 原生导入 OpenAPI 3.0 工具集
                   </span>
                 </div>
@@ -647,15 +734,21 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
                 </button>
               </div>
 
-              <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg space-y-2 text-[11px] text-slate-300">
+              <div
+                className="p-3 border rounded-lg space-y-2 text-[11px]"
+                style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+              >
                 <p>
                   在智谱清言智能体中心创建「写作助理」，在能力配置中选择「添加外部工具 → 导入 OpenAPI URL」，粘贴下方地址：
                 </p>
-                <code className="block bg-slate-950 px-2.5 py-1.5 rounded border border-slate-800 text-purple-300 font-mono">
+                <code
+                  className="block px-2.5 py-1.5 rounded border text-purple-400 font-mono"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                >
                   {openapiUrl}
                 </code>
-                <p className="text-slate-400">
-                  智谱将自动解析出 <code className="text-slate-200">query_lore</code>、<code className="text-slate-200">check_setting_consistency</code>、<code className="text-slate-200">save_scene_draft</code> 等全部小说生产力工具。
+                <p style={{ color: 'var(--text-muted)' }}>
+                  智谱将自动解析出 <code className="text-indigo-400">query_lore</code>、<code className="text-indigo-400">check_setting_consistency</code>、<code className="text-indigo-400">save_scene_draft</code> 等全部小说生产力工具。
                 </p>
               </div>
             </div>
@@ -718,7 +811,8 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
                 {configMode === 'path_guide' && (
                   <button
                     onClick={() => copyToClipboard(fileInfo.path, 'btn-path')}
-                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5 self-start sm:self-auto"
+                    className="px-3 py-1.5 border rounded-lg text-xs font-medium transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer hover:opacity-80"
+                    style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                   >
                     {copiedKey === 'btn-path' ? (
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-200" />
@@ -752,7 +846,7 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
                           <span>{copiedKey === 'btn-codex-cli' ? '已复制' : '复制 CLI 命令'}</span>
                         </button>
                       </div>
-                      <pre className="bg-slate-900 border border-slate-800 rounded-lg p-2.5 font-mono text-[11px] text-emerald-400 overflow-x-auto">
+                      <pre className="border rounded-lg p-2.5 font-mono text-[11px] text-emerald-400 overflow-x-auto" style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}>
                         {codexCliCmd}
                       </pre>
                       <span className="text-[10px] text-indigo-300/80 block">
@@ -767,10 +861,10 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
                         方式 B：终端追加 TOML 配置 ({selectedOS === 'windows' ? 'PowerShell' : 'cat'})
                       </span>
                     )}
-                    <pre className="bg-slate-900 border border-slate-800 rounded-lg p-3 font-mono text-[11px] text-emerald-300 overflow-x-auto leading-relaxed">
+                    <pre className="border rounded-lg p-3 font-mono text-[11px] text-emerald-300 overflow-x-auto leading-relaxed" style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}>
                       {terminalCmd}
                     </pre>
-                    <div className="p-2.5 bg-slate-900/80 border border-slate-800 rounded-lg text-[11px] text-slate-400 flex items-center gap-2">
+                    <div className="p-2.5 border rounded-lg text-[11px] flex items-center gap-2" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}>
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                       <span>
                         {selectedOS === 'windows'
@@ -787,7 +881,7 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
               {/* 渲染内容 2: 纯 JSON / TOML 代码 */}
               {configMode === 'raw_json' && (
                 <div className="space-y-2">
-                  <pre className="bg-slate-900 border border-slate-800 rounded-lg p-3 font-mono text-[11px] text-indigo-300 overflow-x-auto leading-relaxed">
+                  <pre className="border rounded-lg p-3 font-mono text-[11px] overflow-x-auto leading-relaxed" style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)', color: 'var(--accent-primary)' }}>
                     {rawJson}
                   </pre>
                   <p className="text-[11px] text-slate-500">
@@ -806,20 +900,26 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
 
               {/* 渲染内容 3: 路径说明与自动合并 */}
               {configMode === 'path_guide' && (
-                <div className="p-3.5 bg-slate-900 border border-slate-800 rounded-lg space-y-3 text-[11px] text-slate-300">
+                <div
+                  className="p-3.5 border rounded-lg space-y-3 text-[11px]"
+                  style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+                >
                   <div className="space-y-1">
-                    <span className="text-slate-400 block font-medium">1. 目标文件物理路径：</span>
-                    <code className="block bg-slate-950 px-2.5 py-1.5 rounded border border-slate-800 text-indigo-300 font-mono text-xs">
+                    <span className="block font-medium" style={{ color: 'var(--text-muted)' }}>1. 目标文件物理路径：</span>
+                    <code
+                      className="block px-2.5 py-1.5 rounded border text-indigo-400 font-mono text-xs"
+                      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                    >
                       {fileInfo.path}
                     </code>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-slate-400 block font-medium">2. 路径角色与范围：</span>
-                    <p className="text-slate-400">{fileInfo.desc}</p>
+                    <span className="block font-medium" style={{ color: 'var(--text-muted)' }}>2. 路径角色与范围：</span>
+                    <p style={{ color: 'var(--text-muted)' }}>{fileInfo.desc}</p>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-slate-400 block font-medium">3. 多作用域与格式支持：</span>
-                    <p className="text-slate-400 leading-relaxed">
+                    <span className="block font-medium" style={{ color: 'var(--text-muted)' }}>3. 多作用域与格式支持：</span>
+                    <p className="leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                       {selectedClient === 'codex'
                         ? 'OpenAI Codex 采用 TOML 格式。全局作用域位于 ~/.codex/config.toml（Windows 下为 %USERPROFILE%\\.codex\\config.toml）；亦可在工程根目录下创建 .codex/config.toml 实现当前小说的独占 MCP 挂载。'
                         : 'NovManager 的安装脚本已内置安全的配置 Merge 算法，执行安装命令时会保留您已安装的其他 MCP 插件（如 Filesystem、Git、Memory 等），仅安全更新 nov-manager 节点。'}
@@ -835,13 +935,19 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
       {/* ========================================================================= */}
       {/* 步骤三：验证与测试连通性 (Step 3: Test & Verify) */}
       {/* ========================================================================= */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+      <div
+        className="border rounded-2xl p-5 space-y-4 shadow-sm"
+        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+      >
+        <div
+          className="flex items-center justify-between pb-3 border-b"
+          style={{ borderColor: 'var(--border-subtle)' }}
+        >
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-amber-950 border border-amber-800 flex items-center justify-center text-xs font-bold text-amber-300 font-mono">
               3
             </div>
-            <h3 className="text-sm font-bold text-slate-100">
+            <h3 className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>
               步骤三：测试与验证客户端连通性
             </h3>
           </div>
@@ -851,15 +957,21 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-2">
-            <span className="font-semibold text-slate-200 flex items-center gap-1.5">
+          <div
+            className="border rounded-xl p-3.5 space-y-2"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+          >
+            <span className="font-semibold flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
               <Terminal className="w-3.5 h-3.5 text-amber-400" />
               <span>方法 1：命令行握手测试</span>
             </span>
-            <p className="text-slate-400 text-[11px]">
+            <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
               在终端直接执行命令，验证安装目录的可执行程序是否响应 JSON-RPC 初始化报文：
             </p>
-            <div className="flex items-center justify-between bg-slate-900 p-2 rounded-lg border border-slate-800">
+            <div
+              className="flex items-center justify-between p-2 rounded-lg border"
+              style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+            >
               <code className="text-[11px] text-emerald-400 font-mono">
                 {selectedOS === 'windows' ? 'nov-mcp.bat' : 'nov-mcp'}
               </code>
@@ -872,41 +984,63 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
                     'verify-cmd'
                   )
                 }
-                className="text-[10px] text-slate-400 hover:text-slate-200 px-2 py-0.5 rounded bg-slate-800"
+                className="text-[10px] px-2 py-0.5 rounded border transition"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--text-muted)',
+                }}
               >
                 {copiedKey === 'verify-cmd' ? '已复制' : '复制自检测试'}
               </button>
             </div>
           </div>
 
-          <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-2">
-            <span className="font-semibold text-slate-200 flex items-center gap-1.5">
+          <div
+            className="border rounded-xl p-3.5 space-y-2"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+          >
+            <span className="font-semibold flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
               <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
               <span>方法 2：在 Trae / Claude 中体验</span>
             </span>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
+            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>
               重启 Claude Desktop 或在 Trae / Cursor 中重新加载窗口，在 AI 对话框中直接输入：
             </p>
-            <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-[11px] text-slate-300 italic">
+            <div
+              className="p-2.5 rounded-lg border text-[11px] italic"
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-muted)',
+              }}
+            >
               “请通过 nov-manager 检查《太虚纪元》当前有哪些登场角色，并列出战力法则”
             </div>
           </div>
         </div>
 
         {/* 底部引导卡 */}
-        <div className="p-4 bg-gradient-to-r from-indigo-950/40 via-slate-900 to-emerald-950/40 border border-slate-800 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div
+          className="p-4 border rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3"
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            borderColor: 'var(--border-subtle)',
+          }}
+        >
           <div>
-            <span className="font-semibold text-slate-200 text-xs block">
+            <span className="font-semibold text-xs block" style={{ color: 'var(--text-main)' }}>
               想要实时查看 MCP 资源结构或模拟工具执行响应？
             </span>
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
               切换至【协议在线调试与资产看板】进行在线模拟调用与 Resource JSON 预览。
             </span>
           </div>
 
           <button
             onClick={onGoToInspector}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap shadow-md shadow-indigo-600/30"
+            className="px-4 py-2 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap shadow-md"
+            style={{ backgroundColor: 'var(--accent-primary)' }}
           >
             <span>进入协议调试看板</span>
             <ArrowRight className="w-3.5 h-3.5" />

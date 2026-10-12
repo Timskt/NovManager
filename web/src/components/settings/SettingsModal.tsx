@@ -115,18 +115,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 overflow-y-auto">
       <form
         onSubmit={handleSave}
-        className="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl space-y-5 my-8 max-h-[90vh] flex flex-col"
+        className="rounded-2xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl space-y-5 my-8 max-h-[90vh] flex flex-col border"
+        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
       >
         {/* 顶部标题与关闭 */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+        <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--border-subtle)' }}>
+          <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
             <Settings className="w-5 h-5 text-indigo-400" />
             <span>AI 大模型直连与协同配置</span>
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800 transition"
+            className="p-1 rounded-lg transition hover:opacity-80 cursor-pointer"
+            style={{ color: 'var(--text-muted)' }}
           >
             <X className="w-4 h-4" />
           </button>
@@ -134,23 +136,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
         <div className="flex-1 overflow-y-auto space-y-4 pr-1 text-xs">
           {/* 1. 运行模式选择卡片 */}
-          <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
-            <span className="font-semibold text-slate-300 block">AI Agent 推理运行模式</span>
+          <div
+            className="border rounded-xl p-3 space-y-2"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+          >
+            <span className="font-semibold block" style={{ color: 'var(--text-main)' }}>AI Agent 推理运行模式</span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setUseMock(true)}
-                className={`p-3 rounded-xl border text-left transition ${
+                className={`p-3 rounded-xl border text-left transition cursor-pointer ${
                   useMock
                     ? 'bg-indigo-950/60 border-indigo-500 text-indigo-200 ring-1 ring-indigo-500/30'
-                    : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                    : 'hover:border-indigo-500/40'
                 }`}
+                style={
+                  !useMock
+                    ? { backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
+                    : undefined
+                }
               >
                 <div className="font-bold flex items-center gap-1.5 text-xs">
                   <Cpu className="w-4 h-4 text-indigo-400" />
                   <span>极速仿真模式 (离线演示)</span>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                <p className="text-[11px] mt-1 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                   免 API Key，内置全套思维链推演与长篇小说起草模拟引擎
                 </p>
               </button>
@@ -158,17 +168,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               <button
                 type="button"
                 onClick={() => setUseMock(false)}
-                className={`p-3 rounded-xl border text-left transition ${
+                className={`p-3 rounded-xl border text-left transition cursor-pointer ${
                   !useMock
                     ? 'bg-gradient-to-tr from-amber-950/40 to-indigo-950/60 border-amber-500/80 text-amber-200 ring-1 ring-amber-500/30'
-                    : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                    : 'hover:border-indigo-500/40'
                 }`}
+                style={
+                  useMock
+                    ? { backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
+                    : undefined
+                }
               >
                 <div className="font-bold flex items-center gap-1.5 text-xs text-amber-300">
                   <Globe className="w-4 h-4 text-amber-400" />
                   <span>真实大模型 API 直连</span>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                <p className="text-[11px] mt-1 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                   直连 DeepSeek / OpenCode-Go / OpenAI 兼容接口，真机推理
                 </p>
               </button>
@@ -177,7 +192,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           {/* 2. 真实 API 参数配置区 */}
           {!useMock && (
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-4 animate-in fade-in">
+            <div
+              className="border rounded-xl p-4 space-y-4 animate-in fade-in"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+            >
               {/* 供应商预设平铺选择 */}
               <div>
                 <label className="block text-slate-300 font-semibold mb-2">
@@ -192,20 +210,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         key={pid}
                         type="button"
                         onClick={() => handleSelectProvider(pid)}
-                        className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between ${
+                        className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between cursor-pointer hover:opacity-90 ${
                           isSelected
-                            ? 'bg-indigo-950/80 border-indigo-500 text-white shadow-md'
-                            : 'bg-slate-900 border-slate-850 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                            ? 'shadow-md'
+                            : ''
                         }`}
+                        style={
+                          isSelected
+                            ? { backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--accent-primary)', color: 'var(--text-main)' }
+                            : { backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
+                        }
                       >
                         <div>
                           <div className="font-bold text-[11px] line-clamp-1">{item.name}</div>
-                          <div className="text-[9px] text-slate-500 mt-0.5 line-clamp-1">
+                          <div className="text-[9px] mt-0.5 line-clamp-1" style={{ color: 'var(--text-muted)' }}>
                             {item.tag}
                           </div>
                         </div>
                         {isSelected && (
-                          <span className="text-[9px] text-indigo-400 font-semibold mt-1 flex items-center gap-0.5">
+                          <span className="text-[9px] font-semibold mt-1 flex items-center gap-0.5" style={{ color: 'var(--accent-primary)' }}>
                             <CheckCircle2 className="w-2.5 h-2.5" />
                             <span>已选</span>
                           </span>
@@ -214,7 +237,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     );
                   })}
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
+                <p className="text-[11px] mt-1.5 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                   {activePreset.description}
                 </p>
               </div>
@@ -222,7 +245,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               {/* API Key 输入框 */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label className="text-slate-300 font-semibold flex items-center gap-1.5">
+                  <label className="font-semibold flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
                     <Key className="w-3.5 h-3.5 text-amber-400" />
                     <span>API 密钥 (API Key)</span>
                   </label>
@@ -248,7 +271,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       setTestResult(null);
                     }}
                     placeholder={activePreset.keyPlaceholder}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 pr-9 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs"
+                    className="w-full border rounded-xl p-2.5 pr-9 focus:outline-none focus:border-indigo-500 font-mono text-xs"
+                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                   />
                   <button
                     type="button"
@@ -277,16 +301,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     setTestResult(null);
                   }}
                   placeholder="https://api.deepseek.com/v1/chat/completions"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs"
+                  className="w-full border rounded-xl p-2.5 focus:outline-none focus:border-indigo-500 font-mono text-xs"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
-                <span className="text-[10px] text-slate-500 mt-0.5 block">
+                <span className="text-[10px] mt-0.5 block" style={{ color: 'var(--text-muted)' }}>
                   支持填入完整 <code>/chat/completions</code> 地址或 BaseURL（系统会自动补全规范化）。
                 </span>
               </div>
 
               {/* 模型名称与快捷切换 */}
               <div className="space-y-1.5">
-                <label className="block text-slate-300 font-semibold">
+                <label className="block font-semibold" style={{ color: 'var(--text-main)' }}>
                   模型名称 (Model)
                 </label>
                 <input
@@ -297,12 +322,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     setTestResult(null);
                   }}
                   placeholder="如：deepseek-v4-flash 或 v4-flash"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs"
+                  className="w-full border rounded-xl p-2.5 focus:outline-none focus:border-indigo-500 font-mono text-xs"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
 
                 {/* 快捷常用模型标签 */}
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                  <span className="text-[10px] text-slate-500">推荐可选模型：</span>
+                  <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>推荐可选模型：</span>
                   {activePreset.models.map((m) => (
                     <button
                       key={m}
@@ -311,11 +337,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         setModel(m);
                         setTestResult(null);
                       }}
-                      className={`px-2 py-0.5 rounded text-[10px] font-mono transition border ${
+                      className="px-2 py-0.5 rounded text-[10px] font-mono transition border hover:opacity-80"
+                      style={
                         model === m
-                          ? 'bg-indigo-950 text-indigo-300 border-indigo-700'
-                          : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
-                      }`}
+                          ? { backgroundColor: 'var(--accent-primary)', color: '#fff', borderColor: 'var(--accent-primary)' }
+                          : { backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
+                      }
                     >
                       {m}
                     </button>
@@ -324,13 +351,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </div>
 
               {/* 连通性测试按钮与反馈卡片 */}
-              <div className="pt-2 border-t border-slate-900 space-y-2">
+              <div className="pt-2 border-t space-y-2" style={{ borderColor: 'var(--border-subtle)' }}>
                 <div className="flex items-center justify-between">
                   <button
                     type="button"
                     onClick={handleTestConnection}
                     disabled={isTesting}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-750 text-slate-200 font-semibold rounded-xl border border-slate-700 flex items-center gap-1.5 transition active:scale-95 disabled:opacity-50"
+                    className="px-4 py-2 font-semibold rounded-xl border flex items-center gap-1.5 transition active:scale-95 disabled:opacity-50 cursor-pointer hover:opacity-85"
+                    style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                   >
                     <Zap className={`w-3.5 h-3.5 text-amber-400 ${isTesting ? 'animate-bounce' : ''}`} />
                     <span>{isTesting ? '正在测试连接...' : '⚡ 一键测试 API 连通性'}</span>
@@ -377,9 +405,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
               {/* 高级选项面板 */}
               {showAdvanced && (
-                <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-850 space-y-3 animate-in fade-in">
+                <div className="p-3.5 rounded-xl border space-y-3 animate-in fade-in" style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}>
                   <div>
-                    <div className="flex justify-between text-slate-400 mb-1">
+                    <div className="flex justify-between mb-1" style={{ color: 'var(--text-muted)' }}>
                       <span>生成随机性 / 创造力 (Temperature):</span>
                       <span className="text-indigo-400 font-mono font-bold">{temp}</span>
                     </div>
@@ -419,25 +447,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           )}
 
           {/* 3. 全书文风指南与严格禁忌词 */}
-          <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-3">
-            <span className="font-semibold text-slate-300 block flex items-center gap-1.5">
+          <div
+            className="border rounded-xl p-3.5 space-y-3"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+          >
+            <span className="font-semibold block flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
               <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
               <span>全书文风硬约束与过滤库</span>
             </span>
 
             <div>
-              <label className="block text-slate-400 mb-1">叙事基调与语言准则</label>
+              <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>叙事基调与语言准则</label>
               <input
                 type="text"
                 value={tone}
                 onChange={(e) => setTone(e.target.value)}
                 placeholder="冷峻克制，重智斗博弈，重因果逻辑"
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 text-xs"
+                className="w-full rounded-xl p-2.5 border focus:outline-none focus:border-indigo-500 text-xs"
+                style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
               />
             </div>
 
             <div>
-              <label className="block text-slate-400 mb-1">
+              <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>
                 全书严格禁止的成语/套话 (设定稽查员将扫描拦截)
               </label>
               <input
@@ -445,24 +477,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 value={forbidden}
                 onChange={(e) => setForbidden(e.target.value)}
                 placeholder="恐怖如斯、倒吸一口凉气、嘴角泛起一抹冷笑"
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 text-xs"
+                className="w-full rounded-xl p-2.5 border focus:outline-none focus:border-indigo-500 text-xs"
+                style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
               />
             </div>
           </div>
         </div>
 
         {/* 底部保存按钮 */}
-        <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-800">
+        <div className="flex justify-end gap-2.5 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs text-slate-400 hover:text-slate-200 bg-slate-800 rounded-xl transition"
+            className="px-4 py-2 text-xs rounded-xl border transition hover:opacity-80 cursor-pointer"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
           >
             取消
           </button>
           <button
             type="submit"
-            className="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg shadow-indigo-950 transition active:scale-95"
+            className="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg transition active:scale-95 cursor-pointer"
           >
             保存并应用配置
           </button>

@@ -205,13 +205,17 @@ const PlotTreeNodeItem: React.FC<PlotTreeNodeItemProps> = ({
         onClick={() => onSelect(node.id)}
         className={`w-[320px] shrink-0 rounded-2xl border transition-all duration-200 flex flex-col justify-between p-4 shadow-xl cursor-pointer group relative z-10 ${
           isDeducing
-            ? 'bg-slate-900 border-purple-500 ring-2 ring-purple-500 shadow-purple-500/30 animate-pulse'
+            ? 'border-purple-500 ring-2 ring-purple-500 shadow-purple-500/30 animate-pulse'
             : isSelected
-            ? 'bg-slate-900 border-indigo-500 ring-2 ring-indigo-500/60 shadow-indigo-500/20'
+            ? 'border-indigo-500 ring-2 ring-indigo-500/60 shadow-indigo-500/20'
             : isInActivePath
-            ? 'bg-slate-900/90 border-indigo-700/80 shadow-indigo-950/40'
-            : 'bg-slate-900/85 border-slate-800/90 hover:border-slate-700 hover:bg-slate-900'
+            ? 'border-indigo-700/80 shadow-indigo-950/40'
+            : 'hover:border-indigo-500/50'
         }`}
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          borderColor: isSelected || isDeducing || isInActivePath ? undefined : 'var(--border-subtle)',
+        }}
       >
         {/* 左侧因果输入锚点（根节点除外） */}
         {node.parentId && (
@@ -219,13 +223,14 @@ const PlotTreeNodeItem: React.FC<PlotTreeNodeItemProps> = ({
             className={`absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 flex items-center justify-center z-20 transition-colors ${
               isInActivePath
                 ? 'bg-indigo-950 border-indigo-400 shadow-sm shadow-indigo-500/50'
-                : 'bg-slate-900 border-slate-600'
+                : 'border-slate-500'
             }`}
+            style={!isInActivePath ? { backgroundColor: 'var(--bg-card)' } : undefined}
             title={`因果承接自：【${parentNode ? sanitizeActTitle(parentNode.title) : '上级剧情'}】`}
           >
             <div
               className={`w-1.5 h-1.5 rounded-full ${
-                isInActivePath ? 'bg-indigo-300' : 'bg-slate-500'
+                isInActivePath ? 'bg-indigo-300' : 'bg-slate-400'
               }`}
             />
           </div>
@@ -236,13 +241,14 @@ const PlotTreeNodeItem: React.FC<PlotTreeNodeItemProps> = ({
           className={`absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 flex items-center justify-center z-20 transition-colors ${
             isInActivePath
               ? 'bg-indigo-950 border-indigo-400 shadow-sm shadow-indigo-500/50'
-              : 'bg-slate-900 border-slate-600'
+              : 'border-slate-500'
           }`}
+          style={!isInActivePath ? { backgroundColor: 'var(--bg-card)' } : undefined}
           title="剧情衍生输出端（可继续推演子走向）"
         >
           <div
             className={`w-1.5 h-1.5 rounded-full ${
-              isInActivePath ? 'bg-indigo-300' : 'bg-slate-500'
+              isInActivePath ? 'bg-indigo-300' : 'bg-slate-400'
             }`}
           />
         </div>
@@ -257,7 +263,8 @@ const PlotTreeNodeItem: React.FC<PlotTreeNodeItemProps> = ({
                 </span>
               ) : (
                 <span
-                  className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-medium truncate max-w-[140px]"
+                  className="px-1.5 py-0.5 rounded border text-[10px] font-medium truncate max-w-[140px]"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
                   title={`承接：${parentNode ? sanitizeActTitle(parentNode.title) : '父剧情'}`}
                 >
                   承接：{parentNode ? sanitizeActTitle(parentNode.title) : '父剧情'}
@@ -279,7 +286,7 @@ const PlotTreeNodeItem: React.FC<PlotTreeNodeItemProps> = ({
             </div>
 
             {/* 纯粹标题呈现 */}
-            <h4 className="text-xs font-bold text-slate-100 leading-snug line-clamp-1 pt-0.5">
+            <h4 className="text-xs font-bold leading-snug line-clamp-1 pt-0.5" style={{ color: 'var(--text-main)' }}>
               {cleanTitle}
             </h4>
           </div>
@@ -288,14 +295,14 @@ const PlotTreeNodeItem: React.FC<PlotTreeNodeItemProps> = ({
           <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={(e) => onEdit(node, e)}
-              className="p-1 text-slate-400 hover:text-indigo-300 rounded hover:bg-slate-800 transition cursor-pointer"
+              className="p-1 text-slate-400 hover:text-indigo-400 rounded transition cursor-pointer hover:opacity-80"
               title="编辑此剧情实体"
             >
               <Edit3 className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={(e) => onDelete(node.id, e)}
-              className="p-1 text-slate-500 hover:text-rose-400 rounded hover:bg-slate-800 transition cursor-pointer"
+              className="p-1 text-slate-500 hover:text-rose-400 rounded transition cursor-pointer hover:opacity-80"
               title="删除此剧情分支"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -317,35 +324,47 @@ const PlotTreeNodeItem: React.FC<PlotTreeNodeItemProps> = ({
 
           {/* 展开查看戏剧节拍 */}
           {isExpanded && (
-            <div className="pt-2 border-t border-slate-800/80 space-y-2 animate-in fade-in duration-150">
+            <div
+              className="pt-2 border-t space-y-2 animate-in fade-in duration-150"
+              style={{ borderColor: 'var(--border-subtle)' }}
+            >
               {node.conflict && (
-                <div className="p-2 bg-slate-950/60 rounded-lg border border-slate-800/80 space-y-0.5">
+                <div
+                  className="p-2 rounded-lg border space-y-0.5"
+                  style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}
+                >
                   <span className="text-[10px] font-bold text-rose-400 block">
                     ⚡ 核心冲突：
                   </span>
-                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                  <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-main)' }}>
                     {node.conflict}
                   </p>
                 </div>
               )}
 
               {node.turnPoint && (
-                <div className="p-2 bg-slate-950/60 rounded-lg border border-slate-800/80 space-y-0.5">
+                <div
+                  className="p-2 rounded-lg border space-y-0.5"
+                  style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}
+                >
                   <span className="text-[10px] font-bold text-amber-400 block">
                     🔀 戏剧转折：
                   </span>
-                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                  <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-main)' }}>
                     {node.turnPoint}
                   </p>
                 </div>
               )}
 
               {node.outcome && (
-                <div className="p-2 bg-slate-950/60 rounded-lg border border-slate-800/80 space-y-0.5">
+                <div
+                  className="p-2 rounded-lg border space-y-0.5"
+                  style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}
+                >
                   <span className="text-[10px] font-bold text-emerald-400 block">
                     🏁 战果与代价：
                   </span>
-                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                  <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-main)' }}>
                     {node.outcome}
                   </p>
                 </div>
@@ -377,10 +396,11 @@ const PlotTreeNodeItem: React.FC<PlotTreeNodeItemProps> = ({
         </div>
 
         {/* 底栏：折叠开关与子分支推演动作 */}
-        <div className="pt-2.5 border-t border-slate-800/80 flex items-center justify-between gap-1 text-xs">
+        <div className="pt-2.5 border-t flex items-center justify-between gap-1 text-xs" style={{ borderColor: 'var(--border-subtle)' }}>
           <button
             onClick={(e) => onToggleExpand(node.id, e)}
-            className="text-[10px] text-slate-400 hover:text-slate-200 flex items-center gap-0.5 cursor-pointer py-1 px-1.5 rounded hover:bg-slate-800/80"
+            className="text-[10px] flex items-center gap-0.5 cursor-pointer py-1 px-1.5 rounded transition hover:opacity-80"
+            style={{ color: 'var(--text-muted)' }}
           >
             <span>{isExpanded ? '收起详情' : '展开详情'}</span>
             {isExpanded ? (
@@ -393,7 +413,8 @@ const PlotTreeNodeItem: React.FC<PlotTreeNodeItemProps> = ({
           <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={(e) => onAddManualChild(node, e)}
-              className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[10px] font-medium transition flex items-center gap-0.5 cursor-pointer border border-slate-700"
+              className="px-2 py-1 rounded-lg border text-[10px] font-medium transition flex items-center gap-0.5 cursor-pointer hover:opacity-80"
+              style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
               title="手动为此剧情添加一个子分支"
             >
               <Plus className="w-3 h-3" />
@@ -1239,25 +1260,41 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
   const estimatedTargetWords = activePath.length * targetWordsPerAct;
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-950 overflow-hidden select-auto relative">
+    <div
+      className="flex-1 flex flex-col overflow-hidden select-auto relative transition-colors"
+      style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-main)' }}
+    >
       {/* ----------------------------------------------------------------------
           1. 顶部控制与故事主线回溯指示栏
       ---------------------------------------------------------------------- */}
-      <div className="bg-slate-900/90 border-b border-slate-800 px-4 py-2.5 flex flex-col gap-2 shrink-0 backdrop-blur-md z-20 shadow-md">
+      <div
+        className="px-4 py-2.5 flex flex-col gap-2 shrink-0 backdrop-blur-md z-20 shadow-md border-b"
+        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+      >
         <div className="flex items-center justify-between gap-3 flex-wrap">
           {/* 左侧：章节指示与推演拓扑统计 */}
           <div className="flex items-center gap-2.5 flex-wrap min-w-0">
             <div className="flex items-center gap-1.5">
-              <div className="p-1.5 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
+              <div
+                className="p-1.5 rounded-lg border"
+                style={{
+                  backgroundColor: 'var(--accent-surface)',
+                  color: 'var(--accent-primary)',
+                  borderColor: 'var(--border-subtle)',
+                }}
+              >
                 <GitFork className="w-4 h-4" />
               </div>
-              <span className="text-xs font-bold text-slate-100">
+              <span className="text-xs font-bold" style={{ color: 'var(--text-main)' }}>
                 剧情推演树
               </span>
             </div>
 
             {/* 章节切换器 */}
-            <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs">
+            <div
+              className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs border"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+            >
               <Compass className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
               <select
                 value={selectedChapId}
@@ -1265,12 +1302,17 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
                   setSelectedChapId(e.target.value);
                   setActiveChapterId(e.target.value);
                 }}
-                className="bg-transparent text-indigo-200 font-medium focus:outline-none cursor-pointer max-w-[200px] truncate"
+                className="bg-transparent font-medium focus:outline-none cursor-pointer max-w-[200px] truncate"
+                style={{ color: 'var(--accent-primary)' }}
               >
                 {volumes.map((v) => (
                   <optgroup key={v.id} label={`第 ${v.volumeIndex} 卷 · ${v.title}`}>
                     {v.chapters.map((c) => (
-                      <option key={c.id} value={c.id} className="bg-slate-900 text-slate-200">
+                      <option
+                        key={c.id}
+                        value={c.id}
+                        style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-main)' }}
+                      >
                         第 {c.chapterIndex} 章：{c.title}
                       </option>
                     ))}
@@ -1279,14 +1321,26 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
               </select>
             </div>
 
-            <span className="text-[11px] px-2 py-0.5 rounded-md bg-indigo-950/80 text-indigo-300 border border-indigo-800/60 font-medium">
+            <span
+              className="text-[11px] px-2 py-0.5 rounded-md font-medium border"
+              style={{
+                backgroundColor: 'var(--accent-surface)',
+                color: 'var(--accent-primary)',
+                borderColor: 'var(--border-subtle)',
+              }}
+            >
               独立节点：{treeNodes.length} 个
             </span>
 
             {/* 防早现约束提示 */}
             {currentVolume?.boundaryConstraints && (
               <div
-                className="hidden xl:flex items-center gap-1 text-[11px] text-amber-300/90 bg-amber-950/30 border border-amber-800/40 px-2 py-0.5 rounded-md max-w-xs truncate"
+                className="hidden xl:flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md max-w-xs truncate border"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  borderColor: 'var(--border-subtle)',
+                  color: '#f59e0b',
+                }}
                 title={`出场红线约束：${currentVolume.boundaryConstraints}`}
               >
                 <ShieldAlert className="w-3 h-3 text-amber-400 shrink-0" />
@@ -1299,18 +1353,26 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
           {/* 右侧：缩放控制条、重置与全章创作触发 */}
           <div className="flex items-center gap-2 shrink-0">
             {/* 幕布自由缩放工具条 (Zoom Controls: 50% ~ 150%) */}
-            <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-0.5 text-xs text-slate-300">
+            <div
+              className="flex items-center rounded-lg p-0.5 text-xs border"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-muted)',
+              }}
+            >
               <button
                 onClick={handleZoomOut}
                 disabled={zoom <= 0.5}
-                className="p-1 text-slate-400 hover:text-white disabled:opacity-30 rounded hover:bg-slate-850 cursor-pointer"
+                className="p-1 hover:opacity-100 disabled:opacity-30 rounded cursor-pointer"
                 title="缩小画布 (Ctrl + 滚轮向下)"
               >
                 <ZoomOut className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={handleResetZoom}
-                className="px-2 py-0.5 text-[11px] font-mono text-indigo-300 hover:text-indigo-200 cursor-pointer"
+                className="px-2 py-0.5 text-[11px] font-mono hover:underline cursor-pointer"
+                style={{ color: 'var(--accent-primary)' }}
                 title="重置为 100% 缩放"
               >
                 {Math.round(zoom * 100)}%
@@ -1318,7 +1380,7 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
               <button
                 onClick={handleZoomIn}
                 disabled={zoom >= 1.5}
-                className="p-1 text-slate-400 hover:text-white disabled:opacity-30 rounded hover:bg-slate-850 cursor-pointer"
+                className="p-1 hover:opacity-100 disabled:opacity-30 rounded cursor-pointer"
                 title="放大画布 (Ctrl + 滚轮向上)"
               >
                 <ZoomIn className="w-3.5 h-3.5" />
@@ -1330,9 +1392,10 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
               onClick={openSettingsModal}
               className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition flex items-center gap-1.5 cursor-pointer shadow-xs ${
                 isUsingRealAI
-                  ? 'bg-emerald-950/50 hover:bg-emerald-900/50 border-emerald-800/60 text-emerald-300'
-                  : 'bg-amber-950/40 hover:bg-amber-900/50 border-amber-800/50 text-amber-300'
+                  ? 'border-emerald-500/40 text-emerald-400'
+                  : 'border-amber-500/40 text-amber-400'
               }`}
+              style={{ backgroundColor: 'var(--bg-card)' }}
               title={isUsingRealAI ? '已连接真实大模型，点击调整' : '免Key本地启发式模拟，点击可配置API Key'}
             >
               {isUsingRealAI ? (
@@ -1351,17 +1414,21 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
             </button>
 
             {/* 灵感偏向输入框 */}
-            <div className="flex items-center gap-1.5 bg-slate-900/90 border border-slate-700/80 rounded-lg px-2.5 py-1 text-xs shadow-inner">
+            <div
+              className="flex items-center gap-1.5 border rounded-lg px-2.5 py-1 text-xs"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+            >
               <Lightbulb className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               <input
                 type="text"
                 value={globalInspirationHint}
                 onChange={(e) => setGlobalInspirationHint(e.target.value)}
                 placeholder="推演灵感偏向 (选填，如：爆发反杀/第三方介入)"
-                className="bg-transparent border-none text-slate-200 placeholder-slate-500 focus:outline-none text-[11px] w-36 sm:w-52"
+                className="bg-transparent border-none placeholder-slate-500 focus:outline-none text-[11px] w-36 sm:w-52"
+                style={{ color: 'var(--text-main)' }}
               />
               {globalInspirationHint && (
-                <button onClick={() => setGlobalInspirationHint('')} className="text-slate-500 hover:text-slate-300">
+                <button onClick={() => setGlobalInspirationHint('')} className="hover:opacity-75" style={{ color: 'var(--text-muted)' }}>
                   <X className="w-3 h-3" />
                 </button>
               )}
@@ -1370,7 +1437,12 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
             {/* 重置推演树 */}
             <button
               onClick={handleResetTree}
-              className="p-1.5 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800 border border-slate-800 transition cursor-pointer"
+              className="p-1.5 rounded-lg border transition cursor-pointer"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-muted)',
+              }}
               title="重置当前章节推演树"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -1379,7 +1451,8 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
             {/* 核心行动点：采纳主线由 AI 创作全章 */}
             <button
               onClick={handleOpenFullDraftModal}
-              className="px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-lg text-xs font-bold shadow-lg shadow-indigo-600/30 transition flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-1.5 text-white rounded-lg text-xs font-bold shadow-lg transition flex items-center gap-1.5 cursor-pointer"
+              style={{ backgroundColor: 'var(--accent-primary)' }}
               title="基于当前回溯选定故事线，由 AI 连续工笔撰写全章（目标 3000+ 字）"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
@@ -1389,12 +1462,17 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
             {onSwitchToEditor && (
               <button
                 onClick={onSwitchToEditor}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white rounded-lg text-xs font-medium transition flex items-center gap-1 cursor-pointer"
+                className="px-3 py-1.5 border rounded-lg text-xs font-medium transition flex items-center gap-1 cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--text-main)',
+                }}
                 title="前往正文编辑器"
               >
                 <PenTool className="w-3.5 h-3.5 text-indigo-400" />
                 <span className="hidden md:inline">切入正文撰写</span>
-                <ArrowRight className="w-3 h-3" />
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
@@ -1435,7 +1513,10 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
         )}
 
         {/* 故事主线回溯面包屑条 */}
-        <div className="flex items-center justify-between gap-2 bg-slate-950/80 border border-indigo-900/40 rounded-lg px-3 py-1.5 text-xs">
+        <div
+          className="flex items-center justify-between gap-2 border rounded-lg px-3 py-1.5 text-xs"
+          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+        >
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 min-w-0">
             <span className="text-indigo-400 font-bold flex items-center gap-1 shrink-0 text-[11px]">
               <Milestone className="w-3.5 h-3.5 text-amber-400" />
@@ -1452,8 +1533,13 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
                     className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium transition shrink-0 cursor-pointer ${
                       node.id === selectedNodeId
                         ? 'bg-indigo-600 text-white shadow-xs'
-                        : 'bg-slate-900 text-indigo-300 hover:bg-slate-800 border border-slate-800'
+                        : 'border hover:opacity-80'
                     }`}
+                    style={
+                      node.id !== selectedNodeId
+                        ? { backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
+                        : undefined
+                    }
                     title={`第 ${idx + 1} 步梗概：${sanitizeActSummary(node.summary)}`}
                   >
                     <span className="opacity-80 text-[10px]">#{idx + 1}</span>
@@ -1559,7 +1645,8 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
             <div className="flex items-center gap-3">
               <button
                 onClick={handleAddRootAlternative}
-                className="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-indigo-300 hover:text-white border border-indigo-900/60 hover:border-indigo-500/50 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-md"
+                className="px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-md hover:opacity-80"
+                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--accent-primary)' }}
                 title="添加一个新的平行开篇剧情起点"
               >
                 <Plus className="w-3.5 h-3.5 text-indigo-400" />
@@ -1600,49 +1687,51 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
       ---------------------------------------------------------------------- */}
       {isFullDraftModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="border rounded-2xl w-full max-w-2xl p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}>
+            <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
                     <span>AI 工笔起草全章（单章 3000+ 字达标标准）</span>
                   </h3>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
                     基于已选故事线，以【3~4幕因果架构 + 单幕工笔细节】连续起草
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsFullDraftModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 cursor-pointer"
+                className="p-1 rounded-lg hover:opacity-80 transition cursor-pointer"
+                style={{ color: 'var(--text-muted)' }}
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-800/50 space-y-2 text-xs">
+            <div className="p-3.5 rounded-xl border space-y-2 text-xs" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}>
               <div className="flex items-center justify-between">
-                <span className="font-bold text-indigo-300 flex items-center gap-1.5">
+                <span className="font-bold flex items-center gap-1.5" style={{ color: 'var(--accent-primary)' }}>
                   <Target className="w-4 h-4 text-amber-400" />
                   <span>单章 3000+ 字核心控制策略：</span>
                 </span>
-                <span className="text-[11px] text-indigo-400 font-mono">
+                <span className="text-[11px] font-mono" style={{ color: 'var(--accent-primary)' }}>
                   当前主线共 {activePath.length} 幕
                 </span>
               </div>
-              <p className="text-slate-300 leading-relaxed text-[11px]">
+              <p className="leading-relaxed text-[11px]" style={{ color: 'var(--text-muted)' }}>
                 网络小说单章 3000+ 字不靠盲目堆叠幕数（会导致节奏碎裂成流水账），而是通过<strong>【3~4 幕因果架构】</strong>结合<strong>【单幕工笔级慢镜头细致拆解】</strong>（环境五感煞气、招式攻防慢放拆解、多轮心理博弈）。
               </p>
               <div className="flex items-center gap-3 pt-1 text-[11px]">
-                <span className="text-slate-400">单幕工笔目标：</span>
+                <span style={{ color: 'var(--text-muted)' }}>单幕工笔目标：</span>
                 <select
                   value={targetWordsPerAct}
                   onChange={(e) => setTargetWordsPerAct(Number(e.target.value))}
                   disabled={isGeneratingFullChapter}
-                  className="bg-slate-900 border border-slate-700 text-indigo-300 rounded px-2 py-0.5 font-medium cursor-pointer"
+                  className="border rounded px-2 py-0.5 font-medium cursor-pointer"
+                  style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 >
                   <option value={900}>900 字 / 幕 (全章预计 ~{activePath.length * 900} 字)</option>
                   <option value={1050}>1050 字 / 幕 (全章预计 ~{activePath.length * 1050} 字 · 推荐)</option>
@@ -1659,21 +1748,30 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
                 {activePath.map((node, idx) => (
                   <div
                     key={node.id}
-                    className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-start justify-between gap-3 text-xs"
+                    className="p-2.5 rounded-xl border flex items-start justify-between gap-3 text-xs"
+                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
                   >
                     <div className="space-y-0.5 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="px-1.5 py-0.2 rounded bg-indigo-950 text-indigo-300 font-bold text-[10px]">
+                        <span
+                          className="px-1.5 py-0.2 rounded font-bold text-[10px]"
+                          style={{
+                            backgroundColor: 'var(--accent-surface)',
+                            color: 'var(--accent-primary)',
+                          }}
+                        >
                           第 {idx + 1} 幕
                         </span>
-                        <span className="font-semibold text-slate-200 truncate">{sanitizeActTitle(node.title)}</span>
+                        <span className="font-semibold truncate" style={{ color: 'var(--text-main)' }}>
+                          {sanitizeActTitle(node.title)}
+                        </span>
                       </div>
-                      <p className="text-[11px] text-slate-400 line-clamp-1">
+                      <p className="text-[11px] line-clamp-1" style={{ color: 'var(--text-muted)' }}>
                         {sanitizeActSummary(node.summary)}
                       </p>
                     </div>
 
-                    <span className="text-[10px] text-slate-500 shrink-0 font-mono pt-1">
+                    <span className="text-[10px] shrink-0 font-mono pt-1" style={{ color: 'var(--text-muted)' }}>
                       目标 ~{targetWordsPerAct} 字
                     </span>
                   </div>
@@ -1682,21 +1780,28 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
             </div>
 
             {isGeneratingFullChapter && (
-              <div className="p-4 rounded-xl bg-slate-950 border border-indigo-900/50 space-y-3">
+              <div
+                className="p-4 rounded-xl border space-y-3"
+                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+              >
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-indigo-300 font-semibold flex items-center gap-1.5">
+                  <span className="font-semibold flex items-center gap-1.5" style={{ color: 'var(--accent-primary)' }}>
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
                     <span>{generationProgressText}</span>
                   </span>
-                  <span className="text-slate-400 font-mono">
+                  <span className="font-mono" style={{ color: 'var(--text-muted)' }}>
                     {completedActsCount} / {activePath.length} 幕
                   </span>
                 </div>
-                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className="w-full h-2 rounded-full overflow-hidden"
+                  style={{ backgroundColor: 'var(--bg-surface)' }}
+                >
                   <div
-                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-300"
+                    className="h-full transition-all duration-300"
                     style={{
                       width: `${Math.max(10, (completedActsCount / activePath.length) * 100)}%`,
+                      backgroundColor: 'var(--accent-primary)',
                     }}
                   />
                 </div>
@@ -1704,11 +1809,17 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
             )}
 
             {generatedChapterResult && (
-              <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-800/60 space-y-3 animate-in fade-in duration-200">
+              <div
+                className="p-4 rounded-xl border space-y-3 animate-in fade-in duration-200"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  borderColor: 'rgba(16, 185, 129, 0.4)',
+                }}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-bold text-emerald-300">
+                    <span className="text-xs font-bold text-emerald-400">
                       全章工笔起草大获成功！
                     </span>
                   </div>
@@ -1717,7 +1828,14 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
                   </span>
                 </div>
 
-                <div className="max-h-40 overflow-y-auto p-3 bg-slate-950 rounded-lg border border-slate-800/80 text-xs text-slate-300 leading-relaxed font-serif whitespace-pre-wrap">
+                <div
+                  className="max-h-40 overflow-y-auto p-3 rounded-lg border text-xs leading-relaxed font-serif whitespace-pre-wrap"
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
+                >
                   {generatedChapterResult.fullText.slice(0, 500)}...
                 </div>
               </div>
@@ -1766,8 +1884,8 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
       ---------------------------------------------------------------------- */}
       {editingNode && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="border rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}>
+            <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-400">
                   <Edit3 className="w-4 h-4" />
@@ -1783,7 +1901,8 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
               </div>
               <button
                 onClick={() => setEditingNode(null)}
-                className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 cursor-pointer"
+                className="p-1 rounded-lg hover:opacity-80 transition cursor-pointer"
+                style={{ color: 'var(--text-muted)' }}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1792,10 +1911,10 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
             <form onSubmit={handleSaveNodeEdit} className="space-y-3.5 text-xs">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-slate-300 font-bold">
+                  <label className="block font-bold" style={{ color: 'var(--text-main)' }}>
                     走向标题 (Title · 纯动作命名，无需写第几幕)
                   </label>
-                  <span className="text-[10px] text-slate-500">
+                  <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
                     例：伏线入局、绝境硬撼、暗度陈仓
                   </span>
                 </div>
@@ -1805,13 +1924,18 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
                   onChange={(e) => setEditTitle(e.target.value)}
                   placeholder="例如：绝死反扑、引爆地火、移形换影"
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500"
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-slate-200 font-bold flex items-center gap-1">
+                  <label className="block font-bold flex items-center gap-1" style={{ color: 'var(--text-main)' }}>
                     <Target className="w-3.5 h-3.5 text-indigo-400" />
                     <span>剧情走向核心梗概 (Summary · 纯故事叙述，无需前缀)</span>
                   </label>
@@ -1819,7 +1943,8 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
                     type="button"
                     onClick={handleAiRefineNodeBeats}
                     disabled={isAiRefiningBeats}
-                    className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 hover:underline disabled:opacity-50 cursor-pointer"
+                    className="text-[11px] flex items-center gap-1 hover:underline disabled:opacity-50 cursor-pointer"
+                    style={{ color: 'var(--accent-primary)' }}
                   >
                     {isAiRefiningBeats ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
@@ -1835,7 +1960,12 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
                   rows={3}
                   placeholder="直接描述主角在本幕的核心动作与事件推进（如：林越压制肩伤，借溶洞阴煞引爆残破古禁制设伏）..."
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 resize-none leading-relaxed"
+                  className="w-full border rounded-lg p-2.5 focus:outline-none resize-none leading-relaxed"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
                 />
               </div>
 
@@ -1848,7 +1978,12 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
                   onChange={(e) => setEditConflict(e.target.value)}
                   rows={2}
                   placeholder="阻碍主角顺利达成目标的敌对力量、环境或内在魔障..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 resize-none"
+                  className="w-full border rounded-lg p-2.5 focus:outline-none resize-none"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
                 />
               </div>
 
@@ -1861,7 +1996,12 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
                   onChange={(e) => setEditTurnPoint(e.target.value)}
                   rows={2}
                   placeholder="打破预期、让局势突然反转或异化的意外变数..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 resize-none"
+                  className="w-full border rounded-lg p-2.5 focus:outline-none resize-none"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
                 />
               </div>
 
@@ -1874,25 +2014,38 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
                   onChange={(e) => setEditOutcome(e.target.value)}
                   rows={2}
                   placeholder="本幕尘埃落定后的实质改变，将直接演变为下一幕的因果危机..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 resize-none"
+                  className="w-full border rounded-lg p-2.5 focus:outline-none resize-none"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-medium mb-1">发生地点</label>
+                  <label className="block font-medium mb-1" style={{ color: 'var(--text-muted)' }}>发生地点</label>
                   <input
                     type="text"
                     value={editLocation}
                     onChange={(e) => setEditLocation(e.target.value)}
                     placeholder="例如：坠星崖底古溶洞"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--bg-card)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-main)',
+                    }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-medium mb-1">在场登场角色</label>
-                  <div className="flex flex-wrap gap-1 p-1 bg-slate-950 border border-slate-800 rounded-lg max-h-20 overflow-y-auto">
+                  <label className="block font-medium mb-1" style={{ color: 'var(--text-muted)' }}>在场登场角色</label>
+                  <div
+                    className="flex flex-wrap gap-1 p-1 border rounded-lg max-h-20 overflow-y-auto"
+                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                  >
                     {characters.map((char) => {
                       const isChecked = editCharIds.includes(char.id);
                       return (
@@ -1906,9 +2059,13 @@ export const PlotCanvasView: React.FC<PlotCanvasViewProps> = ({
                           }}
                           className={`px-2 py-0.5 rounded text-[11px] font-medium transition cursor-pointer ${
                             isChecked
-                              ? 'bg-indigo-600 text-white'
-                              : 'bg-slate-900 text-slate-400 hover:text-slate-200'
+                              ? 'text-white'
+                              : 'hover:opacity-80'
                           }`}
+                          style={{
+                            backgroundColor: isChecked ? 'var(--accent-primary)' : 'var(--bg-surface)',
+                            color: isChecked ? '#ffffff' : 'var(--text-muted)',
+                          }}
                         >
                           {char.name}
                         </button>

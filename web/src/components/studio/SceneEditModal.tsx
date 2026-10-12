@@ -103,19 +103,22 @@ export const SceneEditModal: React.FC<SceneEditModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+      <div
+        className="w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border"
+        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+      >
         {/* 头部 */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/70">
+        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
           <div className="flex items-center gap-2.5">
             <Target className="w-5 h-5 text-indigo-400" />
             <div>
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+              <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
                 <span>编辑分镜节拍卡</span>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-950 border border-indigo-700/50 text-indigo-300">
                   第 {scene.sceneIndex} 幕
                 </span>
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 所属章节：第 {chapter?.chapterIndex || 1} 章 {chapter?.title}
               </p>
             </div>
@@ -127,7 +130,7 @@ export const SceneEditModal: React.FC<SceneEditModalProps> = ({
                 type="button"
                 onClick={handleAiSuggest}
                 disabled={isAiGenerating}
-                className="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-200 text-xs font-medium flex items-center gap-1.5 transition disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-200 text-xs font-medium flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
                 title="根据前文大纲与因果关系让AI自动推演节拍"
               >
                 {isAiGenerating ? (
@@ -141,7 +144,8 @@ export const SceneEditModal: React.FC<SceneEditModalProps> = ({
 
             <button
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+              className="p-1.5 rounded-lg transition hover:opacity-80 cursor-pointer"
+              style={{ color: 'var(--text-muted)' }}
             >
               <X className="w-5 h-5" />
             </button>
@@ -153,7 +157,7 @@ export const SceneEditModal: React.FC<SceneEditModalProps> = ({
           {/* 1. 场景目标 (Goal) */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="font-semibold text-slate-200 flex items-center gap-1.5">
+              <label className="font-semibold flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
                 <Target className="w-3.5 h-3.5 text-indigo-400" />
                 <span>场景目标 (Scene Goal)</span>
                 <FieldExplainer
@@ -164,21 +168,22 @@ export const SceneEditModal: React.FC<SceneEditModalProps> = ({
                   position="right"
                 />
               </label>
-              <span className="text-[10px] text-slate-500">主角这幕想干成什么？</span>
+              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>主角这幕想干成什么？</span>
             </div>
             <input
               type="text"
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
               placeholder="例如：林越压制肩伤，借溶洞阴煞伪装，设下地煞阴火埋伏..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+              className="w-full rounded-lg px-3 py-2 border focus:outline-none focus:border-indigo-500"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
             />
           </div>
 
           {/* 2. 阻碍与冲突 (Conflict) */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="font-semibold text-slate-200 flex items-center gap-1.5">
+              <label className="font-semibold flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
                 <Flame className="w-3.5 h-3.5 text-red-400" />
                 <span>阻碍与冲突 (Conflict)</span>
                 <FieldExplainer
@@ -189,21 +194,22 @@ export const SceneEditModal: React.FC<SceneEditModalProps> = ({
                   position="right"
                 />
               </label>
-              <span className="text-[10px] text-slate-500">什么在阻挠主角达成目标？</span>
+              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>什么在阻挠主角达成目标？</span>
             </div>
             <textarea
               rows={2}
               value={conflict}
               onChange={(e) => setConflict(e.target.value)}
               placeholder="例如：真元溃散，夜枭的猎杀神识顺着血迹迫近，溶洞唯一出口被封死..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 resize-none leading-relaxed"
+              className="w-full rounded-lg px-3 py-2 border focus:outline-none focus:border-indigo-500 resize-none leading-relaxed"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
             />
           </div>
 
           {/* 3. 核心转折点 (Turn Point) */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="font-semibold text-slate-200 flex items-center gap-1.5">
+              <label className="font-semibold flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
                 <Shuffle className="w-3.5 h-3.5 text-amber-400" />
                 <span>核心转折点 (Turn Point)</span>
                 <FieldExplainer
@@ -214,21 +220,22 @@ export const SceneEditModal: React.FC<SceneEditModalProps> = ({
                   position="right"
                 />
               </label>
-              <span className="text-[10px] text-slate-500">发生了什么让局面突变？</span>
+              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>发生了什么让局面突变？</span>
             </div>
             <textarea
               rows={2}
               value={turnPoint}
               onChange={(e) => setTurnPoint(e.target.value)}
               placeholder="例如：青铜残片与溶洞古纹路产生强烈共鸣，竟意外激发了上古残阵的死穴生门..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 resize-none leading-relaxed"
+              className="w-full rounded-lg px-3 py-2 border focus:outline-none focus:border-indigo-500 resize-none leading-relaxed"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
             />
           </div>
 
           {/* 4. 场景结果与后果 (Outcome) */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="font-semibold text-slate-200 flex items-center gap-1.5">
+              <label className="font-semibold flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
                 <Flag className="w-3.5 h-3.5 text-emerald-400" />
                 <span>场景结果与后果 (Outcome)</span>
                 <FieldExplainer
@@ -239,21 +246,22 @@ export const SceneEditModal: React.FC<SceneEditModalProps> = ({
                   position="right"
                 />
               </label>
-              <span className="text-[10px] text-slate-500">本幕结束时的实质结果（将成为下一幕的因）</span>
+              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>本幕结束时的实质结果（将成为下一幕的因）</span>
             </div>
             <textarea
               rows={2}
               value={outcome}
               onChange={(e) => setOutcome(e.target.value)}
               placeholder="例如：成功诱杀魔宗护法，逼迫夜枭动用金丹法相，但溶洞退路被震塌..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 resize-none leading-relaxed"
+              className="w-full rounded-lg px-3 py-2 border focus:outline-none focus:border-indigo-500 resize-none leading-relaxed"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
             />
           </div>
 
           {/* 5. 地点与在场角色 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
             <div className="space-y-1.5">
-              <label className="font-semibold text-slate-200 flex items-center gap-1.5">
+              <label className="font-semibold flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
                 <MapPin className="w-3.5 h-3.5 text-indigo-400" />
                 <span>发生地点 (Location)</span>
               </label>
@@ -262,12 +270,13 @@ export const SceneEditModal: React.FC<SceneEditModalProps> = ({
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="例如：坠星崖古溶洞入口裂谷"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                className="w-full rounded-lg px-3 py-2 border focus:outline-none focus:border-indigo-500"
+                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="font-semibold text-slate-200 flex items-center gap-1.5">
+              <label className="font-semibold flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
                 <User className="w-3.5 h-3.5 text-indigo-400" />
                 <span>在场登场角色</span>
                 <FieldExplainer
@@ -278,9 +287,12 @@ export const SceneEditModal: React.FC<SceneEditModalProps> = ({
                   position="left"
                 />
               </label>
-              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1.5 bg-slate-950 border border-slate-800 rounded-lg">
+              <div
+                className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1.5 border rounded-lg"
+                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+              >
                 {characters.length === 0 ? (
-                  <span className="text-[11px] text-slate-500 py-1">暂无角色，可在角色中心创建</span>
+                  <span className="text-[11px] py-1" style={{ color: 'var(--text-muted)' }}>暂无角色，可在角色中心创建</span>
                 ) : (
                   characters.map((c) => {
                     const checked = involvedIds.includes(c.id);
@@ -289,11 +301,16 @@ export const SceneEditModal: React.FC<SceneEditModalProps> = ({
                         type="button"
                         key={c.id}
                         onClick={() => handleToggleChar(c.id)}
-                        className={`px-2 py-1 rounded text-[11px] font-medium border transition ${
+                        className={`px-2 py-1 rounded text-[11px] font-medium border transition cursor-pointer ${
                           checked
                             ? 'bg-indigo-950/80 border-indigo-500 text-indigo-200'
-                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                            : 'border-transparent hover:opacity-80'
                         }`}
+                        style={
+                          !checked
+                            ? { backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
+                            : undefined
+                        }
                       >
                         {c.name}
                       </button>
@@ -305,17 +322,18 @@ export const SceneEditModal: React.FC<SceneEditModalProps> = ({
           </div>
 
           {/* 底部按钮栏 */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-400 hover:text-slate-200 font-medium rounded-lg hover:bg-slate-800 transition"
+              className="px-4 py-2 font-medium rounded-lg transition cursor-pointer hover:opacity-80"
+              style={{ color: 'var(--text-muted)' }}
             >
               取消
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg shadow-md transition flex items-center gap-1.5"
+              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg shadow-md transition flex items-center gap-1.5 cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>保存分镜卡</span>

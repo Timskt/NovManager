@@ -210,226 +210,283 @@ export const ManuscriptEditor: React.FC<ManuscriptEditorProps> = ({
           </div>
         )}
 
-        {/* 顶部场景分栏与信息条 */}
+        {/* 顶部极简创作导航条 (Consolidated Studio Navigation Bar) */}
         <div
-          className="flex items-center justify-between border-b pb-3 gap-2"
+          className="flex flex-wrap items-center justify-between pb-2.5 border-b gap-2.5"
           style={{ borderColor: 'var(--border-subtle)' }}
         >
-          {/* 左侧：分镜标签栏 */}
-          <div className="flex items-center gap-1.5 overflow-x-auto">
-            {activeChapter?.scenes?.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setActiveSceneIndex(s.sceneIndex)}
-                title={`第 ${s.sceneIndex} 幕${s.sceneGoal ? ` · 目标：${s.sceneGoal}` : ''} (${s.draftContent?.length || 0}字)`}
-                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 flex-shrink-0 font-literary-sans ${
-                  s.sceneIndex === activeSceneIndex
-                    ? 'border shadow-xs'
-                    : 'hover:opacity-80'
-                }`}
-                style={
-                  s.sceneIndex === activeSceneIndex
-                    ? {
-                        backgroundColor: 'var(--bg-card)',
-                        color: 'var(--accent-primary)',
-                        borderColor: 'var(--accent-primary)',
-                      }
-                    : { color: 'var(--text-muted)' }
-                }
+          {/* 左侧：当前章节标题与幕选呼应 */}
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span
+                className="text-[11px] px-2 py-0.5 rounded font-mono font-medium shrink-0"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  color: 'var(--accent-primary)',
+                  border: '1px solid var(--border-subtle)',
+                }}
               >
-                <span>第 {s.sceneIndex} 幕</span>
-                {s.draftContent ? (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                ) : (
-                  <span className="w-1.5 h-1.5 rounded-full opacity-30 bg-current" />
-                )}
-              </button>
-            ))}
+                第 {activeChapter?.chapterIndex} 章
+              </span>
+              <h2
+                className="text-sm sm:text-base font-bold font-literary-serif truncate max-w-[160px] sm:max-w-xs"
+                title={activeChapter?.title}
+              >
+                {activeChapter?.title || '未命名章节'}
+              </h2>
+            </div>
 
-            <div className="flex items-center gap-1">
+            {/* 分镜节拍 Pills */}
+            <div
+              className="flex items-center gap-1 overflow-x-auto pl-2 border-l"
+              style={{ borderColor: 'var(--border-subtle)' }}
+            >
+              {activeChapter?.scenes?.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setActiveSceneIndex(s.sceneIndex)}
+                  title={`第 ${s.sceneIndex} 幕${s.sceneGoal ? ` · 目标：${s.sceneGoal}` : ''} (${s.draftContent?.length || 0}字)`}
+                  className={`px-2 py-1 rounded-md text-xs font-medium transition flex items-center gap-1.5 flex-shrink-0 ${
+                    s.sceneIndex === activeSceneIndex
+                      ? 'shadow-xs font-semibold'
+                      : 'hover:opacity-80'
+                  }`}
+                  style={
+                    s.sceneIndex === activeSceneIndex
+                      ? {
+                          backgroundColor: 'var(--bg-card)',
+                          color: 'var(--accent-primary)',
+                          border: '1px solid var(--accent-primary)',
+                        }
+                      : {
+                          backgroundColor: 'transparent',
+                          color: 'var(--text-muted)',
+                          border: '1px solid transparent',
+                        }
+                  }
+                >
+                  <span>第 {s.sceneIndex} 幕</span>
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      s.draftContent ? 'bg-emerald-500' : 'opacity-25 bg-current'
+                    }`}
+                  />
+                </button>
+              ))}
+
               <button
                 onClick={handleAddScene}
-                className="p-1.5 rounded-lg border border-dashed hover:opacity-80 transition flex-shrink-0"
+                className="p-1 rounded-md border border-dashed hover:opacity-80 transition flex-shrink-0"
                 style={{ borderColor: 'var(--border-strong)', color: 'var(--text-muted)' }}
-                title="新增场景节拍"
+                title="新增本章分镜幕"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-3 h-3" />
               </button>
-
-              <button
-                onClick={() => setShowFullChapterModal(true)}
-                className="ml-1 px-2.5 py-1 rounded-lg text-xs font-medium border flex items-center gap-1.5 flex-shrink-0 shadow-xs hover:opacity-85 font-literary-sans"
-                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
-                title="连续通读本章所有幕的完整正文"
-              >
-                <BookOpen className="w-3.5 h-3.5 text-amber-500" />
-                <span>整章通读</span>
-              </button>
-
-              {onSwitchToCanvas && (
-                <button
-                  onClick={onSwitchToCanvas}
-                  className="px-2.5 py-1 rounded-lg text-xs font-medium border flex items-center gap-1.5 flex-shrink-0 shadow-xs hover:opacity-85 font-literary-sans"
-                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
-                  title="切换至剧情推演幕布"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  <span>推演幕布</span>
-                </button>
-              )}
             </div>
           </div>
 
-          {/* 右侧：字数、禅定专注与全屏 */}
-          <div className="flex items-center gap-2 sm:gap-3 text-xs font-literary-sans flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
-            <span className="flex items-center gap-1">
+          {/* 右侧：统计、视图切换与原子保存 */}
+          <div className="flex items-center gap-2 sm:gap-2.5 text-xs flex-shrink-0">
+            <span
+              className="hidden sm:flex items-center gap-1 font-mono text-[11px]"
+              style={{ color: 'var(--text-muted)' }}
+            >
               <FileText className="w-3.5 h-3.5" />
-              <span className="font-mono">{wordCount}</span>
-              <span>字</span>
-            </span>
-            <span className="hidden sm:flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" />
+              <span>{wordCount} 字</span>
+              <span className="opacity-40">·</span>
               <span>约 {readingTimeMin} 分钟</span>
             </span>
 
-            {/* 禅定模式唤起 */}
+            <button
+              onClick={() => setShowFullChapterModal(true)}
+              className="px-2 py-1 rounded-md border flex items-center gap-1 hover:opacity-85 transition text-xs"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-muted)',
+              }}
+              title="连续通读本章所有幕的完整正文"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">整章通读</span>
+            </button>
+
+            {onSwitchToCanvas && (
+              <button
+                onClick={onSwitchToCanvas}
+                className="px-2 py-1 rounded-md border flex items-center gap-1 hover:opacity-85 transition text-xs"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--text-muted)',
+                }}
+                title="切换至推演幕布"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span className="hidden md:inline">幕布</span>
+              </button>
+            )}
+
             <button
               onClick={() => setIsZenFocusOpen(true)}
-              className="px-2 py-1 rounded-lg border text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1 hover:opacity-80 transition"
-              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+              className="px-2 py-1 rounded-md border flex items-center gap-1 hover:opacity-85 transition text-xs"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-muted)',
+              }}
               title="进入作家禅定沉浸专注模式"
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">禅定专注</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span className="hidden sm:inline">禅定</span>
             </button>
 
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
-              className="p-1.5 rounded-lg border hover:opacity-80 transition"
-              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+              className="p-1.5 rounded-md border hover:opacity-80 transition"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-muted)',
+              }}
               title={isFullscreen ? '退出全屏' : '全屏写作'}
             >
-              {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+              {isFullscreen ? (
+                <Minimize2 className="w-3.5 h-3.5" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5" />
+              )}
             </button>
-          </div>
-        </div>
 
-        {/* 章节标题与本幕概要提示 */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg sm:text-xl font-bold font-literary-serif">
-              第 {activeChapter?.chapterIndex} 章：{activeChapter?.title}
-              <span className="text-xs sm:text-sm font-normal ml-2 sm:ml-3" style={{ color: 'var(--accent-primary)' }}>
-                [第 {activeSceneIndex} 幕]
-              </span>
-            </h2>
-
-            {/* 快捷保存 */}
-            <div className="flex items-center gap-2">
+            {/* 快捷保存按钮 */}
+            <div className="flex items-center gap-1.5">
               {saveToast && (
-                <span className="text-xs text-emerald-600 flex items-center gap-1 animate-in fade-in">
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">已原子落盘并存入快照</span>
+                <span className="text-[11px] text-emerald-500 flex items-center gap-1 animate-in fade-in">
+                  <CheckCircle className="w-3 h-3" />
+                  <span className="hidden lg:inline">已保存</span>
                 </span>
               )}
               <button
                 onClick={handleManualSave}
-                className="px-3 py-1.5 text-xs text-white rounded-lg flex items-center gap-1.5 font-bold transition hover:opacity-90"
+                className="px-3 py-1 text-xs text-white rounded-md flex items-center gap-1.5 font-medium transition hover:opacity-90 shadow-xs"
                 style={{ backgroundColor: 'var(--accent-primary)' }}
+                title="Ctrl+S 快速落盘"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>保存</span>
               </button>
             </div>
           </div>
-
-          <p className="text-xs line-clamp-2 font-literary-sans" style={{ color: 'var(--text-muted)' }}>
-            <span className="font-semibold">本幕目标：</span>
-            {activeScene?.sceneGoal || '暂未定义场景目标'}
-          </p>
         </div>
 
-        {/* 深度专业文学创作工具条 (Artisan Literary Action Bar) */}
+        {/* 场景目标与文风助手条 (Slim Goal & Literary Assistant Ribbon) */}
         <div
-          className="flex flex-wrap items-center justify-between p-2.5 rounded-xl border text-xs gap-2"
+          className="flex flex-wrap items-center justify-between px-3 py-1.5 rounded-xl border text-xs gap-2"
           style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
         >
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            <span className="font-bold flex items-center gap-1 text-[11px]" style={{ color: 'var(--text-muted)' }}>
-              <Wand2 className="w-3 h-3 text-amber-500" />
-              <span>智能参谋：</span>
+          {/* 左侧：本幕戏剧目标 */}
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <span
+              className="text-[11px] font-semibold shrink-0"
+              style={{ color: 'var(--text-faint)' }}
+            >
+              幕目标:
             </span>
+            <span
+              className="truncate text-xs font-literary-sans"
+              style={{ color: 'var(--text-muted)' }}
+              title={activeScene?.sceneGoal}
+            >
+              {activeScene?.sceneGoal || '承接上文推进情节'}
+            </span>
+          </div>
 
-            {/* 执笔起草 */}
+          {/* 右侧：精雅沉稳的创作工具集 */}
+          <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
             <button
               onClick={runDrafterWriteScene}
               disabled={isAgentRunning}
-              className="px-2.5 py-1 rounded-md border font-medium flex items-center gap-1 hover:opacity-85 transition disabled:opacity-50"
-              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-strong)', color: 'var(--accent-primary)' }}
+              className="px-2 py-0.5 rounded border text-[11px] font-medium flex items-center gap-1 hover:opacity-85 transition disabled:opacity-50"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--accent-primary)',
+              }}
               title="根据当前幕目标与角色状态机起草正文"
             >
-              <span>✍️ 执笔起草</span>
+              <span>✍️ 起草</span>
             </button>
 
-            {/* 文风润色 */}
             <button
               onClick={() => runStylistPolish()}
               disabled={isAgentRunning}
-              className="px-2.5 py-1 rounded-md border font-medium flex items-center gap-1 hover:opacity-85 transition disabled:opacity-50"
-              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-strong)' }}
+              className="px-2 py-0.5 rounded border text-[11px] font-medium flex items-center gap-1 hover:opacity-85 transition disabled:opacity-50"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-main)',
+              }}
               title="根据名家文风准则打磨工笔与动作细节"
             >
-              <span>🎨 文风润色</span>
+              <span>🎨 润色</span>
             </button>
 
-            {/* 战力与设定防崩盘稽查 */}
             <button
               onClick={() => setIsConsistencyGuardOpen(true)}
-              className="px-2.5 py-1 rounded-md border font-medium flex items-center gap-1 hover:opacity-85 transition text-amber-600 dark:text-amber-400"
-              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-strong)' }}
+              className="px-2 py-0.5 rounded border text-[11px] font-medium flex items-center gap-1 hover:opacity-85 transition"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-main)',
+              }}
               title="检查战力崩坏与吃设定漏洞，支持一键自愈修复"
             >
-              <ShieldAlert className="w-3.5 h-3.5" />
+              <ShieldAlert className="w-3 h-3 text-amber-500" />
               <span>战力自愈</span>
             </button>
 
-            {/* 角色对白诊所 */}
             <button
               onClick={() => setIsDialogueDoctorOpen(true)}
-              className="px-2.5 py-1 rounded-md border font-medium flex items-center gap-1 hover:opacity-85 transition text-indigo-600 dark:text-indigo-400"
-              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-strong)' }}
+              className="px-2 py-0.5 rounded border text-[11px] font-medium flex items-center gap-1 hover:opacity-85 transition"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-main)',
+              }}
               title="深度调优对白潜台词与角色身体动作"
             >
-              <MessageSquare className="w-3.5 h-3.5" />
+              <MessageSquare className="w-3 h-3 text-indigo-400" />
               <span>对白诊所</span>
             </button>
 
-            {/* 高燃打斗动作分镜 */}
             <button
               onClick={() => setIsActionDirectorOpen(true)}
-              className="px-2.5 py-1 rounded-md border font-medium flex items-center gap-1 hover:opacity-85 transition text-rose-600 dark:text-rose-400"
-              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-strong)' }}
+              className="px-2 py-0.5 rounded border text-[11px] font-medium flex items-center gap-1 hover:opacity-85 transition"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-main)',
+              }}
               title="电影级高燃战斗与法宝搏杀动作分镜"
             >
-              <Swords className="w-3.5 h-3.5" />
+              <Swords className="w-3 h-3 text-rose-400" />
               <span>打斗分镜</span>
             </button>
 
-            {/* 技法资产库 */}
             <button
               onClick={() => setIsTechniqueModalOpen(true)}
-              className="px-2.5 py-1 rounded-md border flex items-center gap-1 hover:opacity-85 transition"
-              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+              className="px-2 py-0.5 rounded border text-[11px] font-medium flex items-center gap-1 hover:opacity-85 transition"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-muted)',
+              }}
               title="文学润色技巧资产库"
             >
-              <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+              <BookOpen className="w-3 h-3 text-amber-500" />
               <span>技巧库 ({savedPolishTechniques.length})</span>
             </button>
           </div>
-
-          <span className="text-[11px] opacity-60 hidden md:inline font-literary-sans">
-            按 Ctrl+S 快速落盘 · WAL 日志容灾实时就绪
-          </span>
         </div>
 
         {/* 差异审阅区：支持句段级微观比对与打勾合入 */}

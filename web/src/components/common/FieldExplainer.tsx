@@ -180,6 +180,9 @@ export const FieldExplainer: React.FC<FieldExplainerProps> = ({
               left: `${coords.left}px`,
               zIndex: 99999,
               maxWidth: 'min(360px, calc(100vw - 24px))',
+              backgroundColor: 'var(--bg-surface)',
+              borderColor: 'var(--border-subtle)',
+              color: 'var(--text-main)',
             }}
             onMouseEnter={() => {
               if (closeTimerRef.current) {
@@ -188,10 +191,10 @@ export const FieldExplainer: React.FC<FieldExplainerProps> = ({
               }
             }}
             onMouseLeave={handleMouseLeave}
-            className="p-3.5 bg-slate-900/98 backdrop-blur-md border border-indigo-500/40 rounded-xl shadow-2xl text-xs space-y-2.5 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto"
+            className="p-3.5 backdrop-blur-md border rounded-xl shadow-2xl text-xs space-y-2.5 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto"
           >
             {/* 头部标题与关闭 */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-1.5 text-indigo-300 font-semibold">
+            <div className="flex items-center justify-between border-b pb-1.5 text-indigo-400 font-semibold" style={{ borderColor: 'var(--border-subtle)' }}>
               <span className="flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 <span>{title}</span>
@@ -199,7 +202,8 @@ export const FieldExplainer: React.FC<FieldExplainerProps> = ({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-slate-500 hover:text-slate-300 p-0.5 rounded transition"
+                className="p-0.5 rounded transition hover:opacity-80 cursor-pointer"
+                style={{ color: 'var(--text-muted)' }}
                 title="关闭"
               >
                 <X className="w-3.5 h-3.5" />
@@ -212,7 +216,7 @@ export const FieldExplainer: React.FC<FieldExplainerProps> = ({
                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block" />
                 做什么 (What)
               </span>
-              <p className="text-slate-200 text-[11px] leading-relaxed pl-2.5">
+              <p className="text-[11px] leading-relaxed pl-2.5" style={{ color: 'var(--text-main)' }}>
                 {what}
               </p>
             </div>
@@ -223,18 +227,21 @@ export const FieldExplainer: React.FC<FieldExplainerProps> = ({
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
                 为什么 (Why)
               </span>
-              <p className="text-slate-200 text-[11px] leading-relaxed pl-2.5">
+              <p className="text-[11px] leading-relaxed pl-2.5" style={{ color: 'var(--text-main)' }}>
                 {why}
               </p>
             </div>
 
             {/* 范例 (Example) */}
             {example && (
-              <div className="bg-slate-950/80 border border-slate-800/90 rounded-lg p-2 space-y-0.5 mt-1">
+              <div
+                className="border rounded-lg p-2 space-y-0.5 mt-1"
+                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+              >
                 <span className="text-[10px] text-emerald-400 font-medium block">
                   💡 参考范例：
                 </span>
-                <p className="text-[11px] text-slate-300 italic leading-relaxed">
+                <p className="text-[11px] italic leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                   "{example}"
                 </p>
               </div>

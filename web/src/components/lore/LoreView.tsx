@@ -76,23 +76,30 @@ export const LoreView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 bg-slate-950 p-6 overflow-y-auto">
+    <div
+      className="flex-1 p-6 overflow-y-auto transition-colors"
+      style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-main)' }}
+    >
       <div className="max-w-5xl mx-auto space-y-6">
         {/* 顶部标题与操作栏 */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div
+          className="flex items-center justify-between pb-4 border-b"
+          style={{ borderColor: 'var(--border-subtle)' }}
+        >
           <div>
-            <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+            <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
               <Sparkles className="w-5 h-5 text-indigo-400" />
               <span>世界观与战力法则库 (Lore & Hard Constraints)</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
               定义不可动摇的世界观底层铁律与战力境界，Agent 在起草与稽查时将强制作为硬约束执行。
             </p>
           </div>
 
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/30 transition flex items-center gap-1.5"
+            className="px-3.5 py-2 text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center gap-1.5"
+            style={{ backgroundColor: 'var(--accent-primary)' }}
           >
             <Plus className="w-4 h-4" />
             <span>新建法则设定</span>
@@ -101,7 +108,10 @@ export const LoreView: React.FC = () => {
 
         {/* 筛选与搜索 */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs overflow-x-auto">
+          <div
+            className="flex items-center gap-1.5 p-1 rounded-xl border text-xs overflow-x-auto"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+          >
             {[
               { id: 'ALL', label: '全部设定' },
               { id: 'POWER_SYSTEM', label: '战力体系' },
@@ -114,10 +124,12 @@ export const LoreView: React.FC = () => {
                 key={tab.id}
                 onClick={() => setSelectedCat(tab.id)}
                 className={`px-3 py-1.5 rounded-lg transition flex-shrink-0 ${
-                  selectedCat === tab.id
-                    ? 'bg-slate-800 text-indigo-300 font-semibold shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
+                  selectedCat === tab.id ? 'font-semibold shadow-sm' : ''
                 }`}
+                style={{
+                  backgroundColor: selectedCat === tab.id ? 'var(--bg-card)' : 'transparent',
+                  color: selectedCat === tab.id ? 'var(--accent-primary)' : 'var(--text-muted)',
+                }}
               >
                 {tab.label}
               </button>
@@ -131,7 +143,12 @@ export const LoreView: React.FC = () => {
               placeholder="搜索条目、别名或规则..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              className="w-full rounded-xl pl-9 pr-3 py-1.5 text-xs focus:outline-none transition border"
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-main)',
+              }}
             />
           </div>
         </div>
@@ -139,26 +156,30 @@ export const LoreView: React.FC = () => {
         {/* 设定卡片列表 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filtered.length === 0 ? (
-            <div className="col-span-2 py-12 text-center text-slate-500 text-xs">
+            <div className="col-span-2 py-12 text-center text-xs" style={{ color: 'var(--text-muted)' }}>
               未找到匹配的设定条目
             </div>
           ) : (
             filtered.map((lore) => (
               <div
                 key={lore.id}
-                className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg hover:border-slate-700 transition"
+                className="border rounded-2xl p-4 space-y-3 shadow-lg transition"
+                style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="p-1.5 rounded-lg bg-slate-800">
+                    <span
+                      className="p-1.5 rounded-lg border"
+                      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                    >
                       {getCategoryIcon(lore.category)}
                     </span>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-100 font-serif">
+                      <h3 className="text-sm font-bold font-serif" style={{ color: 'var(--text-main)' }}>
                         {lore.name}
                       </h3>
                       {lore.aliases.length > 0 && (
-                        <p className="text-[10px] text-slate-500">
+                        <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
                           别名: {lore.aliases.join('、')}
                         </p>
                       )}
@@ -166,7 +187,14 @@ export const LoreView: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-900/60 font-medium">
+                    <span
+                      className="text-[10px] px-2 py-0.5 rounded font-medium border"
+                      style={{
+                        backgroundColor: 'var(--accent-surface)',
+                        color: 'var(--accent-primary)',
+                        borderColor: 'var(--border-subtle)',
+                      }}
+                    >
                       权重 {lore.priority}
                     </span>
                     <button
@@ -175,7 +203,8 @@ export const LoreView: React.FC = () => {
                           deleteWorldSetting(lore.id);
                         }
                       }}
-                      className="p-1 text-slate-500 hover:text-red-400 transition"
+                      className="p-1 hover:text-red-400 transition"
+                      style={{ color: 'var(--text-muted)' }}
                       title="删除"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -183,7 +212,14 @@ export const LoreView: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 text-xs text-slate-300 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
+                <div
+                  className="border rounded-xl p-3 text-xs whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
+                >
                   {lore.content}
                 </div>
 
@@ -192,7 +228,12 @@ export const LoreView: React.FC = () => {
                     {lore.tags.map((t, idx) => (
                       <span
                         key={idx}
-                        className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 flex items-center gap-1"
+                        className="text-[10px] px-2 py-0.5 rounded flex items-center gap-1 border"
+                        style={{
+                          backgroundColor: 'var(--bg-card)',
+                          color: 'var(--text-muted)',
+                          borderColor: 'var(--border-subtle)',
+                        }}
                       >
                         <Tag className="w-2.5 h-2.5" />
                         {t}
@@ -211,9 +252,10 @@ export const LoreView: React.FC = () => {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <form
             onSubmit={handleCreateLore}
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4"
+            className="border rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
           >
-            <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+            <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
               <Plus className="w-4 h-4 text-indigo-400" />
               <span>新建世界观或战力法则</span>
             </h3>
@@ -221,23 +263,33 @@ export const LoreView: React.FC = () => {
             <div className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 mb-1">设定名称</label>
+                  <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>设定名称</label>
                   <input
                     type="text"
                     required
                     placeholder="例如：万宝楼通商法典"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full border rounded-lg p-2 focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--bg-card)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-main)',
+                    }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">类别归属</label>
+                  <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>类别归属</label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value as LoreCategory)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full border rounded-lg p-2 focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--bg-card)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-main)',
+                    }}
                   >
                     <option value="POWER_SYSTEM">战力体系 (Power System)</option>
                     <option value="FACTION">门派阵营 (Faction)</option>
@@ -250,37 +302,52 @@ export const LoreView: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 mb-1">别名 (逗号隔开)</label>
+                  <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>别名 (逗号隔开)</label>
                   <input
                     type="text"
                     placeholder="如：商盟, 宝楼"
                     value={aliases}
                     onChange={(e) => setAliases(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full border rounded-lg p-2 focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--bg-card)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-main)',
+                    }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">标签</label>
+                  <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>标签</label>
                   <input
                     type="text"
                     placeholder="中立, 经济, 禁令"
                     value={tags}
                     onChange={(e) => setTags(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full border rounded-lg p-2 focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--bg-card)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-main)',
+                    }}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">详细法则与运作规则</label>
+                <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>详细法则与运作规则</label>
                 <textarea
                   rows={5}
                   required
                   placeholder="详细写明运行规律、等级阶梯、硬性约束与触发反噬后果..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs"
+                  className="w-full border rounded-lg p-2 focus:outline-none font-mono text-xs"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
                 />
               </div>
             </div>
@@ -289,13 +356,19 @@ export const LoreView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg"
+                className="px-3 py-1.5 text-xs rounded-lg transition border"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  color: 'var(--text-muted)',
+                  borderColor: 'var(--border-subtle)',
+                }}
               >
                 取消
               </button>
               <button
                 type="submit"
-                className="px-4 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow-md"
+                className="px-4 py-1.5 text-xs font-medium text-white rounded-lg shadow-md transition"
+                style={{ backgroundColor: 'var(--accent-primary)' }}
               >
                 保存设定
               </button>

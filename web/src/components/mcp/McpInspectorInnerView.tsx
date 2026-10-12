@@ -214,22 +214,33 @@ export const McpInspectorInnerView: React.FC<McpInspectorInnerViewProps> = ({ on
   };
 
   return (
-    <div className="flex-1 bg-slate-950 p-6 overflow-y-auto space-y-6 max-w-6xl mx-auto">
+    <div
+      className="flex-1 p-6 overflow-y-auto space-y-6 max-w-6xl mx-auto transition-colors"
+      style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-main)' }}
+    >
       {/* 顶部标题栏 */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+      <div
+        className="flex items-center justify-between pb-4 border-b"
+        style={{ borderColor: 'var(--border-subtle)' }}
+      >
         <div>
-          <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+          <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
             <Layers className="w-5 h-5 text-indigo-400" />
             <span>MCP 协议在线调试与小说资产看板</span>
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
             实时模拟外部 Agent（Claude Desktop、Trae、Cursor）通过 JSON-RPC 2.0 探索只读资源与调用写作工具。
           </p>
         </div>
 
         <button
           onClick={onGoToSetup}
-          className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 text-xs font-medium rounded-xl transition flex items-center gap-1.5"
+          className="px-3.5 py-1.5 border text-xs font-medium rounded-xl transition flex items-center gap-1.5"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            borderColor: 'var(--border-subtle)',
+            color: 'var(--text-main)',
+          }}
         >
           <ArrowLeft className="w-3.5 h-3.5 text-indigo-400" />
           <span>返回【客户端安装与配置向导】</span>
@@ -241,8 +252,11 @@ export const McpInspectorInnerView: React.FC<McpInspectorInnerViewProps> = ({ on
         {/* 左 5 栏：资源与工具定义 */}
         <div className="col-span-1 md:col-span-5 space-y-4">
           {/* Resources 清单 */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-2.5">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-200">
+          <div
+            className="border rounded-2xl p-4 space-y-2.5"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+          >
+            <div className="flex items-center gap-2 text-xs font-bold" style={{ color: 'var(--text-main)' }}>
               <Database className="w-4 h-4 text-indigo-400" />
               <span>只读小说资源 (Resources)</span>
             </div>
@@ -259,138 +273,192 @@ export const McpInspectorInnerView: React.FC<McpInspectorInnerViewProps> = ({ on
                   key={item.id}
                   onClick={() => setSelectedResource(item.id)}
                   className={`w-full p-2.5 rounded-xl border text-left transition flex flex-col gap-0.5 ${
-                    selectedResource === item.id
-                      ? 'bg-indigo-950/60 border-indigo-500/80 text-indigo-200'
-                      : 'bg-slate-950 border-slate-800/80 text-slate-400 hover:text-slate-200'
+                    selectedResource === item.id ? 'font-semibold' : 'hover:opacity-80'
                   }`}
+                  style={{
+                    backgroundColor: selectedResource === item.id ? 'var(--accent-surface)' : 'var(--bg-card)',
+                    borderColor: selectedResource === item.id ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                    color: selectedResource === item.id ? 'var(--accent-primary)' : 'var(--text-muted)',
+                  }}
                 >
-                  <span className="font-mono text-[11px] text-indigo-300 font-semibold">
+                  <span className="font-mono text-[11px] font-semibold" style={{ color: 'var(--accent-primary)' }}>
                     {item.uri}
                   </span>
-                  <span className="text-[10px] text-slate-500">{item.label}</span>
+                  <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{item.label}</span>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Tools 清单 */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-2.5">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-200">
+          <div
+            className="border rounded-2xl p-4 space-y-2.5"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+          >
+            <div className="flex items-center gap-2 text-xs font-bold" style={{ color: 'var(--text-main)' }}>
               <Wrench className="w-4 h-4 text-emerald-400" />
               <span>可调用工具集 (Tools Playground)</span>
             </div>
 
             <div className="space-y-2 text-xs">
               {/* list_novels */}
-              <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl space-y-1">
+              <div
+                className="border p-2.5 rounded-xl space-y-1"
+                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+              >
                 <div className="flex items-center justify-between">
-                  <span className="font-mono font-bold text-indigo-400 text-xs">
+                  <span className="font-mono font-bold text-xs" style={{ color: 'var(--accent-primary)' }}>
                     list_novels()
                   </span>
                   <button
                     onClick={() => handleSimulateTool('list_novels')}
-                    className="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 hover:bg-indigo-900 text-[10px] flex items-center gap-1"
+                    className="px-2 py-0.5 rounded text-[10px] flex items-center gap-1 border"
+                    style={{
+                      backgroundColor: 'var(--accent-surface)',
+                      color: 'var(--accent-primary)',
+                      borderColor: 'var(--border-subtle)',
+                    }}
                   >
                     <Play className="w-2.5 h-2.5" />
                     模拟探测
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
                   大模型开局探测书库，感知当前名下所有小说与活跃焦点。
                 </p>
               </div>
 
               {/* switch_active_novel */}
-              <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl space-y-1">
+              <div
+                className="border p-2.5 rounded-xl space-y-1"
+                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+              >
                 <div className="flex items-center justify-between">
-                  <span className="font-mono font-bold text-indigo-400 text-xs">
+                  <span className="font-mono font-bold text-xs" style={{ color: 'var(--accent-primary)' }}>
                     switch_active_novel(title)
                   </span>
                   <button
                     onClick={() => handleSimulateTool('switch_active_novel')}
-                    className="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 hover:bg-indigo-900 text-[10px] flex items-center gap-1"
+                    className="px-2 py-0.5 rounded text-[10px] flex items-center gap-1 border"
+                    style={{
+                      backgroundColor: 'var(--accent-surface)',
+                      color: 'var(--accent-primary)',
+                      borderColor: 'var(--border-subtle)',
+                    }}
                   >
                     <Play className="w-2.5 h-2.5" />
                     模拟切换
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
                   支持传入自然语言书名（如 "太虚"），自动模糊匹配并绑定小说。
                 </p>
               </div>
 
               {/* query_lore */}
-              <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl space-y-1">
+              <div
+                className="border p-2.5 rounded-xl space-y-1"
+                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+              >
                 <div className="flex items-center justify-between">
                   <span className="font-mono font-bold text-emerald-400 text-xs">
                     query_lore(query)
                   </span>
                   <button
                     onClick={() => handleSimulateTool('query_lore')}
-                    className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 hover:bg-emerald-900 text-[10px] flex items-center gap-1"
+                    className="px-2 py-0.5 rounded text-[10px] flex items-center gap-1 border"
+                    style={{
+                      backgroundColor: 'var(--bg-surface)',
+                      color: '#10b981',
+                      borderColor: 'var(--border-subtle)',
+                    }}
                   >
                     <Play className="w-2.5 h-2.5" />
                     模拟调用
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
                   语义检索世界观法则与战力限制（novel_id 可省略自动取焦点）。
                 </p>
               </div>
 
               {/* check_setting_consistency */}
-              <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl space-y-1">
+              <div
+                className="border p-2.5 rounded-xl space-y-1"
+                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+              >
                 <div className="flex items-center justify-between">
                   <span className="font-mono font-bold text-emerald-400 text-xs">
                     check_setting_consistency(...)
                   </span>
                   <button
                     onClick={() => handleSimulateTool('check_setting_consistency')}
-                    className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 hover:bg-emerald-900 text-[10px] flex items-center gap-1"
+                    className="px-2 py-0.5 rounded text-[10px] flex items-center gap-1 border"
+                    style={{
+                      backgroundColor: 'var(--bg-surface)',
+                      color: '#10b981',
+                      borderColor: 'var(--border-subtle)',
+                    }}
                   >
                     <Play className="w-2.5 h-2.5" />
                     模拟调用
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
                   向 NovManager 提交正文片段，进行战力悖论与人设 OOC 自动拦截。
                 </p>
               </div>
 
               {/* save_scene_draft */}
-              <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl space-y-1">
+              <div
+                className="border p-2.5 rounded-xl space-y-1"
+                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+              >
                 <div className="flex items-center justify-between">
-                  <span className="font-mono font-bold text-slate-200 text-xs">
+                  <span className="font-mono font-bold text-xs" style={{ color: 'var(--text-main)' }}>
                     save_scene_draft(...)
                   </span>
                   <button
                     onClick={() => handleSimulateTool('save_scene_draft')}
-                    className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 text-[10px] flex items-center gap-1"
+                    className="px-2 py-0.5 rounded text-[10px] flex items-center gap-1 border"
+                    style={{
+                      backgroundColor: 'var(--bg-surface)',
+                      color: 'var(--text-muted)',
+                      borderColor: 'var(--border-subtle)',
+                    }}
                   >
                     <Play className="w-2.5 h-2.5" />
                     模拟调用
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
                   将外部 Agent 起草的 Markdown 正文回写至场景并生成 Git-like 版本快照。
                 </p>
               </div>
 
               {/* update_character_state */}
-              <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl space-y-1">
+              <div
+                className="border p-2.5 rounded-xl space-y-1"
+                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+              >
                 <div className="flex items-center justify-between">
-                  <span className="font-mono font-bold text-slate-200 text-xs">
+                  <span className="font-mono font-bold text-xs" style={{ color: 'var(--text-main)' }}>
                     update_character_state(...)
                   </span>
                   <button
                     onClick={() => handleSimulateTool('update_character_state')}
-                    className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 text-[10px] flex items-center gap-1"
+                    className="px-2 py-0.5 rounded text-[10px] flex items-center gap-1 border"
+                    style={{
+                      backgroundColor: 'var(--bg-surface)',
+                      color: 'var(--text-muted)',
+                      borderColor: 'var(--border-subtle)',
+                    }}
                   >
                     <Play className="w-2.5 h-2.5" />
                     模拟调用
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
                   当外部 Agent 推进情节导致角色受伤或突破时，自动反向更新状态机。
                 </p>
               </div>
@@ -400,36 +468,62 @@ export const McpInspectorInnerView: React.FC<McpInspectorInnerViewProps> = ({ on
 
         {/* 右 7 栏：JSON-RPC 实时响应控制台 */}
         <div className="col-span-1 md:col-span-7 space-y-4">
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-2">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-              <span className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+          <div
+            className="border rounded-2xl p-4 space-y-2"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+          >
+            <div
+              className="flex items-center justify-between pb-2 border-b"
+              style={{ borderColor: 'var(--border-subtle)' }}
+            >
+              <span className="text-xs font-semibold flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
                 <FileCode className="w-4 h-4 text-indigo-400" />
                 <span>当前选中的 MCP Resource 结构化 Payload 预览</span>
               </span>
-              <span className="text-[10px] font-mono text-slate-500">MIME: application/json</span>
+              <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>MIME: application/json</span>
             </div>
 
-            <pre className="bg-slate-950 border border-slate-800/90 rounded-xl p-3 text-xs font-mono text-slate-300 max-h-80 overflow-y-auto leading-relaxed">
+            <pre
+              className="border rounded-xl p-3 text-xs font-mono max-h-80 overflow-y-auto leading-relaxed"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-main)',
+              }}
+            >
               {JSON.stringify(getResourcePayload(), null, 2)}
             </pre>
           </div>
 
           {toolResult && (
-            <div className="bg-slate-900/80 border border-emerald-900/60 rounded-2xl p-4 space-y-2 animate-in fade-in">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span className="text-xs font-semibold text-emerald-300 flex items-center gap-1.5">
+            <div
+              className="border border-emerald-500/40 rounded-2xl p-4 space-y-2 animate-in fade-in"
+              style={{ backgroundColor: 'var(--bg-surface)' }}
+            >
+              <div
+                className="flex items-center justify-between pb-2 border-b"
+                style={{ borderColor: 'var(--border-subtle)' }}
+              >
+                <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
                   <Terminal className="w-4 h-4 text-emerald-400" />
                   <span>MCP Tool 模拟执行响应 (JSON-RPC Result)</span>
                 </span>
                 <button
                   onClick={() => setToolResult(null)}
-                  className="text-[10px] text-slate-500 hover:text-slate-300"
+                  className="text-[10px] hover:underline"
+                  style={{ color: 'var(--text-muted)' }}
                 >
                   清空
                 </button>
               </div>
 
-              <pre className="bg-slate-950 border border-slate-800/90 rounded-xl p-3 text-xs font-mono text-emerald-200 max-h-64 overflow-y-auto leading-relaxed">
+              <pre
+                className="border rounded-xl p-3 text-xs font-mono text-emerald-400 max-h-64 overflow-y-auto leading-relaxed"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  borderColor: 'var(--border-subtle)',
+                }}
+              >
                 {toolResult}
               </pre>
             </div>

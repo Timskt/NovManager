@@ -34,10 +34,10 @@ interface ThemeContextType {
 }
 
 const DEFAULT_THEME_SETTINGS: ThemeSettings = {
-  theme: 'ink', // 默认古典宣纸雅致米黄
+  theme: 'obsidian', // 默认黑曜冷萃专业深色 (媲美 Linear / Final Draft)
   fontFamily: 'serif', // 默认典雅宋体
   fontSize: 17,
-  lineHeight: 1.9,
+  lineHeight: 1.85,
   paragraphIndent: true,
   readerWidth: 'standard',
   typewriterMode: false,

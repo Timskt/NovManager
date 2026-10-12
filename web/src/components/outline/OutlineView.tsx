@@ -178,16 +178,19 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
   };
 
   return (
-    <div className="flex-1 bg-slate-950 p-6 overflow-y-auto">
+    <div
+      className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto"
+      style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-main)' }}
+    >
       <div className="max-w-5xl mx-auto space-y-6">
         {/* 顶部标题与新建按钮 */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: 'var(--border-subtle)' }}>
           <div>
-            <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <Compass className="w-5 h-5 text-indigo-400" />
+            <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
+              <Compass className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />
               <span>三级大纲与分镜树架构</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
               分卷（总括矛盾） ➔ 章节（阶段目标） ➔ 分镜场景（具象对抗节拍）。
             </p>
           </div>
@@ -196,17 +199,23 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
             {onJumpToCanvas && (
               <button
                 onClick={() => onJumpToCanvas()}
-                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-indigo-300 text-xs font-semibold rounded-xl border border-indigo-700/50 shadow-md transition flex items-center gap-1.5"
+                className="px-3.5 py-2 text-xs font-semibold rounded-xl border shadow-sm transition flex items-center gap-1.5"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--accent-primary)',
+                }}
                 title="打开剧情多分支因果推演幕布"
               >
-                <GitFork className="w-4 h-4 text-indigo-400" />
+                <GitFork className="w-4 h-4" />
                 <span>推演幕布</span>
               </button>
             )}
 
             <button
               onClick={() => setShowAddVolumeModal(true)}
-              className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/30 transition flex items-center gap-1.5"
+              className="px-3.5 py-2 text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center gap-1.5"
+              style={{ backgroundColor: 'var(--accent-primary)' }}
             >
               <FolderPlus className="w-4 h-4" />
               <span>新建分卷</span>
@@ -221,16 +230,27 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
             return (
               <div
                 key={vol.id}
-                className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-lg"
+                className="rounded-2xl overflow-hidden shadow-sm border"
+                style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
               >
                 {/* 卷头部 */}
-                <div className="p-4 bg-slate-850 border-b border-slate-800 flex flex-col gap-3">
+                <div
+                  className="p-4 border-b flex flex-col gap-3"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                >
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div
                       onClick={() => toggleVolume(vol.id)}
                       className="flex items-center gap-3 cursor-pointer group select-none flex-1"
                     >
-                      <div className="p-1.5 rounded-lg bg-slate-800 text-indigo-400 group-hover:bg-slate-700 transition">
+                      <div
+                        className="p-1.5 rounded-lg border transition"
+                        style={{
+                          backgroundColor: 'var(--bg-surface)',
+                          borderColor: 'var(--border-subtle)',
+                          color: 'var(--accent-primary)',
+                        }}
+                      >
                         {isExpanded ? (
                           <ChevronDown className="w-4 h-4" />
                         ) : (
@@ -239,19 +259,26 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/60">
+                          <span
+                            className="text-xs font-bold px-2 py-0.5 rounded border"
+                            style={{
+                              backgroundColor: 'var(--accent-surface)',
+                              borderColor: 'var(--border-subtle)',
+                              color: 'var(--accent-primary)',
+                            }}
+                          >
                             第 {vol.volumeIndex} 卷
                           </span>
-                          <h3 className="text-base font-bold text-slate-100 font-serif">
+                          <h3 className="text-base font-bold font-serif" style={{ color: 'var(--text-main)' }}>
                             {vol.title}
                           </h3>
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">
-                          <span className="text-slate-500">核心矛盾：</span>
+                        <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                          <span style={{ color: 'var(--text-faint)' }}>核心矛盾：</span>
                           {vol.mainConflict || '未设置'}
-                          <span className="text-slate-600 mx-2">•</span>
-                          <span className="text-slate-500">预期高潮：</span>
-                          <span className="text-amber-300/80">{vol.targetClimax || '未设置'}</span>
+                          <span className="mx-2" style={{ color: 'var(--border-strong)' }}>•</span>
+                          <span style={{ color: 'var(--text-faint)' }}>预期高潮：</span>
+                          <span className="text-amber-500 font-medium">{vol.targetClimax || '未设置'}</span>
                         </p>
                       </div>
                     </div>
@@ -266,10 +293,15 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                           setEditVolSummary(vol.summary || '');
                           setEditVolBoundary(vol.boundaryConstraints || '');
                         }}
-                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-lg transition flex items-center gap-1 border border-slate-700/60"
+                        className="px-3 py-1.5 text-xs rounded-lg transition flex items-center gap-1 border"
+                        style={{
+                          backgroundColor: 'var(--bg-surface)',
+                          borderColor: 'var(--border-subtle)',
+                          color: 'var(--text-main)',
+                        }}
                         title="编辑该卷的故事概要与出场边界约束"
                       >
-                        <Edit className="w-3.5 h-3.5 text-indigo-400" />
+                        <Edit className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
                         <span>编辑卷纲与约束</span>
                       </button>
 
@@ -280,7 +312,8 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                           setChapOutline('');
                           setAddTitleCandidates([]);
                         }}
-                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded-lg transition flex items-center gap-1 shadow-sm"
+                        className="px-3 py-1.5 text-white text-xs rounded-lg transition flex items-center gap-1 shadow-sm"
+                        style={{ backgroundColor: 'var(--accent-primary)' }}
                       >
                         <FilePlus className="w-3.5 h-3.5" />
                         <span>添加新章节</span>
@@ -292,7 +325,8 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                               deleteVolume(vol.id);
                             }
                           }}
-                          className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded-lg transition"
+                          className="p-1.5 rounded-lg transition hover:text-rose-400"
+                          style={{ color: 'var(--text-faint)' }}
                           title="删除此卷"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -303,24 +337,38 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
 
                   {/* 卷故事概要与防早现边界约束展示卡片 */}
                   {(vol.summary || vol.boundaryConstraints) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-2 border-t border-slate-800/60 text-xs">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-2 border-t text-xs" style={{ borderColor: 'var(--border-subtle)' }}>
                       {vol.summary && (
-                        <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/80 text-slate-300 leading-relaxed flex items-start gap-2">
-                          <BookOpen className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
+                        <div
+                          className="p-2.5 rounded-xl border leading-relaxed flex items-start gap-2"
+                          style={{
+                            backgroundColor: 'var(--bg-surface)',
+                            borderColor: 'var(--border-subtle)',
+                            color: 'var(--text-main)',
+                          }}
+                        >
+                          <BookOpen className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--accent-primary)' }} />
                           <div className="space-y-1">
-                            <span className="font-semibold text-indigo-300 block">本卷故事剧情概要：</span>
-                            <p className="text-slate-400 text-[11px] leading-relaxed">
+                            <span className="font-semibold block" style={{ color: 'var(--accent-primary)' }}>本卷故事剧情概要：</span>
+                            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                               {vol.summary}
                             </p>
                           </div>
                         </div>
                       )}
                       {vol.boundaryConstraints && (
-                        <div className="p-2.5 rounded-xl bg-amber-950/20 border border-amber-800/40 text-amber-200/90 leading-relaxed flex items-start gap-2">
-                          <ShieldAlert className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                        <div
+                          className="p-2.5 rounded-xl border leading-relaxed flex items-start gap-2"
+                          style={{
+                            backgroundColor: 'var(--accent-surface)',
+                            borderColor: 'var(--border-subtle)',
+                            color: 'var(--text-main)',
+                          }}
+                        >
+                          <ShieldAlert className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                           <div className="space-y-1">
-                            <span className="font-semibold text-amber-300 block">出场边界与防早现约束（AI 强约束）：</span>
-                            <p className="text-amber-200/80 text-[11px] leading-relaxed whitespace-pre-line">
+                            <span className="font-semibold text-amber-500 block">出场边界与防早现约束（AI 强约束）：</span>
+                            <p className="text-[11px] leading-relaxed whitespace-pre-line" style={{ color: 'var(--text-muted)' }}>
                               {vol.boundaryConstraints}
                             </p>
                           </div>
@@ -343,25 +391,36 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                         return (
                           <div
                             key={chap.id}
-                            className="bg-slate-950 border border-slate-800/80 rounded-xl p-4 space-y-3 hover:border-slate-700 transition"
+                            className="rounded-xl p-4 space-y-3 border transition"
+                            style={{
+                              backgroundColor: 'var(--bg-card)',
+                              borderColor: 'var(--border-subtle)',
+                            }}
                           >
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                               <div className="space-y-1 flex-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-xs font-semibold text-slate-200 font-serif">
+                                  <span className="text-xs font-semibold font-serif" style={{ color: 'var(--text-main)' }}>
                                     第 {chap.chapterIndex} 章：{chap.title}
                                   </span>
-                                  <span className="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">
+                                  <span
+                                    className="text-[10px] px-2 py-0.5 rounded border"
+                                    style={{
+                                      backgroundColor: 'var(--bg-surface)',
+                                      borderColor: 'var(--border-subtle)',
+                                      color: 'var(--text-muted)',
+                                    }}
+                                  >
                                     {chap.status}
                                   </span>
                                   {povChar && (
-                                    <span className="text-[10px] text-indigo-400 flex items-center gap-1">
+                                    <span className="text-[10px] flex items-center gap-1 font-medium" style={{ color: 'var(--accent-primary)' }}>
                                       <User className="w-3 h-3" />
                                       {povChar.name} 视角
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-xs text-slate-400 leading-relaxed">
+                                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                                   {chap.outline}
                                 </p>
                               </div>
@@ -369,10 +428,15 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                               <div className="flex items-center gap-1.5 flex-shrink-0 self-end sm:self-auto">
                                 <button
                                   onClick={() => generateScenesForChapter(chap.id)}
-                                  className="px-2.5 py-1.5 bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-700/50 text-indigo-300 text-xs rounded-lg transition flex items-center gap-1"
+                                  className="px-2.5 py-1.5 text-xs rounded-lg transition flex items-center gap-1 border"
+                                  style={{
+                                    backgroundColor: 'var(--accent-surface)',
+                                    borderColor: 'var(--border-subtle)',
+                                    color: 'var(--accent-primary)',
+                                  }}
                                   title="让分镜导演 Agent 自动基于大纲规划 3 幕递进对抗节拍"
                                 >
-                                  <Wand2 className="w-3 h-3 text-indigo-400" />
+                                  <Wand2 className="w-3 h-3" />
                                   <span className="hidden xs:inline">AI拆解分镜</span>
                                 </button>
 
@@ -385,7 +449,8 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                                     setEditTitleCandidates([]);
                                     setIsGeneratingEditTitles(false);
                                   }}
-                                  className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-900 rounded-lg transition"
+                                  className="p-1.5 rounded-lg transition hover:text-indigo-400"
+                                  style={{ color: 'var(--text-muted)' }}
                                   title="编辑章节大纲与标题"
                                 >
                                   <Edit className="w-3.5 h-3.5" />
@@ -397,7 +462,8 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                                       deleteChapter(chap.id);
                                     }
                                   }}
-                                  className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-900 rounded-lg transition"
+                                  className="p-1.5 rounded-lg transition hover:text-rose-400"
+                                  style={{ color: 'var(--text-faint)' }}
                                   title="删除章节"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -406,7 +472,8 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                                 {onJumpToCanvas && (
                                   <button
                                     onClick={() => onJumpToCanvas(chap.id)}
-                                    className="p-1.5 text-slate-400 hover:text-indigo-300 hover:bg-slate-900 rounded-lg transition"
+                                    className="p-1.5 rounded-lg transition hover:text-indigo-400"
+                                    style={{ color: 'var(--text-muted)' }}
                                     title="以此章为锚点推演下一步走向"
                                   >
                                     <GitFork className="w-3.5 h-3.5" />
@@ -415,7 +482,12 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
 
                                 <button
                                   onClick={() => onJumpToStudio(chap.id, 1)}
-                                  className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-200 border border-indigo-500/40 text-xs rounded-lg transition flex items-center gap-1.5"
+                                  className="px-3 py-1.5 text-xs rounded-lg transition flex items-center gap-1.5 border"
+                                  style={{
+                                    backgroundColor: 'var(--accent-surface)',
+                                    borderColor: 'var(--border-subtle)',
+                                    color: 'var(--accent-primary)',
+                                  }}
                                 >
                                   <ExternalLink className="w-3 h-3" />
                                   <span>进入工作台</span>
@@ -425,27 +497,31 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
 
                             {/* 细粒度分镜场景节拍 */}
                             {chap.scenes && chap.scenes.length > 0 && (
-                              <div className="pt-2 border-t border-slate-900 grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                              <div className="pt-2 border-t grid grid-cols-1 md:grid-cols-3 gap-2.5" style={{ borderColor: 'var(--border-subtle)' }}>
                                 {chap.scenes.map((sc) => (
                                   <div
                                     key={sc.id}
                                     onClick={() => onJumpToStudio(chap.id, sc.sceneIndex)}
-                                    className="bg-slate-900/60 hover:bg-slate-900 border border-slate-800/60 hover:border-indigo-500/50 rounded-lg p-2.5 cursor-pointer transition text-xs space-y-1"
+                                    className="rounded-lg p-2.5 cursor-pointer transition text-xs space-y-1 border hover:scale-[1.01]"
+                                    style={{
+                                      backgroundColor: 'var(--bg-surface)',
+                                      borderColor: 'var(--border-subtle)',
+                                    }}
                                   >
-                                    <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
-                                      <span className="flex items-center gap-1">
-                                        <Target className="w-3 h-3 text-amber-400" />
+                                    <div className="flex items-center justify-between text-[11px] font-semibold">
+                                      <span className="flex items-center gap-1" style={{ color: 'var(--text-main)' }}>
+                                        <Target className="w-3 h-3 text-amber-500" />
                                         <span>第 {sc.sceneIndex} 幕</span>
                                       </span>
                                       {sc.draftContent ? (
-                                        <span className="text-[9px] text-emerald-400 bg-emerald-950/60 px-1 rounded">
+                                        <span className="text-[9px] text-emerald-500 bg-emerald-500/10 px-1 rounded border border-emerald-500/20">
                                           已起草 ({sc.draftContent.length}字)
                                         </span>
                                       ) : (
-                                        <span className="text-[9px] text-slate-500">待起草</span>
+                                        <span className="text-[9px]" style={{ color: 'var(--text-faint)' }}>待起草</span>
                                       )}
                                     </div>
-                                    <p className="text-slate-400 text-[11px] line-clamp-2 leading-snug">
+                                    <p className="text-[11px] line-clamp-2 leading-snug" style={{ color: 'var(--text-muted)' }}>
                                       {sc.sceneGoal || '未规划'}
                                     </p>
                                   </div>
@@ -469,7 +545,8 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <form
             onSubmit={handleCreateVolume}
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+            className="rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto border"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-strong)', color: 'var(--text-main)' }}
           >
             <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
               <FolderPlus className="w-4 h-4 text-indigo-400" />
@@ -485,7 +562,7 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                   placeholder="例如：第二卷：风起天元"
                   value={volTitle}
                   onChange={(e) => setVolTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -496,7 +573,7 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                   placeholder="概括本卷的故事起承转合，指引本卷全部章节的整体主线走向..."
                   value={volSummary}
                   onChange={(e) => setVolSummary(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500 leading-relaxed"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50 leading-relaxed" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -508,7 +585,7 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                     placeholder="例如：林越隐匿身份进入万宝城..."
                     value={volConflict}
                     onChange={(e) => setVolConflict(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                   />
                 </div>
 
@@ -519,7 +596,7 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                     placeholder="例如：万宝拍卖会大乱，林越斩魔脱身..."
                     value={volClimax}
                     onChange={(e) => setVolClimax(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                   />
                 </div>
               </div>
@@ -537,7 +614,7 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                   placeholder="【人物登场禁忌】：严禁金丹后期以上大能本体降临；&#10;【宝物机缘禁忌】：严禁提前出土上古神器；&#10;【战力天花板】：全卷压制在筑基期至金丹初期；&#10;【剧情悬念暗线】：严禁提前揭晓当年灭族真凶。"
                   value={volBoundary}
                   onChange={(e) => setVolBoundary(e.target.value)}
-                  className="w-full bg-slate-950 border border-amber-900/50 rounded-lg p-2.5 text-amber-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 font-mono text-xs leading-relaxed"
+                  className="w-full rounded-lg p-2.5 font-mono text-xs leading-relaxed border outline-none focus:ring-1" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
             </div>
@@ -546,7 +623,8 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowAddVolumeModal(false)}
-                className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg"
+                className="px-3 py-1.5 text-xs rounded-lg border transition cursor-pointer hover:opacity-80"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
               >
                 取消
               </button>
@@ -566,7 +644,8 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <form
             onSubmit={handleUpdateVolume}
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+            className="rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto border"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-strong)', color: 'var(--text-main)' }}
           >
             <div className="border-b border-slate-800 pb-3">
               <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
@@ -586,7 +665,7 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                   required
                   value={editVolTitle}
                   onChange={(e) => setEditVolTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -597,7 +676,7 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                   placeholder="概括本卷的故事起承转合，指引本卷全部章节的整体主线走向..."
                   value={editVolSummary}
                   onChange={(e) => setEditVolSummary(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500 leading-relaxed"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50 leading-relaxed" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -609,7 +688,7 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                     placeholder="例如：林越获取青铜残片后遭遇宗门暗流与魔宗追杀..."
                     value={editVolConflict}
                     onChange={(e) => setEditVolConflict(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                   />
                 </div>
 
@@ -620,7 +699,7 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                     placeholder="例如：坠星崖绝地血战，破除死局，名动北域..."
                     value={editVolClimax}
                     onChange={(e) => setEditVolClimax(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                   />
                 </div>
               </div>
@@ -638,7 +717,7 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                   placeholder="【人物登场禁忌】：严禁金丹后期以上大能本体直接降临；魔宗宗主仅限侧面传闻；&#10;【宝物机缘禁忌】：本卷仅限第一枚青铜残片苏醒，禁止提前出土第二枚神器；&#10;【战力天花板】：战力严格压制在筑基期至金丹初期，禁止空间撕裂；&#10;【剧情悬念暗线】：严禁提前揭晓当年灭族真凶。"
                   value={editVolBoundary}
                   onChange={(e) => setEditVolBoundary(e.target.value)}
-                  className="w-full bg-slate-950 border border-amber-900/50 rounded-lg p-2.5 text-amber-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 font-mono text-xs leading-relaxed"
+                  className="w-full rounded-lg p-2.5 font-mono text-xs leading-relaxed border outline-none focus:ring-1" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
             </div>
@@ -647,7 +726,8 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
               <button
                 type="button"
                 onClick={() => setEditingVolume(null)}
-                className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg"
+                className="px-3 py-1.5 text-xs rounded-lg border transition cursor-pointer hover:opacity-80"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
               >
                 取消
               </button>
@@ -667,7 +747,8 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <form
             onSubmit={handleCreateChapter}
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4"
+            className="rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 border"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-strong)', color: 'var(--text-main)' }}
           >
             <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
               <FilePlus className="w-4 h-4 text-indigo-400" />
@@ -680,7 +761,7 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                 <select
                   value={chapPov}
                   onChange={(e) => setChapPov(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 >
                   {characters.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -697,7 +778,7 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                   placeholder="简述本章将要发生的关键推进与冲突（输入后点击下方 AI 拟定，即可基于本段梗概生成贴合剧情的高质量备选标题）..."
                   value={chapOutline}
                   onChange={(e) => setChapOutline(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -731,12 +812,12 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                   placeholder="例如：地脉迷踪 或 剑气惊寒"
                   value={chapTitle}
                   onChange={(e) => setChapTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500 font-medium"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50 font-medium" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
 
                 {/* 自动生成的候选标题选项 Chips */}
                 {addTitleCandidates.length > 0 && (
-                  <div className="mt-2.5 p-2.5 bg-slate-950/90 border border-indigo-900/50 rounded-xl space-y-1.5">
+                  <div className="mt-2.5 p-2.5 rounded-xl space-y-1.5 border" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}>
                     <span className="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
                       <Sparkles className="w-3 h-3 text-amber-400" />
                       点击备选标题一键采纳（采纳后仍可在上方自由手动编辑）：
@@ -750,11 +831,12 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                             key={idx}
                             type="button"
                             onClick={() => setChapTitle(clean)}
-                            className={`px-2.5 py-1 rounded-lg text-xs transition border ${
+                            className="px-2.5 py-1 rounded-lg text-xs transition border cursor-pointer hover:opacity-80"
+                            style={
                               isSelected
-                                ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
-                                : 'bg-slate-900 hover:bg-slate-850 text-indigo-300 border-slate-800 hover:border-indigo-700'
-                            }`}
+                                ? { backgroundColor: 'var(--accent-primary)', color: '#fff', borderColor: 'var(--accent-primary)' }
+                                : { backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
+                            }
                           >
                             {clean}
                           </button>
@@ -770,7 +852,8 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowAddChapterModal(null)}
-                className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg"
+                className="px-3 py-1.5 text-xs rounded-lg border transition cursor-pointer hover:opacity-80"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
               >
                 取消
               </button>
@@ -799,7 +882,8 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
               });
               setEditingChapter(null);
             }}
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4"
+            className="rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 border"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-strong)', color: 'var(--text-main)' }}
           >
             <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
               <Edit className="w-4 h-4 text-indigo-400" />
@@ -812,7 +896,7 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                 <select
                   value={editChapPov}
                   onChange={(e) => setEditChapPov(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 >
                   {characters.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -829,7 +913,7 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                   required
                   value={editChapOutline}
                   onChange={(e) => setEditChapOutline(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -862,12 +946,12 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                   required
                   value={editChapTitle}
                   onChange={(e) => setEditChapTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500 font-medium"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50 font-medium" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
 
                 {/* 候选标题选项 Chips */}
                 {editTitleCandidates.length > 0 && (
-                  <div className="mt-2.5 p-2.5 bg-slate-950/90 border border-indigo-900/50 rounded-xl space-y-1.5">
+                  <div className="mt-2.5 p-2.5 rounded-xl space-y-1.5 border" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}>
                     <span className="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
                       <Sparkles className="w-3 h-3 text-amber-400" />
                       点击备选标题一键采纳（采纳后仍可在上方自由手动编辑）：
@@ -881,11 +965,12 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
                             key={idx}
                             type="button"
                             onClick={() => setEditChapTitle(clean)}
-                            className={`px-2.5 py-1 rounded-lg text-xs transition border ${
+                            className="px-2.5 py-1 rounded-lg text-xs transition border cursor-pointer hover:opacity-80"
+                            style={
                               isSelected
-                                ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
-                                : 'bg-slate-900 hover:bg-slate-850 text-indigo-300 border-slate-800 hover:border-indigo-700'
-                            }`}
+                                 ? { backgroundColor: 'var(--accent-primary)', color: '#fff', borderColor: 'var(--accent-primary)' }
+                                 : { backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
+                            }
                           >
                             {clean}
                           </button>
@@ -901,7 +986,8 @@ export const OutlineView: React.FC<OutlineViewProps> = ({
               <button
                 type="button"
                 onClick={() => setEditingChapter(null)}
-                className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg"
+                className="px-3 py-1.5 text-xs rounded-lg border transition cursor-pointer hover:opacity-80"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
               >
                 取消
               </button>

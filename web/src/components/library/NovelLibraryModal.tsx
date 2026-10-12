@@ -48,21 +48,24 @@ export const NovelLibraryModal: React.FC<NovelLibraryModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl flex flex-col max-h-[85vh] space-y-4">
+      <div
+        className="rounded-2xl max-w-2xl w-full p-6 shadow-2xl flex flex-col max-h-[85vh] space-y-4 border"
+        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+      >
         {/* 顶部标题与关闭 */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--border-subtle)' }}>
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-indigo-950 border border-indigo-800/60 text-indigo-400">
               <Library className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+              <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
                 <span>小说作品库与多书管理</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-normal">
+                <span className="text-xs px-2 py-0.5 rounded-full font-normal border" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}>
                   共 {novelList.length} 部作品
                 </span>
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 可随时在不同小说项目间无缝切换，每部作品独立维护完整大纲、人物状态机与世界观法则。
               </p>
             </div>
@@ -70,7 +73,8 @@ export const NovelLibraryModal: React.FC<NovelLibraryModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800 transition"
+            className="p-1.5 rounded-lg transition hover:opacity-80 cursor-pointer"
+            style={{ color: 'var(--text-muted)' }}
           >
             <X className="w-5 h-5" />
           </button>
@@ -80,7 +84,8 @@ export const NovelLibraryModal: React.FC<NovelLibraryModalProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowCreateBlank(!showCreateBlank)}
-            className="flex-1 py-2.5 px-3 bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-xl text-xs font-semibold text-slate-200 flex items-center justify-center gap-1.5 transition"
+            className="flex-1 py-2.5 px-3 border rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer hover:opacity-80"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
           >
             <Plus className="w-4 h-4 text-indigo-400" />
             <span>新建空白作品</span>
@@ -91,7 +96,7 @@ export const NovelLibraryModal: React.FC<NovelLibraryModalProps> = ({
               onClose();
               onOpenArchitect();
             }}
-            className="flex-1 py-2.5 px-3 bg-gradient-to-r from-indigo-600 to-amber-600 hover:from-indigo-500 hover:to-amber-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-950 flex items-center justify-center gap-1.5 transition"
+            className="flex-1 py-2.5 px-3 bg-gradient-to-r from-indigo-600 to-amber-600 hover:from-indigo-500 hover:to-amber-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-950 flex items-center justify-center gap-1.5 transition cursor-pointer"
           >
             <Sparkles className="w-4 h-4 text-amber-200 animate-pulse" />
             <span>AI 灵感探讨与创世向导</span>
@@ -102,14 +107,16 @@ export const NovelLibraryModal: React.FC<NovelLibraryModalProps> = ({
         {showCreateBlank && (
           <form
             onSubmit={handleCreateBlankSubmit}
-            className="bg-slate-950 border border-indigo-500/40 rounded-xl p-4 space-y-3 animate-in slide-in-from-top-2 duration-200 text-xs"
+            className="border rounded-xl p-4 space-y-3 animate-in slide-in-from-top-2 duration-200 text-xs"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
           >
-            <div className="font-semibold text-indigo-300 flex items-center justify-between">
+            <div className="font-semibold text-indigo-400 flex items-center justify-between">
               <span>填写新小说基本信息</span>
               <button
                 type="button"
                 onClick={() => setShowCreateBlank(false)}
-                className="text-slate-500 hover:text-slate-300 text-[11px]"
+                className="text-[11px] cursor-pointer hover:opacity-80"
+                style={{ color: 'var(--text-muted)' }}
               >
                 收起
               </button>
@@ -117,36 +124,39 @@ export const NovelLibraryModal: React.FC<NovelLibraryModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-slate-400 mb-1">作品书名</label>
+                <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>作品书名</label>
                 <input
                   type="text"
                   required
                   placeholder="例如：剑破九天"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 border focus:outline-none focus:border-indigo-500"
+                  style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">题材品类</label>
+                <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>题材品类</label>
                 <input
                   type="text"
                   placeholder="例如：玄幻仙侠 / 都市异能"
                   value={newGenre}
                   onChange={(e) => setNewGenre(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 border focus:outline-none focus:border-indigo-500"
+                  style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">目标字数</label>
+                <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>目标字数</label>
                 <input
                   type="number"
                   step={100000}
                   value={newTargetWords}
                   onChange={(e) => setNewTargetWords(Number(e.target.value))}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 border focus:outline-none focus:border-indigo-500"
+                  style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
             </div>
@@ -155,13 +165,14 @@ export const NovelLibraryModal: React.FC<NovelLibraryModalProps> = ({
               <button
                 type="button"
                 onClick={() => setShowCreateBlank(false)}
-                className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200"
+                className="px-3 py-1.5 rounded-lg border transition cursor-pointer hover:opacity-80"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
               >
                 取消
               </button>
               <button
                 type="submit"
-                className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium"
+                className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium cursor-pointer"
               >
                 确认创建并开始创作
               </button>
@@ -179,26 +190,39 @@ export const NovelLibraryModal: React.FC<NovelLibraryModalProps> = ({
                 className={`p-3.5 rounded-xl border transition flex items-center justify-between gap-3 ${
                   isActive
                     ? 'bg-indigo-950/40 border-indigo-500/80 shadow-md'
-                    : 'bg-slate-950/70 border-slate-800/80 hover:border-slate-700'
+                    : 'hover:border-indigo-500/40'
                 }`}
+                style={
+                  !isActive
+                    ? { backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }
+                    : undefined
+                }
               >
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                       isActive
                         ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-                        : 'bg-slate-800 text-slate-400'
+                        : 'border text-slate-400'
                     }`}
+                    style={
+                      !isActive
+                        ? { backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
+                        : undefined
+                    }
                   >
                     <BookOpen className="w-5 h-5" />
                   </div>
 
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-slate-100">
+                      <span className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>
                         {item.title}
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-indigo-300 font-medium">
+                      <span
+                        className="text-[10px] px-2 py-0.5 rounded border font-medium text-indigo-400"
+                        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+                      >
                         {item.genre}
                       </span>
                       {isActive && (
@@ -250,7 +274,7 @@ export const NovelLibraryModal: React.FC<NovelLibraryModalProps> = ({
                           deleteNovel(item.id);
                         }
                       }}
-                      className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded-lg transition"
+                      className="p-1.5 text-slate-500 hover:text-red-400 rounded-lg transition cursor-pointer hover:opacity-80"
                       title="删除作品"
                     >
                       <Trash2 className="w-4 h-4" />

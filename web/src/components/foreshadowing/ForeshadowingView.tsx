@@ -52,23 +52,30 @@ export const ForeshadowingView: React.FC = () => {
   ];
 
   return (
-    <div className="flex-1 bg-slate-950 p-6 overflow-y-auto">
+    <div
+      className="flex-1 p-6 overflow-y-auto transition-colors"
+      style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-main)' }}
+    >
       <div className="max-w-6xl mx-auto space-y-6">
         {/* 顶部标题与操作 */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div
+          className="flex items-center justify-between pb-4 border-b"
+          style={{ borderColor: 'var(--border-subtle)' }}
+        >
           <div>
-            <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+            <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
               <Radar className="w-5 h-5 text-indigo-400" />
               <span>全书伏笔与暗线雷达 (Foreshadowing Tracker)</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
               追踪所有长线线索的生命周期。当章节推进至计划回收章节时，Agent 将自动提醒呼应，防止烂尾与遗忘。
             </p>
           </div>
 
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/30 transition flex items-center gap-1.5"
+            className="px-3.5 py-2 text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center gap-1.5"
+            style={{ backgroundColor: 'var(--accent-primary)' }}
           >
             <Plus className="w-4 h-4" />
             <span>登记新伏笔</span>
@@ -82,37 +89,55 @@ export const ForeshadowingView: React.FC = () => {
             return (
               <div
                 key={col.status}
-                className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-3 min-h-[500px]"
+                className="border rounded-2xl p-4 space-y-3 min-h-[500px]"
+                style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
               >
-                <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                <div
+                  className="flex items-center justify-between pb-2 border-b"
+                  style={{ borderColor: 'var(--border-subtle)' }}
+                >
                   <span className={`text-xs font-bold ${col.color}`}>
                     {col.label}
                   </span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">
+                  <span
+                    className="text-[10px] px-1.5 py-0.2 rounded border"
+                    style={{
+                      backgroundColor: 'var(--bg-card)',
+                      color: 'var(--text-muted)',
+                      borderColor: 'var(--border-subtle)',
+                    }}
+                  >
                     {list.length}
                   </span>
                 </div>
 
                 <div className="space-y-3">
                   {list.length === 0 ? (
-                    <p className="text-xs text-slate-600 italic py-6 text-center">
+                    <p className="text-xs italic py-6 text-center" style={{ color: 'var(--text-muted)' }}>
                       暂无对应伏笔
                     </p>
                   ) : (
                     list.map((item) => (
                       <div
                         key={item.id}
-                        className="bg-slate-950 border border-slate-800/80 rounded-xl p-3 text-xs space-y-2 hover:border-slate-700 transition"
+                        className="border rounded-xl p-3 text-xs space-y-2 transition"
+                        style={{
+                          backgroundColor: 'var(--bg-card)',
+                          borderColor: 'var(--border-subtle)',
+                        }}
                       >
-                        <div className="font-bold text-slate-200">
+                        <div className="font-bold" style={{ color: 'var(--text-main)' }}>
                           {item.title}
                         </div>
 
-                        <p className="text-slate-400 text-[11px] leading-relaxed">
+                        <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                           {item.clueDescription}
                         </p>
 
-                        <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-900">
+                        <div
+                          className="flex items-center justify-between text-[10px] pt-1 border-t"
+                          style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+                        >
                           <span>埋于 第 {item.plantedChapterIndex || '?'} 章</span>
                           <span className="flex items-center gap-1 text-indigo-400">
                             计划 ➔ 第 {item.plannedResolveChapterIndex || '?'} 章
@@ -120,7 +145,14 @@ export const ForeshadowingView: React.FC = () => {
                         </div>
 
                         {item.notes && (
-                          <p className="text-[10px] text-amber-400/80 bg-amber-950/20 p-1.5 rounded border border-amber-900/20">
+                          <p
+                            className="text-[10px] p-1.5 rounded border"
+                            style={{
+                              backgroundColor: 'var(--bg-surface)',
+                              color: 'var(--accent-primary)',
+                              borderColor: 'var(--border-subtle)',
+                            }}
+                          >
                             备忘：{item.notes}
                           </p>
                         )}
@@ -146,7 +178,8 @@ export const ForeshadowingView: React.FC = () => {
                           {item.status !== 'ABANDONED' && item.status !== 'RESOLVED' && (
                             <button
                               onClick={() => updateForeshadowingStatus(item.id, 'ABANDONED')}
-                              className="px-1.5 py-0.5 rounded text-slate-500 hover:text-red-400 text-[10px]"
+                              className="px-1.5 py-0.5 rounded hover:text-red-400 text-[10px]"
+                              style={{ color: 'var(--text-muted)' }}
                             >
                               废弃
                             </button>
@@ -167,58 +200,79 @@ export const ForeshadowingView: React.FC = () => {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <form
             onSubmit={handleCreate}
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4"
+            className="border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
           >
-            <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+            <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
               <Radar className="w-4 h-4 text-indigo-400" />
               <span>登记新的伏笔或暗线</span>
             </h3>
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-400 mb-1">伏笔简短命名</label>
+                <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>伏笔简短命名</label>
                 <input
                   type="text"
                   required
                   placeholder="例如：师尊密室中的引魂香"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full border rounded-lg p-2 focus:outline-none"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
                 />
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">伏笔具体线索与细节</label>
+                <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>伏笔具体线索与细节</label>
                 <textarea
                   rows={3}
                   required
                   placeholder="记录在哪个场景中埋下了什么看似不起眼的细节或异样举动..."
                   value={clueDescription}
                   onChange={(e) => setClueDescription(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full border rounded-lg p-2 focus:outline-none"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
                 />
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">预期揭开/回收的章节号</label>
+                <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>预期揭开/回收的章节号</label>
                 <input
                   type="number"
                   required
                   min={1}
                   value={plannedChapter}
                   onChange={(e) => setPlannedChapter(Number(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full border rounded-lg p-2 focus:outline-none"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
                 />
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">作者备忘与回收思路</label>
+                <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>作者备忘与回收思路</label>
                 <input
                   type="text"
                   placeholder="用于后续提醒自己或为 Agent 注入揭晓提示"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full border rounded-lg p-2 focus:outline-none"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
                 />
               </div>
             </div>
@@ -227,13 +281,19 @@ export const ForeshadowingView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg"
+                className="px-3 py-1.5 text-xs rounded-lg transition border"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  color: 'var(--text-muted)',
+                  borderColor: 'var(--border-subtle)',
+                }}
               >
                 取消
               </button>
               <button
                 type="submit"
-                className="px-4 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow-md"
+                className="px-4 py-1.5 text-xs font-medium text-white rounded-lg shadow-md transition"
+                style={{ backgroundColor: 'var(--accent-primary)' }}
               >
                 保存伏笔
               </button>

@@ -229,7 +229,7 @@ export const CharacterView: React.FC = () => {
     } else if (score >= 30) {
       return { label: '互信亲善 / 坚定盟友', color: 'text-teal-300 bg-teal-950/70 border-teal-800/60' };
     } else if (score >= 0) {
-      return { label: '萍水相逢 / 普通交情', color: 'text-slate-300 bg-slate-800/80 border-slate-700/60' };
+      return { label: '萍水相逢 / 普通交情', color: 'text-slate-400 bg-slate-500/10 border-slate-500/30' };
     } else if (score >= -40) {
       return { label: '暗中戒备 / 互有嫌隙', color: 'text-amber-400 bg-amber-950/70 border-amber-800/60' };
     } else {
@@ -238,23 +238,27 @@ export const CharacterView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 bg-slate-950 p-6 overflow-y-auto">
+    <div
+      className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto"
+      style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-main)' }}
+    >
       <div className="max-w-6xl mx-auto space-y-6">
         {/* 顶部标题与创建 */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: 'var(--border-subtle)' }}>
           <div>
-            <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <Users className="w-5 h-5 text-indigo-400" />
+            <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
+              <Users className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />
               <span>人物档案与动态状态机 (Character & SoT)</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
               左侧选择人物；右侧一体化记录「静态人设/身份」、「人际羁绊网络」与随章节推进的「物理状态机演化」。
             </p>
           </div>
 
           <button
             onClick={handleOpenAddModal}
-            className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/30 transition flex items-center gap-1.5"
+            className="px-3.5 py-2 text-white text-xs font-semibold rounded-xl shadow-md transition flex items-center gap-1.5"
+            style={{ backgroundColor: 'var(--accent-primary)' }}
           >
             <UserPlus className="w-4 h-4" />
             <span>新增登场人物</span>
@@ -265,7 +269,7 @@ export const CharacterView: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* 角色卡列表 (左 4 栏) */}
           <div className="col-span-1 md:col-span-4 space-y-2.5">
-            <div className="flex items-center justify-between text-xs text-slate-400 px-1 font-medium">
+            <div className="flex items-center justify-between text-xs px-1 font-medium" style={{ color: 'var(--text-muted)' }}>
               <span>登场人物列表 ({characters.length})</span>
             </div>
 
@@ -280,24 +284,29 @@ export const CharacterView: React.FC = () => {
                   onClick={() => setSelectedCharId(char.id)}
                   className={`p-3.5 rounded-xl border cursor-pointer transition flex flex-col gap-2 ${
                     isSelected
-                      ? 'bg-indigo-950/40 border-indigo-500/70 shadow-md ring-1 ring-indigo-500/30'
-                      : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                      ? 'shadow-md ring-1'
+                      : 'hover:border-opacity-80'
                   }`}
+                  style={{
+                    backgroundColor: isSelected ? 'var(--accent-surface)' : 'var(--bg-surface)',
+                    borderColor: isSelected ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                    color: 'var(--text-main)',
+                  }}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-slate-100">
+                      <span className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>
                         {char.name}
                       </span>
                       <span
                         className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
                           char.roleType === 'PROTAGONIST'
-                            ? 'bg-amber-950 text-amber-300 border border-amber-800/60'
+                            ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
                             : char.roleType === 'ANTAGONIST'
-                            ? 'bg-red-950 text-red-300 border border-red-800/60'
+                            ? 'bg-rose-500/15 text-rose-500 border border-rose-500/30'
                             : char.roleType === 'SUPPORTING'
-                            ? 'bg-indigo-950 text-indigo-300 border border-indigo-800/60'
-                            : 'bg-slate-800 text-slate-300'
+                            ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30'
+                            : 'bg-stone-500/15 text-stone-400 border border-stone-500/20'
                         }`}
                       >
                         {char.roleType === 'PROTAGONIST'
@@ -313,10 +322,10 @@ export const CharacterView: React.FC = () => {
                     <span
                       className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
                         latestState?.healthStatus === 'HEALTHY'
-                          ? 'text-emerald-400 bg-emerald-950/60'
+                          ? 'text-emerald-500 bg-emerald-500/10'
                           : latestState?.healthStatus === 'INJURED'
-                          ? 'text-amber-400 bg-amber-950/60'
-                          : 'text-red-400 bg-red-950/60'
+                          ? 'text-amber-500 bg-amber-500/10'
+                          : 'text-rose-500 bg-rose-500/10'
                       }`}
                     >
                       {latestState?.healthStatus || '正常'}
@@ -324,12 +333,12 @@ export const CharacterView: React.FC = () => {
                   </div>
 
                   {char.profile?.identity && (
-                    <p className="text-[11px] text-indigo-300/90 font-medium line-clamp-1 flex items-center gap-1">
-                      <span className="text-slate-500">身份:</span> {char.profile.identity}
+                    <p className="text-[11px] font-medium line-clamp-1 flex items-center gap-1" style={{ color: 'var(--accent-primary)' }}>
+                      <span style={{ color: 'var(--text-faint)' }}>身份:</span> {char.profile.identity}
                     </p>
                   )}
 
-                  <p className="text-xs text-slate-400 line-clamp-1">
+                  <p className="text-xs line-clamp-1" style={{ color: 'var(--text-muted)' }}>
                     动机：{char.profile?.coreMotivation || '暂未设置'}
                   </p>
 
@@ -337,7 +346,12 @@ export const CharacterView: React.FC = () => {
                     {char.profile?.personalityTraits?.map((t, idx) => (
                       <span
                         key={idx}
-                        className="text-[10px] px-1.5 py-0.2 rounded bg-slate-950 border border-slate-800 text-slate-300"
+                        className="text-[10px] px-1.5 py-0.2 rounded border"
+                        style={{
+                          backgroundColor: 'var(--bg-card)',
+                          borderColor: 'var(--border-subtle)',
+                          color: 'var(--text-muted)',
+                        }}
                       >
                         {t}
                       </span>
@@ -352,20 +366,23 @@ export const CharacterView: React.FC = () => {
           {selectedChar && (
             <div className="col-span-1 md:col-span-8 space-y-6">
               {/* 1. 静态人设 Profile */}
-              <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-lg">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div
+                className="rounded-2xl p-5 space-y-4 border shadow-sm"
+                style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+              >
+                <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--border-subtle)' }}>
                   <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                    <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
                       <span>{selectedChar.name}</span>
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                           selectedChar.roleType === 'PROTAGONIST'
-                            ? 'bg-amber-950 text-amber-300 border border-amber-800/60'
+                            ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
                             : selectedChar.roleType === 'ANTAGONIST'
-                            ? 'bg-red-950 text-red-300 border border-red-800/60'
+                            ? 'bg-rose-500/15 text-rose-500 border border-rose-500/30'
                             : selectedChar.roleType === 'SUPPORTING'
-                            ? 'bg-indigo-950 text-indigo-300 border border-indigo-800/60'
-                            : 'bg-slate-800 text-slate-300'
+                            ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30'
+                            : 'bg-stone-500/15 text-stone-400 border border-stone-500/20'
                         }`}
                       >
                         {selectedChar.roleType === 'PROTAGONIST'
@@ -377,7 +394,7 @@ export const CharacterView: React.FC = () => {
                           : '过客/NPC'}
                       </span>
                     </h3>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                       性别：{selectedChar.gender || '未知'}
                     </span>
                   </div>
@@ -385,7 +402,12 @@ export const CharacterView: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={handleOpenEditModal}
-                      className="px-2.5 py-1.5 text-xs text-indigo-300 hover:text-indigo-200 bg-indigo-950/60 hover:bg-indigo-900/80 border border-indigo-800/50 rounded-lg transition flex items-center gap-1.5 shadow-sm"
+                      className="px-2.5 py-1.5 text-xs rounded-lg transition flex items-center gap-1.5 shadow-sm border"
+                      style={{
+                        backgroundColor: 'var(--bg-card)',
+                        borderColor: 'var(--border-subtle)',
+                        color: 'var(--accent-primary)',
+                      }}
                       title="编辑人物档案"
                     >
                       <Edit className="w-3.5 h-3.5" />
@@ -398,7 +420,8 @@ export const CharacterView: React.FC = () => {
                           deleteCharacter(selectedChar.id);
                         }
                       }}
-                      className="p-1.5 text-slate-500 hover:text-red-400 transition rounded-lg hover:bg-slate-800"
+                      className="p-1.5 transition rounded-lg hover:text-rose-400"
+                      style={{ color: 'var(--text-faint)' }}
                       title="删除角色"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -407,13 +430,16 @@ export const CharacterView: React.FC = () => {
                 </div>
 
                 {/* 身份头衔显著条 */}
-                <div className="bg-indigo-950/30 border border-indigo-500/20 rounded-xl p-3 flex items-center justify-between text-xs">
+                <div
+                  className="rounded-xl p-3 flex items-center justify-between text-xs border"
+                  style={{ backgroundColor: 'var(--accent-surface)', borderColor: 'var(--border-subtle)' }}
+                >
                   <div className="flex items-center gap-2">
-                    <span className="text-indigo-400 font-semibold flex items-center gap-1">
+                    <span className="font-semibold flex items-center gap-1" style={{ color: 'var(--accent-primary)' }}>
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>社会身份与势力头衔：</span>
                     </span>
-                    <span className="text-slate-200 font-medium">
+                    <span className="font-medium" style={{ color: 'var(--text-main)' }}>
                       {selectedChar.profile?.identity || '暂未指定身份与头衔'}
                     </span>
                   </div>
@@ -422,61 +448,81 @@ export const CharacterView: React.FC = () => {
                 {/* 核心设定网格 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div className="space-y-1">
-                    <span className="text-slate-400 font-semibold">核心动机 (Goal / 欲望)</span>
-                    <p className="text-slate-300 leading-relaxed bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80 min-h-[48px]">
+                    <span className="font-semibold" style={{ color: 'var(--text-muted)' }}>核心动机 (Goal / 欲望)</span>
+                    <p
+                      className="leading-relaxed p-2.5 rounded-lg border min-h-[48px]"
+                      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+                    >
                       {selectedChar.profile?.coreMotivation || '暂无设定'}
                     </p>
                   </div>
 
                   <div className="space-y-1">
-                    <span className="text-red-400/90 font-semibold">
+                    <span className="text-rose-500 font-semibold">
                       致命弱点 (Fatal Flaw / 软肋)
                     </span>
-                    <p className="text-slate-300 leading-relaxed bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80 min-h-[48px]">
+                    <p
+                      className="leading-relaxed p-2.5 rounded-lg border min-h-[48px]"
+                      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+                    >
                       {selectedChar.profile?.fatalFlaw || '暂无设定'}
                     </p>
                   </div>
 
                   <div className="space-y-1">
-                    <span className="text-slate-400 font-semibold">语言风格与口癖 (Voice & Tone)</span>
-                    <p className="text-slate-300 leading-relaxed bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80 min-h-[48px]">
+                    <span className="font-semibold" style={{ color: 'var(--text-muted)' }}>语言风格与口癖 (Voice & Tone)</span>
+                    <p
+                      className="leading-relaxed p-2.5 rounded-lg border min-h-[48px]"
+                      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+                    >
                       {selectedChar.profile?.voiceAndTone || '暂无设定'}
                     </p>
                   </div>
 
                   <div className="space-y-1">
-                    <span className="text-slate-400 font-semibold">外貌与标志物 (Appearance)</span>
-                    <p className="text-slate-300 leading-relaxed bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80 min-h-[48px]">
+                    <span className="font-semibold" style={{ color: 'var(--text-muted)' }}>外貌与标志物 (Appearance)</span>
+                    <p
+                      className="leading-relaxed p-2.5 rounded-lg border min-h-[48px]"
+                      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+                    >
                       {selectedChar.profile?.appearance || '暂无设定'}
                     </p>
                   </div>
 
                   {/* 人物生平前史背景 */}
                   <div className="col-span-1 sm:col-span-2 space-y-1">
-                    <span className="text-slate-400 font-semibold flex items-center gap-1.5">
-                      <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
+                    <span className="font-semibold flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
+                      <BookOpen className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
                       <span>生平背景与身世前史 (Background & Lore)</span>
                     </span>
-                    <p className="text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
+                    <p
+                      className="leading-relaxed p-3 rounded-lg border"
+                      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+                    >
                       {selectedChar.background || '暂未记录生平身世背景'}
                     </p>
                   </div>
 
                   {/* 性格特质标签 */}
                   <div className="col-span-1 sm:col-span-2 space-y-1.5">
-                    <span className="text-slate-400 font-semibold">性格特质标签 (防 OOC 基线)</span>
+                    <span className="font-semibold" style={{ color: 'var(--text-muted)' }}>性格特质标签 (防 OOC 基线)</span>
                     <div className="flex flex-wrap gap-1.5">
                       {selectedChar.profile?.personalityTraits && selectedChar.profile.personalityTraits.length > 0 ? (
                         selectedChar.profile.personalityTraits.map((t, idx) => (
                           <span
                             key={idx}
-                            className="px-2 py-0.5 rounded-md bg-slate-800 text-indigo-300 border border-slate-700 text-xs"
+                            className="px-2 py-0.5 rounded-md border text-xs"
+                            style={{
+                              backgroundColor: 'var(--bg-card)',
+                              borderColor: 'var(--border-subtle)',
+                              color: 'var(--accent-primary)',
+                            }}
                           >
                             {t}
                           </span>
                         ))
                       ) : (
-                        <span className="text-slate-500 text-xs italic">暂未设置性格特质标签</span>
+                        <span className="text-xs italic" style={{ color: 'var(--text-faint)' }}>暂未设置性格特质标签</span>
                       )}
                     </div>
                   </div>
@@ -484,18 +530,26 @@ export const CharacterView: React.FC = () => {
               </div>
 
               {/* 2. 与外界人物羁绊网络 (Character Relationships) */}
-              <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-lg">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div
+                className="rounded-2xl p-5 space-y-4 border shadow-sm"
+                style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+              >
+                <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--border-subtle)' }}>
                   <div className="flex items-center gap-2">
                     <HeartHandshake className="w-4 h-4 text-pink-400" />
-                    <h3 className="text-sm font-bold text-slate-100">
+                    <h3 className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>
                       与外界人物羁绊网络 ({relations.length})
                     </h3>
                   </div>
 
                   <button
                     onClick={handleOpenAddRelation}
-                    className="px-2.5 py-1 bg-pink-600/20 hover:bg-pink-600/30 text-pink-300 border border-pink-500/40 text-xs rounded-lg transition flex items-center gap-1"
+                    className="px-2.5 py-1 text-xs rounded-lg transition flex items-center gap-1 border"
+                    style={{
+                      backgroundColor: 'var(--accent-surface)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--accent-primary)',
+                    }}
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>添加人物羁绊</span>
@@ -504,13 +558,17 @@ export const CharacterView: React.FC = () => {
 
                 <div className="space-y-2.5">
                   {relations.length === 0 ? (
-                    <div className="text-center py-6 border border-dashed border-slate-800 rounded-xl space-y-2">
-                      <p className="text-xs text-slate-500">
+                    <div
+                      className="text-center py-6 border border-dashed rounded-xl space-y-2"
+                      style={{ borderColor: 'var(--border-subtle)' }}
+                    >
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                         【{selectedChar.name}】暂未与其他角色建立人际羁绊网络
                       </p>
                       <button
                         onClick={handleOpenAddRelation}
-                        className="text-xs text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center gap-1"
+                        className="text-xs font-medium inline-flex items-center gap-1"
+                        style={{ color: 'var(--accent-primary)' }}
                       >
                         <Plus className="w-3.5 h-3.5" /> 立即记录第一条羁绊
                       </button>
@@ -527,15 +585,26 @@ export const CharacterView: React.FC = () => {
                       return (
                         <div
                           key={rel.id}
-                          className="bg-slate-950 border border-slate-800/90 rounded-xl p-3.5 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-700 transition"
+                          className="rounded-xl p-3.5 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 border transition"
+                          style={{
+                            backgroundColor: 'var(--bg-card)',
+                            borderColor: 'var(--border-subtle)',
+                          }}
                         >
                           <div className="space-y-1.5 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-bold text-slate-100 text-sm">
+                              <span className="font-bold text-sm" style={{ color: 'var(--text-main)' }}>
                                 {otherChar?.name || '未知角色'}
                               </span>
                               {otherChar?.roleType && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">
+                                <span
+                                  className="text-[10px] px-1.5 py-0.5 rounded border"
+                                  style={{
+                                    backgroundColor: 'var(--bg-surface)',
+                                    borderColor: 'var(--border-subtle)',
+                                    color: 'var(--text-muted)',
+                                  }}
+                                >
                                   {otherChar.roleType === 'PROTAGONIST'
                                     ? '主角'
                                     : otherChar.roleType === 'ANTAGONIST'
@@ -543,7 +612,14 @@ export const CharacterView: React.FC = () => {
                                     : '配角'}
                                 </span>
                               )}
-                              <span className="text-indigo-300 bg-indigo-950/60 border border-indigo-800/50 px-2 py-0.5 rounded text-[11px] font-medium">
+                              <span
+                                className="px-2 py-0.5 rounded text-[11px] font-medium border"
+                                style={{
+                                  backgroundColor: 'var(--accent-surface)',
+                                  borderColor: 'var(--border-subtle)',
+                                  color: 'var(--accent-primary)',
+                                }}
+                              >
                                 【{rel.relationType}】
                               </span>
                               <span
@@ -553,25 +629,29 @@ export const CharacterView: React.FC = () => {
                               </span>
                             </div>
 
-                            <p className="text-slate-400 text-xs leading-relaxed">
+                            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                               {rel.description || '暂无详细背景演变描述'}
                             </p>
                           </div>
 
-                          <div className="flex items-center gap-3 sm:border-l sm:border-slate-800 sm:pl-3 justify-between sm:justify-end">
+                          <div
+                            className="flex items-center gap-3 sm:border-l sm:pl-3 justify-between sm:justify-end"
+                            style={{ borderColor: 'var(--border-subtle)' }}
+                          >
                             <div className="text-right">
                               <span
                                 className={`font-mono text-sm font-bold block ${
                                   rel.affinityScore > 0
-                                    ? 'text-emerald-400'
+                                    ? 'text-emerald-500'
                                     : rel.affinityScore < 0
-                                    ? 'text-red-400'
-                                    : 'text-slate-400'
+                                    ? 'text-rose-500'
+                                    : ''
                                 }`}
+                                style={rel.affinityScore === 0 ? { color: 'var(--text-muted)' } : undefined}
                               >
                                 {rel.affinityScore > 0 ? `+${rel.affinityScore}` : rel.affinityScore}
                               </span>
-                              <span className="text-[10px] text-slate-500">
+                              <span className="text-[10px]" style={{ color: 'var(--text-faint)' }}>
                                 羁绊度 (-100~100)
                               </span>
                             </div>
@@ -579,7 +659,8 @@ export const CharacterView: React.FC = () => {
                             <div className="flex items-center gap-1">
                               <button
                                 onClick={() => handleOpenEditRelation(rel)}
-                                className="p-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded transition"
+                                className="p-1 rounded transition hover:text-indigo-400"
+                                style={{ color: 'var(--text-muted)' }}
                                 title="编辑羁绊"
                               >
                                 <Edit className="w-3.5 h-3.5" />
@@ -590,7 +671,8 @@ export const CharacterView: React.FC = () => {
                                     deleteCharacterRelation(rel.id);
                                   }
                                 }}
-                                className="p-1 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded transition"
+                                className="p-1 rounded transition hover:text-rose-400"
+                                style={{ color: 'var(--text-faint)' }}
                                 title="删除羁绊"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -605,18 +687,26 @@ export const CharacterView: React.FC = () => {
               </div>
 
               {/* 3. 动态状态演进机 (Timeline State Machine) */}
-              <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-lg">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div
+                className="rounded-2xl p-5 space-y-4 border shadow-sm"
+                style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+              >
+                <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--border-subtle)' }}>
                   <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-amber-400" />
-                    <h3 className="text-sm font-bold text-slate-100">
+                    <Activity className="w-4 h-4 text-amber-500" />
+                    <h3 className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>
                       时间线动态状态机 (随着剧情推进的物理状态记录)
                     </h3>
                   </div>
 
                   <button
                     onClick={() => setShowAddStateModal(true)}
-                    className="px-2.5 py-1 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/40 text-xs rounded-lg transition flex items-center gap-1"
+                    className="px-2.5 py-1 text-xs rounded-lg transition flex items-center gap-1 border"
+                    style={{
+                      backgroundColor: 'var(--accent-surface)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--accent-primary)',
+                    }}
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>记录状态跃迁</span>
@@ -625,38 +715,49 @@ export const CharacterView: React.FC = () => {
 
                 <div className="space-y-3">
                   {charStates.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic py-4 text-center">
+                    <p className="text-xs italic py-4 text-center" style={{ color: 'var(--text-muted)' }}>
                       该角色尚无时间线跃迁记录，随着剧情章节推进，可在此记录其生理损伤、战力境界与随身机缘。
                     </p>
                   ) : (
                     charStates.map((st) => (
                       <div
                         key={st.id}
-                        className="bg-slate-950 border border-slate-800/90 rounded-xl p-3.5 text-xs space-y-2 relative"
+                        className="rounded-xl p-3.5 text-xs space-y-2 relative border"
+                        style={{
+                          backgroundColor: 'var(--bg-card)',
+                          borderColor: 'var(--border-subtle)',
+                        }}
                       >
                         <div className="flex items-center justify-between flex-wrap gap-2">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-indigo-300 font-semibold">
+                            <span
+                              className="text-[10px] px-2 py-0.5 rounded font-semibold border"
+                              style={{
+                                backgroundColor: 'var(--bg-surface)',
+                                borderColor: 'var(--border-subtle)',
+                                color: 'var(--accent-primary)',
+                              }}
+                            >
                               第 {st.chapterIndex || '?'} 章
                             </span>
-                            <span className="font-semibold text-slate-200 flex items-center gap-1">
-                              <MapPin className="w-3 h-3 text-slate-500" />
+                            <span className="font-semibold flex items-center gap-1" style={{ color: 'var(--text-main)' }}>
+                              <MapPin className="w-3 h-3" style={{ color: 'var(--text-faint)' }} />
                               {st.location}
                             </span>
-                            <span className="text-slate-500">•</span>
-                            <span className="text-amber-300 flex items-center gap-1">
-                              <Flame className="w-3 h-3 text-amber-400" />
+                            <span style={{ color: 'var(--text-faint)' }}>•</span>
+                            <span className="text-amber-500 flex items-center gap-1 font-medium">
+                              <Flame className="w-3 h-3 text-amber-500" />
                               {st.combatPower}
                             </span>
                           </div>
 
                           <span
-                            className={`text-[10px] px-2 py-0.5 rounded font-semibold ${
+                            className={`text-[10px] px-2 py-0.5 rounded font-semibold border ${
                               st.healthStatus === 'HEALTHY'
-                                ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/60'
+                                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
                                 : st.healthStatus === 'INJURED'
-                                ? 'bg-amber-950 text-amber-300 border border-amber-800/60'
-                                : 'bg-red-950 text-red-300 border border-red-800/60'
+                                ? 'bg-amber-500/10 text-amber-500 border-amber-500/30'
+                                : 'bg-rose-500/10 text-rose-500 border-rose-500/30'
                             }`}
                           >
                             {st.healthStatus === 'HEALTHY'
@@ -669,7 +770,7 @@ export const CharacterView: React.FC = () => {
                           </span>
                         </div>
 
-                        <p className="text-slate-300 leading-relaxed">
+                        <p className="leading-relaxed" style={{ color: 'var(--text-main)' }}>
                           {st.stateSummary}
                         </p>
 
@@ -678,7 +779,12 @@ export const CharacterView: React.FC = () => {
                             {st.statusTags.map((tag, i) => (
                               <span
                                 key={i}
-                                className="text-[10px] px-2 py-0.5 rounded bg-red-950/40 border border-red-800/40 text-red-300"
+                                className="text-[10px] px-2 py-0.5 rounded border"
+                                style={{
+                                  backgroundColor: 'var(--accent-surface)',
+                                  borderColor: 'var(--border-subtle)',
+                                  color: 'var(--accent-primary)',
+                                }}
                               >
                                 {tag}
                               </span>
@@ -700,7 +806,8 @@ export const CharacterView: React.FC = () => {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <form
             onSubmit={handleCreateCharacter}
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+            className="rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto border"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-strong)', color: 'var(--text-main)' }}
           >
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
@@ -725,7 +832,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="例如：苏青瑶"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -734,7 +841,7 @@ export const CharacterView: React.FC = () => {
                 <select
                   value={roleType}
                   onChange={(e) => setRoleType(e.target.value as RoleType)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 >
                   <option value="PROTAGONIST">主角 (Protagonist)</option>
                   <option value="ANTAGONIST">反派 (Antagonist)</option>
@@ -750,7 +857,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="男 / 女 / 未知"
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -761,7 +868,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="例如：太虚剑宗真传弟子 / 魔宗少主"
                   value={identity}
                   onChange={(e) => setIdentity(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -774,7 +881,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="简述其出身、过往重大事件或隐秘前史..."
                   value={background}
                   onChange={(e) => setBackground(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -787,7 +894,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="例如：极度谨慎, 隐忍坚毅, 杀伐果断"
                   value={traits}
                   onChange={(e) => setTraits(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -798,7 +905,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="例如：追查灭族真相，求存长生"
                   value={motivation}
                   onChange={(e) => setMotivation(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -809,7 +916,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="例如：过度多疑，极难信任同伴"
                   value={flaw}
                   onChange={(e) => setFlaw(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -820,7 +927,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="例如：惜字如金，少用反问，面对强敌不放狠话"
                   value={voice}
                   onChange={(e) => setVoice(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -831,7 +938,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="例如：青灰道袍，眉眼如刀削，左手食指常年握剑老茧"
                   value={appearance}
                   onChange={(e) => setAppearance(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
             </div>
@@ -840,7 +947,8 @@ export const CharacterView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="px-3.5 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg"
+                className="px-3.5 py-1.5 text-xs rounded-lg border transition cursor-pointer hover:opacity-80"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
               >
                 取消
               </button>
@@ -860,7 +968,8 @@ export const CharacterView: React.FC = () => {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <form
             onSubmit={handleUpdateCharacter}
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+            className="rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto border"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-strong)', color: 'var(--text-main)' }}
           >
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
@@ -884,7 +993,7 @@ export const CharacterView: React.FC = () => {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -893,7 +1002,7 @@ export const CharacterView: React.FC = () => {
                 <select
                   value={roleType}
                   onChange={(e) => setRoleType(e.target.value as RoleType)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 >
                   <option value="PROTAGONIST">主角 (Protagonist)</option>
                   <option value="ANTAGONIST">反派 (Antagonist)</option>
@@ -908,7 +1017,7 @@ export const CharacterView: React.FC = () => {
                   type="text"
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -919,7 +1028,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="例如：太虚剑宗外门杂役弟子 -> 绝剑峰真传剑修"
                   value={identity}
                   onChange={(e) => setIdentity(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -932,7 +1041,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="人物前史、灭族来历或隐藏身世..."
                   value={background}
                   onChange={(e) => setBackground(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -944,7 +1053,7 @@ export const CharacterView: React.FC = () => {
                   type="text"
                   value={traits}
                   onChange={(e) => setTraits(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -954,7 +1063,7 @@ export const CharacterView: React.FC = () => {
                   type="text"
                   value={motivation}
                   onChange={(e) => setMotivation(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -964,7 +1073,7 @@ export const CharacterView: React.FC = () => {
                   type="text"
                   value={flaw}
                   onChange={(e) => setFlaw(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -974,7 +1083,7 @@ export const CharacterView: React.FC = () => {
                   type="text"
                   value={voice}
                   onChange={(e) => setVoice(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -984,7 +1093,7 @@ export const CharacterView: React.FC = () => {
                   type="text"
                   value={appearance}
                   onChange={(e) => setAppearance(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
             </div>
@@ -993,7 +1102,8 @@ export const CharacterView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowEditModal(false)}
-                className="px-3.5 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg"
+                className="px-3.5 py-1.5 text-xs rounded-lg border transition cursor-pointer hover:opacity-80"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
               >
                 取消
               </button>
@@ -1013,7 +1123,8 @@ export const CharacterView: React.FC = () => {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <form
             onSubmit={handleSaveRelation}
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4"
+            className="rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-strong)', color: 'var(--text-main)' }}
           >
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
@@ -1040,7 +1151,7 @@ export const CharacterView: React.FC = () => {
                   required
                   value={targetCharId}
                   onChange={(e) => setTargetCharId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 >
                   {characters
                     .filter((c) => c.id !== selectedChar?.id)
@@ -1060,7 +1171,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="例如：同门同僚 / 互信盟友、生死死敌、师徒..."
                   value={relationType}
                   onChange={(e) => setRelationType(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {['同门同僚 / 互信盟友', '生死死敌 / 宿命仇杀', '师徒传承', '道侣眷侣', '同门暗竞', '父女 / 掌教与弟子', '主仆部属'].map((preset) => (
@@ -1068,7 +1179,12 @@ export const CharacterView: React.FC = () => {
                       key={preset}
                       type="button"
                       onClick={() => setRelationType(preset)}
-                      className="text-[10px] px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-400 hover:text-indigo-300 hover:border-indigo-500/40"
+                      className="text-[10px] px-1.5 py-0.5 rounded border transition"
+                      style={{
+                        backgroundColor: 'var(--bg-card)',
+                        borderColor: 'var(--border-subtle)',
+                        color: 'var(--text-muted)',
+                      }}
                     >
                       {preset}
                     </button>
@@ -1119,7 +1235,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="描述两人是如何结识的、经历过何种事件、信任或仇恨的底层逻辑..."
                   value={relationDesc}
                   onChange={(e) => setRelationDesc(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
             </div>
@@ -1128,7 +1244,8 @@ export const CharacterView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowRelationModal(false)}
-                className="px-3.5 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg"
+                className="px-3.5 py-1.5 text-xs rounded-lg border transition cursor-pointer hover:opacity-80"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
               >
                 取消
               </button>
@@ -1148,7 +1265,8 @@ export const CharacterView: React.FC = () => {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <form
             onSubmit={handleAddState}
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4"
+            className="rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-strong)', color: 'var(--text-main)' }}
           >
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
@@ -1176,7 +1294,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="例如：1 表示第1章，12 表示第12章"
                   value={stateChapterIndex}
                   onChange={(e) => setStateChapterIndex(parseInt(e.target.value) || 1)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
                 <span className="text-[10px] text-slate-500 mt-0.5 block">
                   创作工作台会根据作者当前所编辑的章节自动沿时间线回溯角色此快照。
@@ -1190,7 +1308,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="例如：坠星崖底古溶洞"
                   value={stateLoc}
                   onChange={(e) => setStateLoc(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -1201,7 +1319,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="例如：筑基后期（真元透支）"
                   value={statePower}
                   onChange={(e) => setStatePower(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -1210,7 +1328,7 @@ export const CharacterView: React.FC = () => {
                 <select
                   value={stateHealth}
                   onChange={(e) => setStateHealth(e.target.value as any)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 >
                   <option value="HEALTHY">良好 (Healthy)</option>
                   <option value="INJURED">负伤 (Injured)</option>
@@ -1226,7 +1344,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="左肩贯穿伤, 获得残片, 中毒"
                   value={stateTags}
                   onChange={(e) => setStateTags(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
@@ -1238,7 +1356,7 @@ export const CharacterView: React.FC = () => {
                   placeholder="简述本段剧情如何改变了该角色的生理或心理状态..."
                   value={stateSummary}
                   onChange={(e) => setStateSummary(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 text-xs border outline-none focus:ring-1 focus:ring-indigo-500/50" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
             </div>
@@ -1247,7 +1365,8 @@ export const CharacterView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowAddStateModal(false)}
-                className="px-3.5 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg"
+                className="px-3.5 py-1.5 text-xs rounded-lg border transition cursor-pointer hover:opacity-80"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
               >
                 取消
               </button>

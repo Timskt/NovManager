@@ -133,21 +133,27 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-6 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-indigo-500/50 rounded-2xl max-w-4xl w-full h-[90vh] shadow-2xl flex flex-col overflow-hidden">
+      <div
+        className="rounded-2xl max-w-4xl w-full h-[90vh] shadow-2xl flex flex-col overflow-hidden border"
+        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+      >
         {/* 头部标题与步骤指示 */}
-        <div className="px-6 py-4 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between">
+        <div
+          className="px-6 py-4 border-b flex items-center justify-between"
+          style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}
+        >
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-gradient-to-tr from-amber-600 to-indigo-600 text-white shadow-lg shadow-indigo-950">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-100 flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
                 <span>AI 小说创世工坊 (Novel Architect)</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-950 border border-indigo-700/60 text-indigo-300 font-normal">
                   从灵感到完整结构化作品
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 多轮脑暴 ➔ 自动推演世界观硬约束与人物状态机 ➔ 规划第一卷前3章三幕大纲 ➔ 一键实例化新书。
               </p>
             </div>
@@ -155,7 +161,8 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+            className="p-1.5 rounded-lg transition hover:opacity-80 cursor-pointer"
+            style={{ color: 'var(--text-muted)' }}
           >
             <X className="w-5 h-5" />
           </button>
@@ -166,7 +173,7 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
           <div className="flex-1 flex flex-col overflow-hidden p-6 gap-4">
             {/* 灵感快捷预设 */}
             <div className="space-y-1.5">
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
                 选择热门反套路灵感种子快速起步：
               </span>
               <div className="flex flex-wrap gap-2">
@@ -174,7 +181,8 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
                   <button
                     key={idx}
                     onClick={() => handleSendMessage(p.prompt)}
-                    className="px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-850 border border-slate-800 hover:border-indigo-500/50 text-slate-300 text-xs transition flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded-xl border text-xs transition flex items-center gap-1.5 cursor-pointer hover:border-indigo-500/50"
+                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                   >
                     <span>{p.label}</span>
                   </button>
@@ -183,7 +191,10 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
             </div>
 
             {/* 对话历史滚屏区 */}
-            <div className="flex-1 overflow-y-auto space-y-3 bg-slate-950/70 border border-slate-800 rounded-2xl p-4 text-xs font-serif leading-relaxed">
+            <div
+              className="flex-1 overflow-y-auto space-y-3 border rounded-2xl p-4 text-xs font-serif leading-relaxed"
+              style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}
+            >
               {chatMessages.map((msg, idx) => (
                 <div
                   key={idx}
@@ -201,8 +212,13 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
                     className={`max-w-xl p-3.5 rounded-2xl whitespace-pre-wrap ${
                       msg.role === 'user'
                         ? 'bg-indigo-600 text-white rounded-tr-none'
-                        : 'bg-slate-900 border border-slate-800/90 text-slate-200 rounded-tl-none shadow-sm'
+                        : 'border rounded-tl-none shadow-sm'
                     }`}
+                    style={
+                      msg.role !== 'user'
+                        ? { backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }
+                        : undefined
+                    }
                   >
                     {msg.content}
                   </div>
@@ -228,13 +244,15 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleSendMessage();
                   }}
-                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  className="flex-1 rounded-xl px-4 py-2.5 text-xs border focus:outline-none focus:border-indigo-500"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
 
                 <button
                   onClick={() => handleSendMessage()}
                   disabled={!userInput.trim() || isChatting}
-                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-4 py-2.5 border text-xs font-semibold rounded-xl transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer hover:opacity-80"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>探讨</span>
@@ -242,7 +260,7 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
 
                 <button
                   onClick={() => handleStartGenerate()}
-                  className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-amber-600 hover:from-indigo-500 hover:to-amber-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-950/80 transition flex items-center gap-2 flex-shrink-0"
+                  className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-amber-600 hover:from-indigo-500 hover:to-amber-500 text-white text-xs font-bold rounded-xl shadow-lg transition flex items-center gap-2 flex-shrink-0 cursor-pointer"
                 >
                   <Wand2 className="w-4 h-4" />
                   <span>一键生成全套结构化大纲骨架</span>
@@ -260,22 +278,25 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
             </div>
 
             <div className="text-center space-y-1">
-              <h3 className="text-base font-bold text-slate-100">
+              <h3 className="text-base font-bold" style={{ color: 'var(--text-main)' }}>
                 AI 正在推演并铸造小说结构化骨架...
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 正在生成严密的战力铁律、角色致命弱点、初期状态机与前3章三幕式对抗节拍
               </p>
             </div>
 
             {/* 执行日志流 */}
-            <div className="w-full max-w-md bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2.5 max-h-64 overflow-y-auto text-xs">
+            <div
+              className="w-full max-w-md border rounded-xl p-4 space-y-2.5 max-h-64 overflow-y-auto text-xs"
+              style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}
+            >
               {progressLogs.map((log, i) => (
                 <div key={i} className="flex items-start gap-2 animate-in fade-in">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-semibold text-slate-200">{log.step}</span>
-                    <p className="text-[11px] text-slate-400">{log.detail}</p>
+                    <span className="font-semibold" style={{ color: 'var(--text-main)' }}>{log.step}</span>
+                    <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{log.detail}</p>
                   </div>
                 </div>
               ))}
@@ -287,55 +308,66 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
         {step === 'review' && generatedFramework && (
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* 顶部分类导航 */}
-            <div className="px-6 py-3 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs overflow-x-auto">
+            <div
+              className="px-6 py-3 border-b flex items-center justify-between gap-4"
+              style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}
+            >
+              <div
+                className="flex items-center gap-1.5 p-1 rounded-xl border text-xs overflow-x-auto"
+                style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+              >
                 <button
                   onClick={() => setActiveReviewTab('meta')}
-                  className={`px-3 py-1.5 rounded-lg transition ${
+                  className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
                     activeReviewTab === 'meta'
                       ? 'bg-indigo-600 text-white font-semibold'
-                      : 'text-slate-400 hover:text-slate-200'
+                      : 'hover:opacity-80'
                   }`}
+                  style={activeReviewTab !== 'meta' ? { color: 'var(--text-muted)' } : undefined}
                 >
                   📖 基础档案与风格
                 </button>
                 <button
                   onClick={() => setActiveReviewTab('rules')}
-                  className={`px-3 py-1.5 rounded-lg transition ${
+                  className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
                     activeReviewTab === 'rules'
                       ? 'bg-indigo-600 text-white font-semibold'
-                      : 'text-slate-400 hover:text-slate-200'
+                      : 'hover:opacity-80'
                   }`}
+                  style={activeReviewTab !== 'rules' ? { color: 'var(--text-muted)' } : undefined}
                 >
                   ⚖️ 战力与世界法则 ({generatedFramework.worldSettings.length})
                 </button>
                 <button
                   onClick={() => setActiveReviewTab('characters')}
-                  className={`px-3 py-1.5 rounded-lg transition ${
+                  className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
                     activeReviewTab === 'characters'
                       ? 'bg-indigo-600 text-white font-semibold'
-                      : 'text-slate-400 hover:text-slate-200'
+                      : 'hover:opacity-80'
                   }`}
+                  style={activeReviewTab !== 'characters' ? { color: 'var(--text-muted)' } : undefined}
                 >
                   🎭 人设与状态机 ({generatedFramework.characters.length})
                 </button>
                 <button
                   onClick={() => setActiveReviewTab('outlines')}
-                  className={`px-3 py-1.5 rounded-lg transition ${
+                  className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
                     activeReviewTab === 'outlines'
                       ? 'bg-indigo-600 text-white font-semibold'
-                      : 'text-slate-400 hover:text-slate-200'
+                      : 'hover:opacity-80'
                   }`}
+                  style={activeReviewTab !== 'outlines' ? { color: 'var(--text-muted)' } : undefined}
                 >
                   🗺️ 第一卷与前3章细纲
                 </button>
                 <button
                   onClick={() => setActiveReviewTab('foreshadowing')}
-                  className={`px-3 py-1.5 rounded-lg transition ${
+                  className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
                     activeReviewTab === 'foreshadowing'
                       ? 'bg-indigo-600 text-white font-semibold'
-                      : 'text-slate-400 hover:text-slate-200'
+                      : 'hover:opacity-80'
                   }`}
+                  style={activeReviewTab !== 'foreshadowing' ? { color: 'var(--text-muted)' } : undefined}
                 >
                   ⚡ 初始伏笔 ({generatedFramework.foreshadowings.length})
                 </button>
@@ -344,7 +376,8 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setStep('brainstorm')}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl transition flex items-center gap-1"
+                  className="px-3 py-1.5 border text-xs rounded-xl transition flex items-center gap-1 cursor-pointer hover:opacity-80"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>微调探讨</span>
@@ -352,7 +385,7 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
 
                 <button
                   onClick={handleConfirmAndLaunch}
-                  className="px-4 py-1.5 bg-gradient-to-r from-emerald-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-950 transition flex items-center gap-1.5"
+                  className="px-4 py-1.5 bg-gradient-to-r from-emerald-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <span>确认创建并进入新书创作</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -361,12 +394,15 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
             </div>
 
             {/* 详细内容面板 */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4" style={{ backgroundColor: 'var(--bg-canvas)' }}>
               {activeReviewTab === 'meta' && (
                 <div className="space-y-4 max-w-2xl mx-auto">
-                  <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-3">
+                  <div
+                    className="border rounded-2xl p-5 space-y-3"
+                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                  >
                     <div className="flex items-center justify-between">
-                      <span className="text-xl font-bold text-slate-100 font-serif">
+                      <span className="text-xl font-bold font-serif" style={{ color: 'var(--text-main)' }}>
                         《{generatedFramework.title}》
                       </span>
                       <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-950 border border-indigo-700/60 text-indigo-300">
@@ -380,31 +416,40 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
                       </p>
                     )}
 
-                    <div className="pt-2 border-t border-slate-900 space-y-2 text-xs">
+                    <div className="pt-2 border-t space-y-2 text-xs" style={{ borderColor: 'var(--border-subtle)' }}>
                       <div>
-                        <span className="text-slate-500 font-semibold block mb-0.5">一句话核心故事梗概 (Logline)：</span>
-                        <p className="text-slate-200 leading-relaxed bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                        <span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>一句话核心故事梗概 (Logline)：</span>
+                        <p
+                          className="leading-relaxed p-3 rounded-xl border"
+                          style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+                        >
                           {generatedFramework.logline}
                         </p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 pt-2">
-                        <div className="bg-slate-900/40 p-2.5 rounded-xl border border-slate-800/80">
-                          <span className="text-slate-500 text-[11px] block">预期篇幅字数</span>
-                          <span className="text-slate-200 font-mono font-bold text-sm">
+                        <div
+                          className="p-2.5 rounded-xl border"
+                          style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+                        >
+                          <span className="text-[11px] block" style={{ color: 'var(--text-muted)' }}>预期篇幅字数</span>
+                          <span className="font-mono font-bold text-sm" style={{ color: 'var(--text-main)' }}>
                             {generatedFramework.targetWordCount.toLocaleString()} 字
                           </span>
                         </div>
-                        <div className="bg-slate-900/40 p-2.5 rounded-xl border border-slate-800/80">
-                          <span className="text-slate-500 text-[11px] block">叙事语调 (Tone)</span>
-                          <span className="text-slate-300 text-xs">
+                        <div
+                          className="p-2.5 rounded-xl border"
+                          style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+                        >
+                          <span className="text-[11px] block" style={{ color: 'var(--text-muted)' }}>叙事语调 (Tone)</span>
+                          <span className="text-xs" style={{ color: 'var(--text-main)' }}>
                             {generatedFramework.styleGuide.tone}
                           </span>
                         </div>
                       </div>
 
                       <div className="pt-2">
-                        <span className="text-slate-500 text-[11px] block mb-1">违禁成语库（防止网文水词与浮夸感）：</span>
+                        <span className="text-[11px] block mb-1" style={{ color: 'var(--text-muted)' }}>违禁成语库（防止网文水词与浮夸感）：</span>
                         <div className="flex flex-wrap gap-1.5">
                           {generatedFramework.styleGuide.forbiddenPhrases.map((phrase, i) => (
                             <span key={i} className="text-[10px] px-2 py-0.5 rounded bg-red-950/40 border border-red-800/40 text-red-300">
@@ -423,23 +468,34 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
                   {generatedFramework.worldSettings.map((rule, idx) => (
                     <div
                       key={idx}
-                      className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-2.5"
+                      className="border rounded-2xl p-4 space-y-2.5"
+                      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-100 text-sm font-serif flex items-center gap-1.5">
+                        <span className="font-bold text-sm font-serif flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
                           <Shield className="w-4 h-4 text-indigo-400" />
                           <span>{rule.name}</span>
                         </span>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-slate-900 text-indigo-300 border border-slate-800">
+                        <span
+                          className="text-[10px] px-2 py-0.5 rounded border text-indigo-400"
+                          style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+                        >
                           {rule.category}
                         </span>
                       </div>
-                      <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-850 text-xs text-slate-300 whitespace-pre-wrap leading-relaxed">
+                      <div
+                        className="p-3 rounded-xl border text-xs whitespace-pre-wrap leading-relaxed"
+                        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+                      >
                         {rule.content}
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {rule.tags.map((t, i) => (
-                          <span key={i} className="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">
+                          <span
+                            key={i}
+                            className="text-[9px] px-1.5 py-0.2 rounded border"
+                            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+                          >
                             {t}
                           </span>
                         ))}
@@ -454,17 +510,18 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
                   {generatedFramework.characters.map((cItem, idx) => (
                     <div
                       key={idx}
-                      className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3"
+                      className="border rounded-2xl p-4 space-y-3"
+                      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
                     >
-                      <div className="flex items-center justify-between border-b border-slate-900 pb-2">
+                      <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: 'var(--border-subtle)' }}>
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-slate-100 font-serif">
+                          <span className="font-bold text-sm font-serif" style={{ color: 'var(--text-main)' }}>
                             {cItem.character.name}
                           </span>
                           <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 font-semibold border border-indigo-800/60">
                             {cItem.character.roleType}
                           </span>
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                             性别：{cItem.character.gender}
                           </span>
                         </div>
@@ -474,23 +531,32 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                        <div className="bg-slate-900/50 p-2.5 rounded-xl border border-slate-850">
-                          <span className="text-slate-500 text-[10px] block font-semibold">核心动机</span>
-                          <p className="text-slate-300 mt-0.5">{cItem.character.profile.coreMotivation}</p>
+                        <div
+                          className="p-2.5 rounded-xl border"
+                          style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+                        >
+                          <span className="text-[10px] block font-semibold" style={{ color: 'var(--text-muted)' }}>核心动机</span>
+                          <p className="mt-0.5" style={{ color: 'var(--text-main)' }}>{cItem.character.profile.coreMotivation}</p>
                         </div>
-                        <div className="bg-slate-900/50 p-2.5 rounded-xl border border-slate-850">
+                        <div
+                          className="p-2.5 rounded-xl border"
+                          style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+                        >
                           <span className="text-red-400/80 text-[10px] block font-semibold">致命缺陷</span>
-                          <p className="text-slate-300 mt-0.5">{cItem.character.profile.fatalFlaw}</p>
+                          <p className="mt-0.5" style={{ color: 'var(--text-main)' }}>{cItem.character.profile.fatalFlaw}</p>
                         </div>
-                        <div className="bg-slate-900/50 p-2.5 rounded-xl border border-slate-850">
-                          <span className="text-slate-500 text-[10px] block font-semibold">语言语气口癖</span>
-                          <p className="text-slate-300 mt-0.5">{cItem.character.profile.voiceAndTone}</p>
+                        <div
+                          className="p-2.5 rounded-xl border"
+                          style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+                        >
+                          <span className="text-[10px] block font-semibold" style={{ color: 'var(--text-muted)' }}>语言语气口癖</span>
+                          <p className="mt-0.5" style={{ color: 'var(--text-main)' }}>{cItem.character.profile.voiceAndTone}</p>
                         </div>
                       </div>
 
                       {cItem.initialState.statusTags.length > 0 && (
                         <div className="flex items-center gap-1.5 pt-1">
-                          <span className="text-[10px] text-slate-500">初始状态标签：</span>
+                          <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>初始状态标签：</span>
                           {cItem.initialState.statusTags.map((tag, i) => (
                             <span key={i} className="text-[9px] px-1.5 py-0.2 rounded bg-red-950/60 text-red-300 border border-red-800/40">
                               {tag}
@@ -506,9 +572,13 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
               {activeReviewTab === 'outlines' && (
                 <div className="space-y-4 max-w-4xl mx-auto">
                   {generatedFramework.volumes.map((vol, vIdx) => (
-                    <div key={vIdx} className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
-                      <div className="flex items-center justify-between border-b border-slate-900 pb-2">
-                        <span className="font-bold text-sm text-slate-100 font-serif">
+                    <div
+                      key={vIdx}
+                      className="border rounded-2xl p-4 space-y-3"
+                      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                    >
+                      <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: 'var(--border-subtle)' }}>
+                        <span className="font-bold text-sm font-serif" style={{ color: 'var(--text-main)' }}>
                           第 {vol.volume.volumeIndex} 卷：{vol.volume.title}
                         </span>
                         <span className="text-xs text-amber-300/80">
@@ -516,34 +586,42 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
                         </span>
                       </div>
 
-                      <p className="text-xs text-slate-400">
-                        <span className="text-slate-500">主线核心矛盾：</span>{vol.volume.mainConflict}
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                        <span>主线核心矛盾：</span>{vol.volume.mainConflict}
                       </p>
 
                       <div className="space-y-2.5 pt-1">
                         {vol.chapters.map((chap, cIdx) => (
-                          <div key={cIdx} className="bg-slate-900/60 border border-slate-850 rounded-xl p-3 text-xs space-y-2">
+                          <div
+                            key={cIdx}
+                            className="border rounded-xl p-3 text-xs space-y-2"
+                            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+                          >
                             <div className="flex items-center justify-between">
-                              <span className="font-bold text-slate-200">
+                              <span className="font-bold" style={{ color: 'var(--text-main)' }}>
                                 第 {chap.chapter.chapterIndex} 章：{chap.chapter.title}
                               </span>
-                              <span className="text-[10px] text-slate-500">
+                              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
                                 包含 {chap.scenes.length} 幕节拍
                               </span>
                             </div>
-                            <p className="text-slate-400 text-[11px] leading-relaxed">
+                            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                               {chap.chapter.outline}
                             </p>
 
                             {/* 场景节拍卡 */}
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
                               {chap.scenes.map((sc, sIdx) => (
-                                <div key={sIdx} className="bg-slate-950 p-2 rounded-lg border border-slate-850 text-[10px] space-y-1">
-                                  <div className="font-semibold text-indigo-300 flex items-center gap-1">
+                                <div
+                                  key={sIdx}
+                                  className="p-2 rounded-lg border text-[10px] space-y-1"
+                                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                                >
+                                  <div className="font-semibold text-indigo-400 flex items-center gap-1">
                                     <Zap className="w-2.5 h-2.5" />
                                     <span>第 {sc.sceneIndex} 幕</span>
                                   </div>
-                                  <p className="text-slate-400 line-clamp-2">{sc.sceneGoal}</p>
+                                  <p className="line-clamp-2" style={{ color: 'var(--text-muted)' }}>{sc.sceneGoal}</p>
                                 </div>
                               ))}
                             </div>
@@ -558,18 +636,25 @@ export const NovelArchitectModal: React.FC<NovelArchitectModalProps> = ({
               {activeReviewTab === 'foreshadowing' && (
                 <div className="space-y-3 max-w-2xl mx-auto">
                   {generatedFramework.foreshadowings.map((fs, idx) => (
-                    <div key={idx} className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-2 text-xs">
+                    <div
+                      key={idx}
+                      className="border rounded-2xl p-4 space-y-2 text-xs"
+                      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                    >
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-amber-300 font-serif">{fs.title}</span>
-                        <span className="text-[10px] text-slate-500">
+                        <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
                           计划第 {fs.plannedResolveChapterIndex || '?'} 章回收
                         </span>
                       </div>
-                      <p className="text-slate-300 text-[11px] leading-relaxed bg-slate-900/50 p-2.5 rounded-xl border border-slate-850">
+                      <p
+                        className="text-[11px] leading-relaxed p-2.5 rounded-xl border"
+                        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+                      >
                         {fs.clueDescription}
                       </p>
                       {fs.notes && (
-                        <p className="text-[10px] text-slate-500">作者备忘：{fs.notes}</p>
+                        <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>作者备忘：{fs.notes}</p>
                       )}
                     </div>
                   ))}

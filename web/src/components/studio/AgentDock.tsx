@@ -169,18 +169,34 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
       className={`${
         isMobile
           ? 'w-full h-full p-4 flex flex-col gap-3 overflow-y-auto'
-          : 'w-full border-l border-slate-800 bg-slate-950/60 p-3.5 flex flex-col gap-3 overflow-hidden h-[calc(100vh-60px)]'
+          : 'w-full border-l p-3.5 flex flex-col gap-3 overflow-hidden h-[calc(100vh-60px)]'
       }`}
+      style={{
+        backgroundColor: 'var(--bg-surface)',
+        borderColor: 'var(--border-subtle)',
+        color: 'var(--text-main)',
+      }}
     >
       {/* 顶部 Tab 切换器：灵感研讨 vs 专家流水线 */}
-      <div className="flex rounded-xl bg-slate-900/90 p-1 border border-slate-800 shrink-0">
+      <div
+        className="flex rounded-xl p-1 border shrink-0"
+        style={{
+          backgroundColor: 'var(--bg-card)',
+          borderColor: 'var(--border-subtle)',
+        }}
+      >
         <button
           onClick={() => setActiveDockTab('chat')}
           className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
             activeDockTab === 'chat'
-              ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/20'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'shadow-xs font-semibold'
+              : 'hover:opacity-80'
           }`}
+          style={
+            activeDockTab === 'chat'
+              ? { backgroundColor: 'var(--accent-primary)', color: '#ffffff' }
+              : { color: 'var(--text-muted)' }
+          }
         >
           <MessageSquare className="w-3.5 h-3.5" />
           <span>灵感研讨 (AI对话)</span>
@@ -189,9 +205,14 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
           onClick={() => setActiveDockTab('pipeline')}
           className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
             activeDockTab === 'pipeline'
-              ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/20'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'shadow-xs font-semibold'
+              : 'hover:opacity-80'
           }`}
+          style={
+            activeDockTab === 'pipeline'
+              ? { backgroundColor: 'var(--accent-primary)', color: '#ffffff' }
+              : { color: 'var(--text-muted)' }
+          }
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span>专家流水线与稽查</span>
@@ -204,16 +225,23 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
       {activeDockTab === 'chat' && (
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden gap-2.5">
           {/* 当前研讨上下文概况 */}
-          <div className="bg-slate-900/70 border border-slate-800/80 rounded-xl px-3 py-2 shrink-0 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 text-slate-300 min-w-0">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 animate-pulse" />
+          <div
+            className="border rounded-xl px-3 py-2 shrink-0 flex items-center justify-between text-xs"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-subtle)',
+            }}
+          >
+            <div className="flex items-center gap-1.5 min-w-0" style={{ color: 'var(--text-main)' }}>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
               <span className="font-medium truncate">
                 《{novel.title}》· 第 {activeChapter?.chapterIndex || 1} 章 · 第 {activeScene?.sceneIndex || 1} 幕
               </span>
             </div>
             <button
               onClick={handleClearHistory}
-              className="text-slate-500 hover:text-slate-300 p-1 rounded hover:bg-slate-800 transition shrink-0"
+              className="p-1 rounded transition shrink-0 hover:opacity-80"
+              style={{ color: 'var(--text-muted)' }}
               title="清空研讨记录"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -227,7 +255,12 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
                 key={idx}
                 onClick={() => handleSendMessage(item.prompt)}
                 disabled={isSending}
-                className="px-2.5 py-1 rounded-full bg-slate-900/90 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/40 text-[11px] text-slate-300 hover:text-indigo-200 transition shrink-0 whitespace-nowrap shadow-xs"
+                className="px-2.5 py-1 rounded-full border text-[11px] transition shrink-0 whitespace-nowrap shadow-xs hover:opacity-80"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--text-muted)',
+                }}
               >
                 {item.label}
               </button>
@@ -243,18 +276,27 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
                   key={msg.id}
                   className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} gap-1`}
                 >
-                  <div className="flex items-center gap-1.5 text-[10px] text-slate-500 px-1">
+                  <div className="flex items-center gap-1.5 text-[10px] px-1" style={{ color: 'var(--text-faint)' }}>
                     <span>{isUser ? '你' : 'AI 参谋'}</span>
                     <span>·</span>
                     <span>{msg.time}</span>
                   </div>
 
                   <div
-                    className={`max-w-[95%] rounded-xl p-3 leading-relaxed whitespace-pre-wrap ${
+                    className="max-w-[95%] rounded-xl p-3 leading-relaxed whitespace-pre-wrap border shadow-xs"
+                    style={
                       isUser
-                        ? 'bg-indigo-600/30 border border-indigo-500/40 text-indigo-100 rounded-tr-xs'
-                        : 'bg-slate-900/90 border border-slate-800 text-slate-200 rounded-tl-xs shadow-md'
-                    }`}
+                        ? {
+                            backgroundColor: 'var(--accent-surface)',
+                            borderColor: 'var(--accent-primary)',
+                            color: 'var(--text-main)',
+                          }
+                        : {
+                            backgroundColor: 'var(--bg-card)',
+                            borderColor: 'var(--border-subtle)',
+                            color: 'var(--text-main)',
+                          }
+                    }
                   >
                     {msg.content}
                   </div>
@@ -273,7 +315,8 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
 
                       <button
                         onClick={() => handleAppendToEditor(msg.content, msg.id)}
-                        className="text-slate-400 hover:text-emerald-300 flex items-center gap-1 bg-slate-900 hover:bg-slate-800 px-2 py-0.5 rounded border border-slate-800 transition"
+                        className="flex items-center gap-1 px-2 py-0.5 rounded border transition cursor-pointer hover:opacity-80"
+                        style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
                         title="追加到正文末尾"
                       >
                         {addedToastId === msg.id ? (
@@ -291,7 +334,8 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
 
                       <button
                         onClick={() => handleCopyText(msg.content, msg.id)}
-                        className="text-slate-500 hover:text-slate-300 flex items-center gap-1 p-1 rounded hover:bg-slate-900 transition"
+                        className="flex items-center gap-1 p-1 rounded transition cursor-pointer hover:opacity-80"
+                        style={{ color: 'var(--text-muted)' }}
                         title="复制内容"
                       >
                         {copiedId === msg.id ? (
@@ -307,7 +351,7 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
             })}
 
             {isSending && (
-              <div className="flex items-center gap-2 text-xs text-indigo-400 bg-slate-900/60 p-2.5 rounded-xl border border-indigo-900/30">
+              <div className="flex items-center gap-2 text-xs p-2.5 rounded-xl border" style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)', color: 'var(--accent-primary)' }}>
                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                 <span>AI 参谋正在结合本幕设定与前文推演...</span>
               </div>
@@ -316,7 +360,13 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
           </div>
 
           {/* 底部输入框与发送按钮 */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-2 shrink-0 space-y-2">
+          <div
+            className="border rounded-xl p-2 shrink-0 space-y-2"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-subtle)',
+            }}
+          >
             <textarea
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
@@ -328,17 +378,22 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
               }}
               placeholder="向 AI 参谋提问或探讨情节（Enter 发送，Shift+Enter 换行）..."
               rows={2}
-              className="w-full bg-transparent text-xs text-slate-100 placeholder-slate-500 focus:outline-none resize-none leading-relaxed"
+              className="w-full bg-transparent text-xs focus:outline-none resize-none leading-relaxed placeholder:opacity-30"
+              style={{ color: 'var(--text-main)' }}
             />
-            <div className="flex items-center justify-between pt-1 border-t border-slate-800/60 text-[11px] text-slate-500">
-              <span className="flex items-center gap-1">
-                <CornerDownLeft className="w-3 h-3 text-slate-600" />
+            <div
+              className="flex items-center justify-between pt-1 border-t text-[11px]"
+              style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+            >
+              <span className="flex items-center gap-1 opacity-70">
+                <CornerDownLeft className="w-3 h-3" />
                 <span>Enter 发送</span>
               </span>
               <button
                 onClick={() => handleSendMessage()}
                 disabled={isSending || !inputVal.trim()}
-                className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:hover:bg-indigo-600 text-white font-medium rounded-lg text-xs transition flex items-center gap-1 shadow-sm"
+                className="px-3 py-1 text-white font-medium rounded-lg text-xs transition flex items-center gap-1 shadow-sm disabled:opacity-40 hover:opacity-90 cursor-pointer"
+                style={{ backgroundColor: 'var(--accent-primary)' }}
               >
                 {isSending ? (
                   <RefreshCw className="w-3 h-3 animate-spin" />
@@ -358,13 +413,21 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
       {activeDockTab === 'pipeline' && (
         <div className="flex-1 overflow-y-auto space-y-3.5 pr-1">
           {/* 1. 专家 Agent 矩阵选择器 */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3 space-y-2.5">
+          <div
+            className="rounded-xl p-3 space-y-2.5 border shadow-xs"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-subtle)',
+            }}
+          >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="text-xs font-semibold flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                 <span>Agent 专家矩阵</span>
               </span>
-              <span className="text-[10px] text-slate-500">点击触发流水线</span>
+              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                点击触发流水线
+              </span>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
@@ -372,76 +435,116 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
               <button
                 onClick={runDirectorPlanScenes}
                 disabled={isAgentRunning}
-                className={`p-2.5 rounded-lg border text-left transition flex flex-col gap-1 ${
+                className={`p-2.5 rounded-lg border text-left transition flex flex-col gap-1 cursor-pointer ${
                   currentAgent === 'DIRECTOR' && isAgentRunning
-                    ? 'bg-indigo-950/60 border-indigo-500/70 text-indigo-200'
-                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                    ? 'shadow-xs font-semibold'
+                    : 'hover:opacity-85'
                 }`}
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  borderColor:
+                    currentAgent === 'DIRECTOR' && isAgentRunning
+                      ? 'var(--accent-primary)'
+                      : 'var(--border-subtle)',
+                  color: 'var(--text-main)',
+                }}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold">🎬 分镜导演</span>
                   {currentAgent === 'DIRECTOR' && isAgentRunning && (
-                    <RefreshCw className="w-3 h-3 animate-spin text-indigo-400" />
+                    <RefreshCw className="w-3 h-3 animate-spin" style={{ color: 'var(--accent-primary)' }} />
                   )}
                 </div>
-                <span className="text-[10px] text-slate-500">规划 3 幕递进对抗节拍</span>
+                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                  规划 3 幕递进对抗节拍
+                </span>
               </button>
 
               {/* 执笔起草 */}
               <button
                 onClick={runDrafterWriteScene}
                 disabled={isAgentRunning}
-                className={`p-2.5 rounded-lg border text-left transition flex flex-col gap-1 ${
+                className={`p-2.5 rounded-lg border text-left transition flex flex-col gap-1 cursor-pointer ${
                   currentAgent === 'DRAFTER' && isAgentRunning
-                    ? 'bg-indigo-950/60 border-indigo-500/70 text-indigo-200'
-                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                    ? 'shadow-xs font-semibold'
+                    : 'hover:opacity-85'
                 }`}
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  borderColor:
+                    currentAgent === 'DRAFTER' && isAgentRunning
+                      ? 'var(--accent-primary)'
+                      : 'var(--border-subtle)',
+                  color: 'var(--text-main)',
+                }}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold">✍️ 执笔起草</span>
                   {currentAgent === 'DRAFTER' && isAgentRunning && (
-                    <RefreshCw className="w-3 h-3 animate-spin text-indigo-400" />
+                    <RefreshCw className="w-3 h-3 animate-spin" style={{ color: 'var(--accent-primary)' }} />
                   )}
                 </div>
-                <span className="text-[10px] text-slate-500">带状态机硬约束生成</span>
+                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                  带状态机硬约束生成
+                </span>
               </button>
 
               {/* 设定稽查 */}
               <button
                 onClick={runInspectorAudit}
                 disabled={isAgentRunning}
-                className={`p-2.5 rounded-lg border text-left transition flex flex-col gap-1 ${
+                className={`p-2.5 rounded-lg border text-left transition flex flex-col gap-1 cursor-pointer ${
                   currentAgent === 'INSPECTOR' && isAgentRunning
-                    ? 'bg-indigo-950/60 border-indigo-500/70 text-indigo-200'
-                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                    ? 'shadow-xs font-semibold'
+                    : 'hover:opacity-85'
                 }`}
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  borderColor:
+                    currentAgent === 'INSPECTOR' && isAgentRunning
+                      ? 'var(--accent-primary)'
+                      : 'var(--border-subtle)',
+                  color: 'var(--text-main)',
+                }}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold">🔍 设定稽查</span>
                   {currentAgent === 'INSPECTOR' && isAgentRunning && (
-                    <RefreshCw className="w-3 h-3 animate-spin text-indigo-400" />
+                    <RefreshCw className="w-3 h-3 animate-spin" style={{ color: 'var(--accent-primary)' }} />
                   )}
                 </div>
-                <span className="text-[10px] text-slate-500">查吃设定 / 战力 / OOC</span>
+                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                  查吃设定 / 战力 / OOC
+                </span>
               </button>
 
               {/* 文风润色 */}
               <button
                 onClick={() => runStylistPolish()}
                 disabled={isAgentRunning}
-                className={`p-2.5 rounded-lg border text-left transition flex flex-col gap-1 ${
+                className={`p-2.5 rounded-lg border text-left transition flex flex-col gap-1 cursor-pointer ${
                   currentAgent === 'STYLIST' && isAgentRunning
-                    ? 'bg-indigo-950/60 border-indigo-500/70 text-indigo-200'
-                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                    ? 'shadow-xs font-semibold'
+                    : 'hover:opacity-85'
                 }`}
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  borderColor:
+                    currentAgent === 'STYLIST' && isAgentRunning
+                      ? 'var(--accent-primary)'
+                      : 'var(--border-subtle)',
+                  color: 'var(--text-main)',
+                }}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold">🎨 文风润色</span>
                   {currentAgent === 'STYLIST' && isAgentRunning && (
-                    <RefreshCw className="w-3 h-3 animate-spin text-indigo-400" />
+                    <RefreshCw className="w-3 h-3 animate-spin" style={{ color: 'var(--accent-primary)' }} />
                   )}
                 </div>
-                <span className="text-[10px] text-slate-500">消除AI腔 / 增强张力</span>
+                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                  消除AI腔 / 增强张力
+                </span>
               </button>
             </div>
           </div>
@@ -456,17 +559,24 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
               <p className="text-xs text-amber-200/90 leading-relaxed">
                 正文激战完毕，建议同步将【{affectedChar?.name || '主角'}】的即时状态更新为：
               </p>
-              <div className="bg-slate-950/80 rounded p-2 text-[11px] text-slate-300 space-y-1 border border-amber-900/30">
+              <div
+                className="rounded p-2 text-[11px] space-y-1 border"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--text-main)',
+                }}
+              >
                 <div>
-                  <span className="text-slate-500">最新战力：</span>
-                  <span className="text-amber-300 font-medium">{suggestedStateUpdate.combatPower}</span>
+                  <span style={{ color: 'var(--text-muted)' }}>最新战力：</span>
+                  <span className="font-medium" style={{ color: 'var(--accent-primary)' }}>{suggestedStateUpdate.combatPower}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500">所在地点：</span>
-                  <span className="text-slate-200">{suggestedStateUpdate.location}</span>
+                  <span style={{ color: 'var(--text-muted)' }}>所在地点：</span>
+                  <span style={{ color: 'var(--text-main)' }}>{suggestedStateUpdate.location}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500">标签变动：</span>
+                  <span style={{ color: 'var(--text-muted)' }}>标签变动：</span>
                   <span className="text-red-400">{suggestedStateUpdate.statusTags?.join('、')}</span>
                 </div>
               </div>
@@ -481,15 +591,21 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
           )}
 
           {/* 3. 实时执行思维链与调用日志 */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3 space-y-2">
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-200">
+          <div
+            className="rounded-xl p-3 space-y-2 border shadow-xs"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-subtle)',
+            }}
+          >
+            <div className="flex items-center justify-between text-xs font-semibold" style={{ color: 'var(--text-main)' }}>
               <span className="flex items-center gap-1.5">
-                <Activity className="w-3.5 h-3.5 text-indigo-400" />
+                <Activity className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
                 <span>执行思维追踪 (Agent Trace)</span>
               </span>
               {isAgentRunning && (
-                <span className="text-[10px] text-indigo-400 animate-pulse flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                <span className="text-[10px] animate-pulse flex items-center gap-1" style={{ color: 'var(--accent-primary)' }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--accent-primary)' }} />
                   正在思考...
                 </span>
               )}
@@ -497,31 +613,35 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
 
             <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
               {agentLogs.length === 0 ? (
-                <p className="text-xs text-slate-500 py-3 text-center">
+                <p className="text-xs py-3 text-center" style={{ color: 'var(--text-muted)' }}>
                   暂无执行日志，点击上方专家卡片开始协同创作
                 </p>
               ) : (
                 agentLogs.map((log, index) => (
                   <div
                     key={index}
-                    className="bg-slate-950 border border-slate-900 rounded-lg p-2 text-xs space-y-0.5"
+                    className="border rounded-lg p-2 text-xs space-y-0.5"
+                    style={{
+                      backgroundColor: 'var(--bg-surface)',
+                      borderColor: 'var(--border-subtle)',
+                    }}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-slate-300 flex items-center gap-1.5">
+                      <span className="font-medium flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
                         {log.status === 'running' ? (
-                          <RefreshCw className="w-3 h-3 text-indigo-400 animate-spin" />
+                          <RefreshCw className="w-3 h-3 animate-spin" style={{ color: 'var(--accent-primary)' }} />
                         ) : log.status === 'warning' ? (
-                          <AlertTriangle className="w-3 h-3 text-amber-400" />
+                          <AlertTriangle className="w-3 h-3 text-amber-500" />
                         ) : (
-                          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                          <CheckCircle2 className="w-3 h-3 text-emerald-500" />
                         )}
                         {log.step}
                       </span>
-                      <span className="text-[9px] text-slate-500 font-mono">
+                      <span className="text-[9px] font-mono" style={{ color: 'var(--text-faint)' }}>
                         {log.timestamp}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-400 pl-4 leading-relaxed">
+                    <p className="text-[11px] pl-4 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                       {log.detail}
                     </p>
                   </div>
@@ -531,13 +651,26 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
           </div>
 
           {/* 4. 设定稽查员合规报告 (Continuity Guard) */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3 space-y-2">
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-200">
+          <div
+            className="rounded-xl p-3 space-y-2 border shadow-xs"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-subtle)',
+            }}
+          >
+            <div className="flex items-center justify-between text-xs font-semibold" style={{ color: 'var(--text-main)' }}>
               <span className="flex items-center gap-1.5">
-                <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+                <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />
                 <span>设定与逻辑合规稽查</span>
               </span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">
+              <span
+                className="text-[10px] px-1.5 py-0.2 rounded border"
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--text-muted)',
+                }}
+              >
                 {inspectionIssues.length} 项关注
               </span>
             </div>
@@ -573,13 +706,26 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
                           {issue.issueType}
                         </span>
                       </span>
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-950/80">
+                      <span
+                        className="text-[9px] px-1.5 py-0.2 rounded border"
+                        style={{
+                          backgroundColor: 'var(--bg-surface)',
+                          borderColor: 'var(--border-subtle)',
+                        }}
+                      >
                         {issue.severity}
                       </span>
                     </div>
 
-                    <div className="bg-slate-950/70 p-1.5 rounded text-[11px] font-mono text-slate-300">
-                      <span className="text-slate-500">触碰点：</span>"{issue.locationSnippet}"
+                    <div
+                      className="p-1.5 rounded text-[11px] font-mono border"
+                      style={{
+                        backgroundColor: 'var(--bg-card)',
+                        borderColor: 'var(--border-subtle)',
+                        color: 'var(--text-main)',
+                      }}
+                    >
+                      <span style={{ color: 'var(--text-muted)' }}>触碰点：</span>"{issue.locationSnippet}"
                     </div>
 
                     <p className="text-[11px] leading-relaxed opacity-90">

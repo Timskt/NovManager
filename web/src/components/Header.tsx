@@ -208,9 +208,14 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setActiveTab('STUDIO')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition font-medium ${
                 activeTab === 'STUDIO'
-                  ? 'bg-amber-600 text-white shadow-xs'
+                  ? 'text-white shadow-xs font-semibold'
                   : 'hover:opacity-80'
               }`}
+              style={
+                activeTab === 'STUDIO'
+                  ? { backgroundColor: 'var(--accent-primary)' }
+                  : { color: 'var(--text-muted)' }
+              }
             >
               <Feather className="w-3.5 h-3.5" />
               <span>创作台</span>
@@ -220,9 +225,14 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setActiveTab('VIDEO_STUDIO')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition font-medium ${
                 activeTab === 'VIDEO_STUDIO'
-                  ? 'bg-amber-600 text-white shadow-xs'
+                  ? 'text-white shadow-xs font-semibold'
                   : 'hover:opacity-80'
               }`}
+              style={
+                activeTab === 'VIDEO_STUDIO'
+                  ? { backgroundColor: 'var(--accent-primary)' }
+                  : { color: 'var(--text-muted)' }
+              }
             >
               <Video className="w-3.5 h-3.5" />
               <span>分镜工坊</span>
@@ -232,9 +242,14 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setActiveTab('WORKFLOW')}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition font-medium ${
                 activeTab === 'WORKFLOW'
-                  ? 'bg-amber-600 text-white shadow-xs'
+                  ? 'text-white shadow-xs font-semibold'
                   : 'hover:opacity-80'
               }`}
+              style={
+                activeTab === 'WORKFLOW'
+                  ? { backgroundColor: 'var(--accent-primary)' }
+                  : { color: 'var(--text-muted)' }
+              }
             >
               <Cable className="w-3.5 h-3.5" />
               <span>流程编排</span>
@@ -244,9 +259,14 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setActiveTab('PROGRESS_PULSE')}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition font-medium ${
                 activeTab === 'PROGRESS_PULSE'
-                  ? 'bg-amber-600 text-white shadow-xs'
+                  ? 'text-white shadow-xs font-semibold'
                   : 'hover:opacity-80'
               }`}
+              style={
+                activeTab === 'PROGRESS_PULSE'
+                  ? { backgroundColor: 'var(--accent-primary)' }
+                  : { color: 'var(--text-muted)' }
+              }
             >
               <Activity className="w-3.5 h-3.5" />
               <span>进度大盘</span>
@@ -256,9 +276,14 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setActiveTab('DUNGEONS')}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition font-medium ${
                 activeTab === 'DUNGEONS'
-                  ? 'bg-amber-600 text-white shadow-xs'
+                  ? 'text-white shadow-xs font-semibold'
                   : 'hover:opacity-80'
               }`}
+              style={
+                activeTab === 'DUNGEONS'
+                  ? { backgroundColor: 'var(--accent-primary)' }
+                  : { color: 'var(--text-muted)' }
+              }
             >
               <Flame className="w-3.5 h-3.5" />
               <span>副本推演</span>
@@ -281,9 +306,29 @@ export const Header: React.FC<HeaderProps> = ({
                     'CLINIC',
                     'PLUGINS',
                   ].includes(activeTab)
-                    ? 'bg-amber-600/20 text-amber-600 border border-amber-500/30 font-semibold'
+                    ? 'border font-semibold shadow-xs'
                     : 'hover:opacity-80'
                 }`}
+                style={
+                  [
+                    'RELATIONS',
+                    'TIMELINE',
+                    'TENSION',
+                    'FORESHADOWING',
+                    'MAP',
+                    'SANDBOX',
+                    'EVOLUTION',
+                    'PRODUCTIVITY',
+                    'CLINIC',
+                    'PLUGINS',
+                  ].includes(activeTab)
+                    ? {
+                        backgroundColor: 'var(--accent-surface)',
+                        color: 'var(--accent-primary)',
+                        borderColor: 'var(--accent-primary)',
+                      }
+                    : { color: 'var(--text-muted)' }
+                }
               >
                 <span>构筑研判</span>
                 <ChevronDown className="w-3 h-3" />
@@ -495,28 +540,64 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={() => setTheme('ink')}
               title="古意宣纸 (Ink)"
-              className={`p-1.5 rounded-md transition text-xs ${themeSettings.theme === 'ink' ? 'bg-amber-600 text-white shadow-xs' : 'opacity-60 hover:opacity-100'}`}
+              className={`p-1.5 rounded-md transition text-xs ${
+                themeSettings.theme === 'ink'
+                  ? 'text-white shadow-xs font-semibold'
+                  : 'opacity-60 hover:opacity-100'
+              }`}
+              style={
+                themeSettings.theme === 'ink'
+                  ? { backgroundColor: 'var(--accent-primary)' }
+                  : {}
+              }
             >
               📜
             </button>
             <button
               onClick={() => setTheme('obsidian')}
               title="黑曜冷萃 (Obsidian)"
-              className={`p-1.5 rounded-md transition text-xs ${themeSettings.theme === 'obsidian' ? 'bg-amber-600 text-white shadow-xs' : 'opacity-60 hover:opacity-100'}`}
+              className={`p-1.5 rounded-md transition text-xs ${
+                themeSettings.theme === 'obsidian'
+                  ? 'text-white shadow-xs font-semibold'
+                  : 'opacity-60 hover:opacity-100'
+              }`}
+              style={
+                themeSettings.theme === 'obsidian'
+                  ? { backgroundColor: 'var(--accent-primary)' }
+                  : {}
+              }
             >
               🌌
             </button>
             <button
               onClick={() => setTheme('celadon')}
               title="秘色青釉 (Celadon)"
-              className={`p-1.5 rounded-md transition text-xs ${themeSettings.theme === 'celadon' ? 'bg-amber-600 text-white shadow-xs' : 'opacity-60 hover:opacity-100'}`}
+              className={`p-1.5 rounded-md transition text-xs ${
+                themeSettings.theme === 'celadon'
+                  ? 'text-white shadow-xs font-semibold'
+                  : 'opacity-60 hover:opacity-100'
+              }`}
+              style={
+                themeSettings.theme === 'celadon'
+                  ? { backgroundColor: 'var(--accent-primary)' }
+                  : {}
+              }
             >
               🍵
             </button>
             <button
               onClick={() => setTheme('pure')}
               title="北欧素雅 (Pure Alabaster)"
-              className={`p-1.5 rounded-md transition text-xs ${themeSettings.theme === 'pure' ? 'bg-amber-600 text-white shadow-xs' : 'opacity-60 hover:opacity-100'}`}
+              className={`p-1.5 rounded-md transition text-xs ${
+                themeSettings.theme === 'pure'
+                  ? 'text-white shadow-xs font-semibold'
+                  : 'opacity-60 hover:opacity-100'
+              }`}
+              style={
+                themeSettings.theme === 'pure'
+                  ? { backgroundColor: 'var(--accent-primary)' }
+                  : {}
+              }
             >
               🏛️
             </button>

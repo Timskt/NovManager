@@ -255,7 +255,12 @@ export const StudioView: React.FC<StudioViewProps> = ({
         <button
           onClick={toggleLeftCollapse}
           title={isLeftCollapsed ? '展开左侧大纲面板' : '折叠左侧面板'}
-          className="absolute top-4 -right-2.5 w-5 h-7 rounded bg-slate-900 border border-slate-700 hover:border-indigo-500 text-slate-400 hover:text-white flex items-center justify-center shadow-lg transition z-40 opacity-0 group-hover:opacity-100 focus:opacity-100"
+          className="absolute top-4 -right-2.5 w-5 h-7 rounded border flex items-center justify-center shadow-lg transition z-40 opacity-0 group-hover:opacity-100 focus:opacity-100 hover:opacity-100"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            borderColor: 'var(--border-strong)',
+            color: 'var(--text-muted)',
+          }}
         >
           {isLeftCollapsed ? (
             <ChevronRight className="w-3.5 h-3.5" />
@@ -270,9 +275,14 @@ export const StudioView: React.FC<StudioViewProps> = ({
         <button
           onClick={toggleLeftCollapse}
           title="展开左侧大纲分镜与场景上下文"
-          className="hidden md:flex flex-col items-center justify-center w-7 bg-slate-950/90 border-r border-slate-800 hover:border-indigo-500/60 hover:bg-slate-900 text-slate-500 hover:text-indigo-300 transition-all z-20 py-4 gap-2 flex-shrink-0 cursor-pointer"
+          className="hidden md:flex flex-col items-center justify-center w-7 border-r transition-all z-20 py-4 gap-2 flex-shrink-0 cursor-pointer hover:opacity-90"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            borderColor: 'var(--border-subtle)',
+            color: 'var(--text-muted)',
+          }}
         >
-          <Compass className="w-3.5 h-3.5 text-indigo-400" />
+          <Compass className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
           <span className="text-[10px] [writing-mode:vertical-rl] tracking-wider font-medium">
             大纲分镜
           </span>
@@ -280,21 +290,28 @@ export const StudioView: React.FC<StudioViewProps> = ({
       )}
 
       {/* 中间主工作区：支持【✍️ 正文撰写】与【✨ 剧情推演幕布】Tab 切换 */}
-      <div className="flex-1 flex flex-col bg-slate-950 overflow-hidden relative">
+      <div className="flex-1 flex flex-col overflow-hidden relative" style={{ backgroundColor: 'var(--bg-canvas)' }}>
         {/* 顶部工作台全局模式切换与导航条 */}
-        <div className="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-xs px-4 py-2 flex items-center justify-between gap-3 shrink-0 z-20">
+        <div
+          className="border-b px-3 sm:px-5 py-2 flex items-center justify-between gap-3 shrink-0 z-20 transition-colors"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            borderColor: 'var(--border-subtle)',
+          }}
+        >
           <div className="flex items-center gap-2 min-w-0">
             {/* 手机端打开左侧抽屉按钮 */}
             <button
               onClick={() => setMobileDrawer('context')}
-              className="md:hidden p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
+              className="md:hidden p-1.5 rounded-lg border hover:opacity-80 transition"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
               title="打开大纲分镜目录"
             >
               <Compass className="w-4 h-4 text-indigo-400" />
             </button>
 
             {/* 架构定位指示 */}
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 truncate">
+            <div className="flex items-center gap-1.5 text-xs truncate">
               <button
                 onClick={() => {
                   if (isLeftCollapsed) {
@@ -302,18 +319,25 @@ export const StudioView: React.FC<StudioViewProps> = ({
                   }
                   setIsFullOutlineModalOpen(true);
                 }}
-                className="text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1 hover:underline shrink-0 cursor-pointer"
+                className="font-medium flex items-center gap-1 hover:underline shrink-0 cursor-pointer"
+                style={{ color: 'var(--accent-primary)' }}
                 title="打开全景大纲分镜架构总览"
               >
                 <Compass className="w-3.5 h-3.5" />
                 <span>大纲架构</span>
               </button>
-              <span className="text-slate-600">/</span>
-              <span className="text-slate-200 font-medium truncate">
+              <span style={{ color: 'var(--text-faint)' }}>/</span>
+              <span className="font-semibold truncate" style={{ color: 'var(--text-main)' }}>
                 第 {activeChapter?.chapterIndex} 章 · {activeChapter?.title || '未命名'}
               </span>
               {activeChapter?.status && (
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 hidden sm:inline">
+                <span
+                  className="text-[10px] px-1.5 py-0.5 rounded font-medium hidden sm:inline"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    color: 'var(--text-muted)',
+                  }}
+                >
                   {activeChapter.status === 'PUBLISHED'
                     ? '已发布'
                     : activeChapter.status === 'REVIEWED'
@@ -329,25 +353,41 @@ export const StudioView: React.FC<StudioViewProps> = ({
           </div>
 
           {/* 核心双 Tab 切换：【✍️ 正文撰写】 vs 【✨ 剧情推演幕布】 */}
-          <div className="flex items-center p-0.5 bg-slate-950/90 border border-slate-800 rounded-xl shadow-inner shrink-0">
+          <div
+            className="flex items-center p-0.5 rounded-lg border shrink-0"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-subtle)',
+            }}
+          >
             <button
               onClick={() => switchStudioTab('editor')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
                 studioTab === 'editor'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'shadow-xs text-white'
+                  : 'hover:opacity-80'
               }`}
+              style={
+                studioTab === 'editor'
+                  ? { backgroundColor: 'var(--accent-primary)' }
+                  : { color: 'var(--text-muted)' }
+              }
             >
               <Feather className="w-3.5 h-3.5" />
               <span>正文撰写</span>
             </button>
             <button
               onClick={() => switchStudioTab('canvas')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
                 studioTab === 'canvas'
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xs'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'shadow-xs text-white'
+                  : 'hover:opacity-80'
               }`}
+              style={
+                studioTab === 'canvas'
+                  ? { backgroundColor: 'var(--accent-primary)' }
+                  : { color: 'var(--text-muted)' }
+              }
             >
               <GitFork className="w-3.5 h-3.5 text-amber-300" />
               <span>剧情推演幕布</span>
@@ -389,9 +429,14 @@ export const StudioView: React.FC<StudioViewProps> = ({
         <button
           onClick={toggleRightCollapse}
           title="展开 AI 参谋与协同舱"
-          className="hidden md:flex flex-col items-center justify-center w-6 bg-slate-950/90 border-l border-slate-800 hover:border-indigo-500/60 hover:bg-slate-900 text-slate-500 hover:text-indigo-300 transition-all z-20 py-4 gap-2 flex-shrink-0 cursor-pointer"
+          className="hidden md:flex flex-col items-center justify-center w-6 border-l transition-all z-20 py-4 gap-2 flex-shrink-0 cursor-pointer hover:opacity-90"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            borderColor: 'var(--border-subtle)',
+            color: 'var(--text-muted)',
+          }}
         >
-          <ChevronLeft className="w-3.5 h-3.5" />
+          <ChevronLeft className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
           <span className="text-[10px] [writing-mode:vertical-rl] tracking-wider font-medium">
             AI 参谋
           </span>
@@ -404,7 +449,12 @@ export const StudioView: React.FC<StudioViewProps> = ({
         <button
           onClick={toggleRightCollapse}
           title={isRightCollapsed ? '展开右侧 AI 参谋' : '折叠右侧面板'}
-          className="absolute top-4 -left-2.5 w-5 h-7 rounded bg-slate-900 border border-slate-700 hover:border-indigo-500 text-slate-400 hover:text-white flex items-center justify-center shadow-lg transition z-40 opacity-0 group-hover:opacity-100 focus:opacity-100"
+          className="absolute top-4 -left-2.5 w-5 h-7 rounded border flex items-center justify-center shadow-lg transition z-40 opacity-0 group-hover:opacity-100 focus:opacity-100 hover:opacity-100"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            borderColor: 'var(--border-strong)',
+            color: 'var(--text-muted)',
+          }}
         >
           {isRightCollapsed ? (
             <ChevronLeft className="w-3.5 h-3.5" />
@@ -450,14 +500,21 @@ export const StudioView: React.FC<StudioViewProps> = ({
       {/* 移动端抽屉：场景结构上下文 */}
       {mobileDrawer === 'context' && (
         <div className="fixed inset-0 z-50 flex bg-black/60 backdrop-blur-xs md:hidden animate-in fade-in duration-200">
-          <div className="w-[88vw] max-w-sm bg-slate-950 h-full flex flex-col shadow-2xl border-r border-slate-800 animate-in slide-in-from-left duration-200">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/90">
-              <span className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
+          <div
+            className="w-[88vw] max-w-sm h-full flex flex-col shadow-2xl border-r animate-in slide-in-from-left duration-200"
+            style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}
+          >
+            <div
+              className="flex items-center justify-between px-4 py-3 border-b"
+              style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+            >
+              <span className="text-sm font-bold flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
                 📋 场景大纲与角色状态
               </span>
               <button
                 onClick={() => setMobileDrawer('none')}
-                className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+                className="p-1 rounded-lg transition"
+                style={{ color: 'var(--text-muted)' }}
                 title="关闭"
               >
                 <X className="w-5 h-5" />
@@ -481,14 +538,21 @@ export const StudioView: React.FC<StudioViewProps> = ({
       {mobileDrawer === 'agent' && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs md:hidden animate-in fade-in duration-200">
           <div className="flex-1" onClick={() => setMobileDrawer('none')} />
-          <div className="w-[90vw] max-w-md bg-slate-950 h-full flex flex-col shadow-2xl border-l border-slate-800 animate-in slide-in-from-right duration-200">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/90">
-              <span className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
+          <div
+            className="w-[90vw] max-w-md h-full flex flex-col shadow-2xl border-l animate-in slide-in-from-right duration-200"
+            style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}
+          >
+            <div
+              className="flex items-center justify-between px-4 py-3 border-b"
+              style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+            >
+              <span className="text-sm font-bold flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
                 🤖 Agent 协同舱与稽查
               </span>
               <button
                 onClick={() => setMobileDrawer('none')}
-                className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+                className="p-1 rounded-lg transition"
+                style={{ color: 'var(--text-muted)' }}
                 title="关闭"
               >
                 <X className="w-5 h-5" />

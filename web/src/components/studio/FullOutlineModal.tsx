@@ -217,9 +217,15 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 sm:p-6 animate-in fade-in duration-200">
-      <div className="bg-slate-950 border border-slate-800 rounded-2xl w-full max-w-6xl h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+      <div
+        className="rounded-2xl w-full max-w-6xl h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border"
+        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+      >
         {/* 顶部标题栏 */}
-        <div className="px-6 py-4 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between gap-4 shrink-0">
+        <div
+          className="px-6 py-4 border-b flex items-center justify-between gap-4 shrink-0"
+          style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}
+        >
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
               <Compass className="w-5 h-5" />
@@ -249,7 +255,8 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition cursor-pointer"
+              className="p-1.5 rounded-xl hover:opacity-80 transition cursor-pointer"
+              style={{ color: 'var(--text-muted)' }}
               title="关闭全景大纲"
             >
               <X className="w-5 h-5" />
@@ -271,16 +278,17 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
             return (
               <div
                 key={vol.id}
-                className="bg-slate-900/85 border border-slate-800 rounded-2xl overflow-hidden shadow-lg"
+                className="border rounded-2xl overflow-hidden shadow-lg"
+                style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
               >
                 {/* 卷头部 */}
-                <div className="p-4 bg-slate-900 border-b border-slate-800 flex flex-col gap-3">
+                <div className="p-4 border-b flex flex-col gap-3" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div
                       onClick={() => toggleVolume(vol.id)}
                       className="flex items-center gap-3 cursor-pointer group select-none flex-1"
                     >
-                      <div className="p-1.5 rounded-lg bg-slate-800 text-indigo-400 group-hover:bg-slate-700 transition">
+                      <div className="p-1.5 rounded-lg transition" style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--accent-primary)' }}>
                         {isExpanded ? (
                           <ChevronDown className="w-4 h-4" />
                         ) : (
@@ -289,7 +297,7 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/60">
+                          <span className="text-xs font-bold px-2 py-0.5 rounded border" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--accent-primary)', borderColor: 'var(--border-subtle)' }}>
                             第 {vol.volumeIndex} 卷
                           </span>
                           <h3 className="text-base font-bold text-slate-100 font-serif">
@@ -319,7 +327,8 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                           setEditVolSummary(vol.summary || '');
                           setEditVolBoundary(vol.boundaryConstraints || '');
                         }}
-                        className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs rounded-lg transition flex items-center gap-1 border border-slate-700/60 cursor-pointer"
+                        className="px-2.5 py-1.5 border text-xs rounded-lg transition flex items-center gap-1 cursor-pointer hover:opacity-85"
+                        style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                         title="编辑该卷的故事概要与出场边界约束"
                       >
                         <Edit className="w-3.5 h-3.5 text-indigo-400" />
@@ -350,7 +359,7 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                               deleteVolume(vol.id);
                             }
                           }}
-                          className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded-lg transition cursor-pointer"
+                          className="p-1.5 text-slate-500 hover:text-red-400 rounded-lg transition cursor-pointer hover:opacity-80"
                           title="删除此卷"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -361,15 +370,18 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
 
                   {/* 卷故事概要与防早现边界约束展示卡片 */}
                   {(vol.summary || vol.boundaryConstraints) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-2 border-t border-slate-800/60 text-xs">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-2 border-t text-xs" style={{ borderColor: 'var(--border-subtle)' }}>
                       {vol.summary && (
-                        <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80 text-slate-300 leading-relaxed flex items-start gap-2">
+                        <div
+                          className="p-2.5 rounded-xl border leading-relaxed flex items-start gap-2"
+                          style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+                        >
                           <BookOpen className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
                           <div className="space-y-1">
-                            <span className="font-semibold text-indigo-300 block">
+                            <span className="font-semibold text-indigo-400 block">
                               本卷故事剧情概要：
                             </span>
-                            <p className="text-slate-400 text-[11px] leading-relaxed">
+                            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                               {vol.summary}
                             </p>
                           </div>
@@ -396,7 +408,7 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                 {isExpanded && (
                   <div className="p-4 space-y-4">
                     {vol.chapters.length === 0 ? (
-                      <div className="text-xs text-slate-500 italic py-4 text-center">
+                      <div className="text-xs italic py-4 text-center" style={{ color: 'var(--text-muted)' }}>
                         该卷尚无章节，点击右上角【加新章】创建
                       </div>
                     ) : (
@@ -410,25 +422,26 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                         return (
                           <div
                             key={chap.id}
-                            className="bg-slate-950 border border-slate-800/80 rounded-xl p-4 space-y-3 hover:border-slate-700 transition"
+                            className="border rounded-xl p-4 space-y-3 transition hover:border-indigo-500/40"
+                            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
                           >
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                               <div className="space-y-1 flex-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-xs font-semibold text-slate-200 font-serif">
+                                  <span className="text-xs font-semibold font-serif" style={{ color: 'var(--text-main)' }}>
                                     第 {chap.chapterIndex} 章：{chap.title}
                                   </span>
-                                  <span className="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">
+                                  <span className="text-[10px] px-2 py-0.5 rounded border" style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}>
                                     {chap.status} · {chapWords}字
                                   </span>
                                   {povChar && (
-                                    <span className="text-[10px] text-indigo-400 flex items-center gap-1">
+                                    <span className="text-[10px] flex items-center gap-1" style={{ color: 'var(--accent-primary)' }}>
                                       <User className="w-3 h-3" />
                                       {povChar.name} 视角
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-xs text-slate-400 leading-relaxed">
+                                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                                   {chap.outline}
                                 </p>
                               </div>
@@ -437,7 +450,8 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                                 <button
                                   onClick={() => handlePlanScenes(chap.id)}
                                   disabled={generatingScenesForChapId === chap.id}
-                                  className="px-2.5 py-1.5 bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-700/50 text-indigo-300 text-xs rounded-lg transition flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+                                  className="px-2.5 py-1.5 border text-xs rounded-lg transition flex items-center gap-1 disabled:opacity-50 cursor-pointer hover:opacity-85"
+                                  style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)', color: 'var(--accent-primary)' }}
                                   title="让分镜导演 Agent 自动基于大纲规划 3 幕递进对抗节拍"
                                 >
                                   {generatingScenesForChapId === chap.id ? (
@@ -457,7 +471,8 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                                     setEditTitleCandidates([]);
                                     setIsGeneratingEditTitles(false);
                                   }}
-                                  className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-900 rounded-lg transition cursor-pointer"
+                                  className="p-1.5 rounded-lg transition cursor-pointer hover:opacity-80"
+                                  style={{ color: 'var(--text-muted)' }}
                                   title="编辑章节大纲与标题"
                                 >
                                   <Edit className="w-3.5 h-3.5" />
@@ -469,7 +484,7 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                                       deleteChapter(chap.id);
                                     }
                                   }}
-                                  className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-900 rounded-lg transition cursor-pointer"
+                                  className="p-1.5 text-slate-500 hover:text-red-400 rounded-lg transition cursor-pointer hover:opacity-80"
                                   title="删除章节"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -482,7 +497,8 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                                       onJumpToCanvas(chap.id);
                                       onClose();
                                     }}
-                                    className="p-1.5 text-slate-400 hover:text-indigo-300 hover:bg-slate-900 rounded-lg transition cursor-pointer"
+                                    className="p-1.5 rounded-lg transition cursor-pointer hover:opacity-80"
+                                    style={{ color: 'var(--accent-primary)' }}
                                     title="以此章为锚点推演幕布走向"
                                   >
                                     <GitFork className="w-3.5 h-3.5" />
@@ -498,7 +514,7 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                                     }
                                     onClose();
                                   }}
-                                  className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-200 border border-indigo-500/40 text-xs rounded-lg transition flex items-center gap-1.5 cursor-pointer"
+                                  className="px-3 py-1.5 text-white bg-indigo-600 hover:bg-indigo-500 text-xs rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-sm"
                                 >
                                   <ExternalLink className="w-3 h-3" />
                                   <span>进入撰写</span>
@@ -508,7 +524,7 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
 
                             {/* 细粒度分镜场景节拍 */}
                             {chap.scenes && chap.scenes.length > 0 && (
-                              <div className="pt-2 border-t border-slate-900 grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                              <div className="pt-2 border-t grid grid-cols-1 md:grid-cols-3 gap-2.5" style={{ borderColor: 'var(--border-subtle)' }}>
                                 {chap.scenes.map((sc) => (
                                   <div
                                     key={sc.id}
@@ -520,10 +536,11 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                                       }
                                       onClose();
                                     }}
-                                    className="bg-slate-900/60 hover:bg-slate-900 border border-slate-800/60 hover:border-indigo-500/50 rounded-lg p-2.5 cursor-pointer transition text-xs space-y-1 group"
+                                    className="border rounded-lg p-2.5 cursor-pointer transition text-xs space-y-1 group hover:opacity-90"
+                                    style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}
                                   >
-                                    <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
-                                      <span className="flex items-center gap-1 group-hover:text-indigo-300">
+                                    <div className="flex items-center justify-between text-[11px] font-semibold" style={{ color: 'var(--text-main)' }}>
+                                      <span className="flex items-center gap-1 group-hover:text-indigo-400">
                                         <Target className="w-3 h-3 text-amber-400" />
                                         <span>第 {sc.sceneIndex} 幕</span>
                                       </span>
@@ -559,28 +576,30 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <form
             onSubmit={handleCreateVolume}
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+            className="rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto border"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
           >
-            <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+            <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
               <FolderPlus className="w-4 h-4 text-indigo-400" />
               <span>创建新的小说分卷</span>
             </h3>
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-300 font-medium mb-1">分卷标题</label>
+                <label className="block font-medium mb-1" style={{ color: 'var(--text-main)' }}>分卷标题</label>
                 <input
                   type="text"
                   required
                   placeholder="例如：第二卷：风起天元"
                   value={volTitle}
                   onChange={(e) => setVolTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 border focus:outline-none focus:border-indigo-500"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
               <div>
-                <label className="block text-slate-300 font-medium mb-1">
+                <label className="block font-medium mb-1" style={{ color: 'var(--text-main)' }}>
                   本卷故事剧情概要（整体叙事弧线）
                 </label>
                 <textarea
@@ -588,30 +607,33 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                   placeholder="概括本卷的故事起承转合，指引本卷全部章节的整体主线走向..."
                   value={volSummary}
                   onChange={(e) => setVolSummary(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500 leading-relaxed"
+                  className="w-full rounded-lg p-2 border focus:outline-none focus:border-indigo-500 leading-relaxed"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-medium mb-1">本卷核心矛盾</label>
+                  <label className="block font-medium mb-1" style={{ color: 'var(--text-main)' }}>本卷核心矛盾</label>
                   <textarea
                     rows={2}
                     placeholder="例如：林越隐匿身份进入万宝城..."
                     value={volConflict}
                     onChange={(e) => setVolConflict(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full rounded-lg p-2 border focus:outline-none focus:border-indigo-500"
+                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-medium mb-1">预期卷末大高潮</label>
+                  <label className="block font-medium mb-1" style={{ color: 'var(--text-main)' }}>预期卷末大高潮</label>
                   <textarea
                     rows={2}
                     placeholder="例如：万宝拍卖会大乱，林越斩魔脱身..."
                     value={volClimax}
                     onChange={(e) => setVolClimax(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full rounded-lg p-2 border focus:outline-none focus:border-indigo-500"
+                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                   />
                 </div>
               </div>
@@ -622,23 +644,25 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                     <ShieldAlert className="w-3.5 h-3.5" />
                     <span>出场边界与防早现约束（AI 强约束规则）</span>
                   </label>
-                  <span className="text-[10px] text-slate-500">防人、物、事提早暴露</span>
+                  <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>防人、物、事提早暴露</span>
                 </div>
                 <textarea
                   rows={4}
                   placeholder="【人物登场禁忌】：严禁金丹后期以上大能本体降临；&#10;【宝物机缘禁忌】：严禁提前出土上古神器；&#10;【战力天花板】：全卷压制在筑基期至金丹初期；&#10;【剧情悬念暗线】：严禁提前揭晓当年灭族真凶。"
                   value={volBoundary}
                   onChange={(e) => setVolBoundary(e.target.value)}
-                  className="w-full bg-slate-950 border border-amber-900/50 rounded-lg p-2.5 text-amber-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 font-mono text-xs leading-relaxed"
+                  className="w-full rounded-lg p-2.5 border focus:outline-none focus:border-amber-500 font-mono text-xs leading-relaxed"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+            <div className="flex justify-end gap-2 pt-2 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
               <button
                 type="button"
                 onClick={() => setShowAddVolumeModal(false)}
-                className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg cursor-pointer"
+                className="px-3 py-1.5 text-xs rounded-lg border transition cursor-pointer hover:opacity-80"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
               >
                 取消
               </button>
@@ -658,32 +682,34 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <form
             onSubmit={handleUpdateVolume}
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+            className="rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto border"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
           >
-            <div className="border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+            <div className="border-b pb-3" style={{ borderColor: 'var(--border-subtle)' }}>
+              <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
                 <ShieldAlert className="w-4 h-4 text-indigo-400" />
                 <span>编辑第 {editingVolume.volumeIndex} 卷故事纲要与防早现边界约束</span>
               </h3>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
                 设定本卷的核心矛盾、阶段高潮、故事梗概与人物/物品/事件出场边界，AI 拆解分镜与起草正文时将硬性遵守。
               </p>
             </div>
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-300 font-medium mb-1">分卷标题</label>
+                <label className="block font-medium mb-1" style={{ color: 'var(--text-main)' }}>分卷标题</label>
                 <input
                   type="text"
                   required
                   value={editVolTitle}
                   onChange={(e) => setEditVolTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full rounded-lg p-2 border focus:outline-none focus:border-indigo-500"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
               <div>
-                <label className="block text-slate-300 font-medium mb-1">
+                <label className="block font-medium mb-1" style={{ color: 'var(--text-main)' }}>
                   本卷故事剧情概要（整体叙事弧线）
                 </label>
                 <textarea
@@ -691,30 +717,33 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                   placeholder="概括本卷的故事起承转合，指引本卷全部章节的整体主线走向..."
                   value={editVolSummary}
                   onChange={(e) => setEditVolSummary(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500 leading-relaxed"
+                  className="w-full rounded-lg p-2 border focus:outline-none focus:border-indigo-500 leading-relaxed"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-medium mb-1">本卷核心矛盾</label>
+                  <label className="block font-medium mb-1" style={{ color: 'var(--text-main)' }}>本卷核心矛盾</label>
                   <textarea
                     rows={2}
                     placeholder="例如：林越获取青铜残片后遭遇宗门暗流与魔宗追杀..."
                     value={editVolConflict}
                     onChange={(e) => setEditVolConflict(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full rounded-lg p-2 border focus:outline-none focus:border-indigo-500"
+                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-medium mb-1">预期卷末大高潮</label>
+                  <label className="block font-medium mb-1" style={{ color: 'var(--text-main)' }}>预期卷末大高潮</label>
                   <textarea
                     rows={2}
                     placeholder="例如：坠星崖绝地血战，破除死局，名动北域..."
                     value={editVolClimax}
                     onChange={(e) => setEditVolClimax(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full rounded-lg p-2 border focus:outline-none focus:border-indigo-500"
+                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                   />
                 </div>
               </div>
@@ -725,23 +754,25 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                     <ShieldAlert className="w-3.5 h-3.5" />
                     <span>出场边界与防早现约束（核心负向规则）</span>
                   </label>
-                  <span className="text-[10px] text-slate-500">AI 起草时的最高优先级负向提示词</span>
+                  <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>AI 起草时的最高优先级负向提示词</span>
                 </div>
                 <textarea
                   rows={4}
                   placeholder="【人物登场禁忌】：严禁金丹后期以上大能本体直接降临；魔宗宗主仅限侧面传闻；&#10;【宝物机缘禁忌】：本卷仅限第一枚青铜残片苏醒，禁止提前出土第二枚神器；&#10;【战力天花板】：战力严格压制在筑基期至金丹初期，禁止空间撕裂；&#10;【剧情悬念暗线】：严禁提前揭晓当年灭族真凶。"
                   value={editVolBoundary}
                   onChange={(e) => setEditVolBoundary(e.target.value)}
-                  className="w-full bg-slate-950 border border-amber-900/50 rounded-lg p-2.5 text-amber-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 font-mono text-xs leading-relaxed"
+                  className="w-full rounded-lg p-2.5 border focus:outline-none focus:border-amber-500 font-mono text-xs leading-relaxed"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+            <div className="flex justify-end gap-2 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
               <button
                 type="button"
                 onClick={() => setEditingVolume(null)}
-                className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg cursor-pointer"
+                className="px-3 py-1.5 text-xs rounded-lg border transition cursor-pointer hover:opacity-80"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
               >
                 取消
               </button>
@@ -761,20 +792,22 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <form
             onSubmit={handleCreateChapter}
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4"
+            className="border rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
           >
-            <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+            <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
               <FilePlus className="w-4 h-4 text-indigo-400" />
               <span>在该卷下新增章节</span>
             </h3>
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-400 mb-1">主视角人物 (POV)</label>
+                <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>主视角人物 (POV)</label>
                 <select
                   value={chapPov}
                   onChange={(e) => setChapPov(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full border rounded-lg p-2 focus:outline-none focus:border-indigo-500"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 >
                   {characters.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -785,26 +818,28 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">章节剧情梗概 / 核心对抗事件</label>
+                <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>章节剧情梗概 / 核心对抗事件</label>
                 <textarea
                   rows={3}
                   placeholder="简述本章将要发生的关键推进与冲突（输入后点击下方 AI 拟定，即可基于本段梗概生成贴合剧情的高质量备选标题）..."
                   value={chapOutline}
                   onChange={(e) => setChapOutline(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full border rounded-lg p-2 focus:outline-none focus:border-indigo-500"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-slate-300 font-medium">
+                  <label className="font-medium" style={{ color: 'var(--text-main)' }}>
                     章节标题（支持手动输入编辑，也可点击右侧按钮由 AI 拟定候选）
                   </label>
                   <button
                     type="button"
                     onClick={() => handleGenerateTitlesForAdd(showAddChapterModal)}
                     disabled={isGeneratingAddTitles}
-                    className="px-2.5 py-1 bg-indigo-950 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-300 rounded-lg text-[11px] font-medium transition flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition flex items-center gap-1 disabled:opacity-50 cursor-pointer border hover:opacity-80"
+                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--accent-primary)' }}
                   >
                     {isGeneratingAddTitles ? (
                       <>
@@ -825,13 +860,14 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                   placeholder="例如：地脉迷踪 或 剑气惊寒"
                   value={chapTitle}
                   onChange={(e) => setChapTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500 font-medium"
+                  className="w-full border rounded-lg p-2 focus:outline-none focus:border-indigo-500 font-medium"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
 
                 {/* 自动生成的候选标题选项 Chips */}
                 {addTitleCandidates.length > 0 && (
-                  <div className="mt-2.5 p-2.5 bg-slate-950/90 border border-indigo-900/50 rounded-xl space-y-1.5">
-                    <span className="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
+                  <div className="mt-2.5 p-2.5 rounded-xl space-y-1.5 border" style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}>
+                    <span className="text-[11px] flex items-center gap-1 font-medium" style={{ color: 'var(--text-muted)' }}>
                       <Sparkles className="w-3 h-3 text-amber-400" />
                       点击备选标题一键采纳（采纳后仍可在上方自由手动编辑）：
                     </span>
@@ -844,11 +880,12 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                             key={idx}
                             type="button"
                             onClick={() => setChapTitle(clean)}
-                            className={`px-2.5 py-1 rounded-lg text-xs transition border cursor-pointer ${
+                            className="px-2.5 py-1 rounded-lg text-xs transition border cursor-pointer hover:opacity-80"
+                            style={
                               isSelected
-                                ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
-                                : 'bg-slate-900 hover:bg-slate-850 text-indigo-300 border-slate-800 hover:border-indigo-700'
-                            }`}
+                                ? { backgroundColor: 'var(--accent-primary)', color: '#fff', borderColor: 'var(--accent-primary)' }
+                                : { backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
+                            }
                           >
                             {clean}
                           </button>
@@ -860,11 +897,12 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+            <div className="flex justify-end gap-2 pt-2 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
               <button
                 type="button"
                 onClick={() => setShowAddChapterModal(null)}
-                className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg cursor-pointer"
+                className="px-3 py-1.5 text-xs rounded-lg border transition cursor-pointer hover:opacity-80"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
               >
                 取消
               </button>
@@ -893,17 +931,19 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
               });
               setEditingChapter(null);
             }}
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4"
+            className="border rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4"
+            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
           >
-            <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+            <div className="border-b pb-3 flex items-center justify-between" style={{ borderColor: 'var(--border-subtle)' }}>
+              <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
                 <Edit className="w-4 h-4 text-indigo-400" />
                 <span>编辑第 {editingChapter.chapterIndex} 章大纲与标题</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setEditingChapter(null)}
-                className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+                className="p-1 rounded-lg hover:opacity-80 transition cursor-pointer"
+                style={{ color: 'var(--text-muted)' }}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -911,11 +951,12 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-400 mb-1">主视角人物 (POV)</label>
+                <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>主视角人物 (POV)</label>
                 <select
                   value={editChapPov}
                   onChange={(e) => setEditChapPov(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full border rounded-lg p-2 focus:outline-none focus:border-indigo-500"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 >
                   {characters.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -926,26 +967,28 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">章节剧情梗概 / 核心对抗事件</label>
+                <label className="block mb-1" style={{ color: 'var(--text-muted)' }}>章节剧情梗概 / 核心对抗事件</label>
                 <textarea
                   rows={3}
                   placeholder="修改本章的大纲走向与关键对抗..."
                   value={editChapOutline}
                   onChange={(e) => setEditChapOutline(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full border rounded-lg p-2 focus:outline-none focus:border-indigo-500"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-slate-300 font-medium">
+                  <label className="font-medium" style={{ color: 'var(--text-main)' }}>
                     章节标题（可手动微调，也可点右侧重新让 AI 拟定）
                   </label>
                   <button
                     type="button"
                     onClick={handleGenerateTitlesForEdit}
                     disabled={isGeneratingEditTitles}
-                    className="px-2.5 py-1 bg-indigo-950 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-300 rounded-lg text-[11px] font-medium transition flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition flex items-center gap-1 disabled:opacity-50 cursor-pointer border hover:opacity-80"
+                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--accent-primary)' }}
                   >
                     {isGeneratingEditTitles ? (
                       <>
@@ -965,13 +1008,14 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                   required
                   value={editChapTitle}
                   onChange={(e) => setEditChapTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500 font-medium"
+                  className="w-full border rounded-lg p-2 focus:outline-none focus:border-indigo-500 font-medium"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
 
                 {/* 候选标题 Chips */}
                 {editTitleCandidates.length > 0 && (
-                  <div className="mt-2.5 p-2.5 bg-slate-950/90 border border-indigo-900/50 rounded-xl space-y-1.5">
-                    <span className="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
+                  <div className="mt-2.5 p-2.5 rounded-xl space-y-1.5 border" style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}>
+                    <span className="text-[11px] flex items-center gap-1 font-medium" style={{ color: 'var(--text-muted)' }}>
                       <Sparkles className="w-3 h-3 text-amber-400" />
                       点击备选标题一键采纳：
                     </span>
@@ -984,11 +1028,12 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                             key={idx}
                             type="button"
                             onClick={() => setEditChapTitle(clean)}
-                            className={`px-2.5 py-1 rounded-lg text-xs transition border cursor-pointer ${
+                            className="px-2.5 py-1 rounded-lg text-xs transition border cursor-pointer hover:opacity-80"
+                            style={
                               isSelected
-                                ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
-                                : 'bg-slate-900 hover:bg-slate-850 text-indigo-300 border-slate-800 hover:border-indigo-700'
-                            }`}
+                                ? { backgroundColor: 'var(--accent-primary)', color: '#fff', borderColor: 'var(--accent-primary)' }
+                                : { backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
+                            }
                           >
                             {clean}
                           </button>
@@ -1000,11 +1045,12 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+            <div className="flex justify-end gap-2 pt-2 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
               <button
                 type="button"
                 onClick={() => setEditingChapter(null)}
-                className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg cursor-pointer"
+                className="px-3 py-1.5 text-xs rounded-lg border transition cursor-pointer hover:opacity-80"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
               >
                 取消
               </button>

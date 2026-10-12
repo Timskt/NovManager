@@ -14,25 +14,38 @@ export const McpInspectorView: React.FC = () => {
   const [subPage, setSubPage] = useState<'setup' | 'inspector'>('setup');
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-950 overflow-hidden">
+    <div
+      className="flex-1 flex flex-col overflow-hidden transition-colors"
+      style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-main)' }}
+    >
       {/* 顶部子页面导航切换条 */}
-      <div className="bg-slate-900/90 border-b border-slate-800 px-6 py-2.5 flex items-center justify-between shrink-0">
+      <div
+        className="px-6 py-2.5 flex items-center justify-between shrink-0 border-b"
+        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+      >
         <div className="flex items-center gap-2">
           <Cable className="w-5 h-5 text-emerald-400" />
-          <span className="text-sm font-bold text-slate-100 hidden sm:inline">
+          <span className="text-sm font-bold hidden sm:inline" style={{ color: 'var(--text-main)' }}>
             Model Context Protocol (MCP) 开放生态
           </span>
         </div>
 
         {/* 核心双子页面切换器 */}
-        <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-medium">
+        <div
+          className="flex items-center p-1 rounded-xl border text-xs font-medium"
+          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+        >
           <button
             onClick={() => setSubPage('setup')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
               subPage === 'setup'
-                ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30 font-semibold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'shadow-sm font-semibold'
+                : 'hover:opacity-80'
             }`}
+            style={{
+              backgroundColor: subPage === 'setup' ? 'var(--accent-primary)' : 'transparent',
+              color: subPage === 'setup' ? '#ffffff' : 'var(--text-muted)',
+            }}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>⚙️ 客户端安装与配置向导</span>
@@ -42,9 +55,13 @@ export const McpInspectorView: React.FC = () => {
             onClick={() => setSubPage('inspector')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
               subPage === 'inspector'
-                ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30 font-semibold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'shadow-sm font-semibold'
+                : 'hover:opacity-80'
             }`}
+            style={{
+              backgroundColor: subPage === 'inspector' ? 'var(--accent-primary)' : 'transparent',
+              color: subPage === 'inspector' ? '#ffffff' : 'var(--text-muted)',
+            }}
           >
             <Layers className="w-3.5 h-3.5" />
             <span>🔍 协议在线调试与资产看板</span>

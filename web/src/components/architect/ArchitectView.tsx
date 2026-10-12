@@ -138,23 +138,36 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-slate-950">
+    <div
+      className="flex-1 flex flex-col overflow-hidden"
+      style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-main)' }}
+    >
       {/* 顶部阶段导航指示条 */}
-      <div className="bg-slate-900/90 border-b border-slate-800 px-4 sm:px-8 py-3 flex items-center justify-between">
+      <div
+        className="border-b px-4 sm:px-8 py-3 flex items-center justify-between"
+        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+      >
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-tr from-amber-500/20 to-indigo-500/20 border border-amber-500/30 text-amber-400 shadow-sm">
+          <div
+            className="p-2 rounded-xl border shadow-sm"
+            style={{
+              backgroundColor: 'var(--accent-surface)',
+              borderColor: 'var(--border-subtle)',
+              color: 'var(--accent-primary)',
+            }}
+          >
             <Wand2 className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-slate-100">
+              <h2 className="text-base font-bold" style={{ color: 'var(--text-main)' }}>
                 AI 创世工坊 / Novel Architect
               </h2>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-700/50 font-medium">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 font-medium">
                 大模型架构推演
               </span>
             </div>
-            <p className="text-xs text-slate-400 hidden sm:block">
+            <p className="text-xs hidden sm:block" style={{ color: 'var(--text-muted)' }}>
               从灵感脑暴到全书五维圣经推演，全流程陪伴式小说构思引擎
             </p>
           </div>
@@ -166,39 +179,47 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
             onClick={() => setStep('brainstorm')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
               step === 'brainstorm'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-950'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                ? 'text-white shadow-md'
+                : 'hover:opacity-80'
             }`}
+            style={{
+              backgroundColor: step === 'brainstorm' ? 'var(--accent-primary)' : 'var(--bg-card)',
+              color: step === 'brainstorm' ? '#ffffff' : 'var(--text-muted)',
+            }}
           >
             <MessageSquare className="w-3.5 h-3.5" />
             <span>1. 灵感脑暴</span>
           </button>
 
-          <span className="text-slate-700">→</span>
+          <span style={{ color: 'var(--text-faint)' }}>→</span>
 
           <div
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
-              step === 'generating'
-                ? 'bg-amber-600 text-white shadow-md shadow-amber-950'
-                : 'text-slate-500'
-            }`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition"
+            style={{
+              backgroundColor: step === 'generating' ? 'var(--accent-amber)' : 'var(--bg-card)',
+              color: step === 'generating' ? '#ffffff' : 'var(--text-faint)',
+            }}
           >
             <Zap className="w-3.5 h-3.5" />
             <span>2. 架构推演</span>
           </div>
 
-          <span className="text-slate-700">→</span>
+          <span style={{ color: 'var(--text-faint)' }}>→</span>
 
           <button
             disabled={!generatedFramework}
             onClick={() => generatedFramework && setStep('review')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
               step === 'review'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950'
+                ? 'text-white shadow-md'
                 : generatedFramework
-                ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                : 'text-slate-600 cursor-not-allowed'
+                ? 'hover:opacity-80'
+                : 'cursor-not-allowed opacity-50'
             }`}
+            style={{
+              backgroundColor: step === 'review' ? 'var(--accent-primary)' : 'var(--bg-card)',
+              color: step === 'review' ? '#ffffff' : 'var(--text-muted)',
+            }}
           >
             <FileCheck className="w-3.5 h-3.5" />
             <span>3. 审阅与立项</span>
@@ -215,8 +236,8 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
           <div className="flex-1 flex flex-col max-w-5xl w-full mx-auto p-4 sm:p-6 overflow-hidden">
             {/* 灵感快捷预设胶囊 */}
             <div className="mb-4 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-                <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+              <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: 'var(--text-main)' }}>
+                <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
                 <span>热门网文题材灵感模版（点击自动填入与主编探讨）：</span>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -224,7 +245,12 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
                   <button
                     key={p.label}
                     onClick={() => handleSendMessage(p.prompt)}
-                    className="px-3 py-1.5 text-xs rounded-xl bg-slate-900 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-600/60 text-slate-300 hover:text-indigo-300 transition shadow-sm"
+                    className="px-3 py-1.5 text-xs rounded-xl border transition shadow-xs hover:border-indigo-500/50"
+                    style={{
+                      backgroundColor: 'var(--bg-card)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-main)',
+                    }}
                   >
                     {p.label}
                   </button>
@@ -233,28 +259,42 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
             </div>
 
             {/* 对话消息滚动流 */}
-            <div className="flex-1 overflow-y-auto space-y-4 bg-slate-900/50 rounded-2xl border border-slate-800 p-4 sm:p-6">
+            <div
+              className="flex-1 overflow-y-auto space-y-4 rounded-2xl border p-4 sm:p-6"
+              style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+            >
               {chatMessages.map((msg, idx) => (
                 <div
                   key={idx}
                   className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   {msg.role === 'assistant' && (
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-indigo-600 flex items-center justify-center text-white shrink-0 shadow-md">
+                    <div
+                      className="w-8 h-8 rounded-xl flex items-center justify-center text-white shrink-0 shadow-md"
+                      style={{ backgroundColor: 'var(--accent-primary)' }}
+                    >
                       <Sparkles className="w-4 h-4" />
                     </div>
                   )}
                   <div
-                    className={`max-w-[85%] rounded-2xl p-4 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
+                    className={`max-w-[85%] rounded-2xl p-4 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap border ${
                       msg.role === 'user'
-                        ? 'bg-indigo-600 text-white rounded-br-none shadow-md shadow-indigo-950'
-                        : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-bl-none shadow-sm'
+                        ? 'text-white rounded-br-none shadow-md'
+                        : 'rounded-bl-none shadow-xs'
                     }`}
+                    style={
+                      msg.role === 'user'
+                        ? { backgroundColor: 'var(--accent-primary)', borderColor: 'transparent' }
+                        : { backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }
+                    }
                   >
                     {msg.content}
                   </div>
                   {msg.role === 'user' && (
-                    <div className="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 shrink-0">
+                    <div
+                      className="w-8 h-8 rounded-xl border flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+                    >
                       <Feather className="w-4 h-4" />
                     </div>
                   )}
@@ -262,8 +302,11 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
               ))}
 
               {isChatting && (
-                <div className="flex gap-3 items-center text-slate-400 text-xs">
-                  <div className="w-8 h-8 rounded-xl bg-indigo-950 border border-indigo-800 flex items-center justify-center text-indigo-400 animate-spin">
+                <div className="flex gap-3 items-center text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <div
+                    className="w-8 h-8 rounded-xl border flex items-center justify-center animate-spin"
+                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--accent-primary)' }}
+                  >
                     <RefreshCw className="w-4 h-4" />
                   </div>
                   <span>AI 主编与架构师正在构思回应...</span>
@@ -285,12 +328,14 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
                       handleSendMessage();
                     }
                   }}
-                  className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-3 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none shadow-inner"
+                  className="flex-1 rounded-2xl p-3 text-xs sm:text-sm border outline-none focus:ring-1 focus:ring-indigo-500/50 resize-none shadow-inner"
+                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
                 />
                 <button
                   onClick={() => handleSendMessage()}
                   disabled={!userInput.trim() || isChatting}
-                  className="h-full px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-950 transition"
+                  className="h-full px-5 py-3 rounded-2xl disabled:opacity-50 text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md transition"
+                  style={{ backgroundColor: 'var(--accent-primary)' }}
                 >
                   <Send className="w-4 h-4" />
                   <span className="hidden sm:inline">探讨</span>
@@ -341,19 +386,22 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
             </div>
 
             {/* 动态执行步骤日志 */}
-            <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl p-4 text-left font-mono text-xs text-slate-300 space-y-2 max-h-56 overflow-y-auto">
+            <div
+              className="w-full rounded-2xl p-4 text-left font-mono text-xs space-y-2 max-h-56 overflow-y-auto border shadow-sm"
+              style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+            >
               {progressLogs.length === 0 ? (
-                <div className="text-slate-500 flex items-center gap-2">
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+                <div className="flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" style={{ color: 'var(--accent-primary)' }} />
                   <span>启动策划 Agent 与大纲编排系统...</span>
                 </div>
               ) : (
                 progressLogs.map((log, i) => (
-                  <div key={i} className="flex items-start gap-2 text-indigo-300">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                  <div key={i} className="flex items-start gap-2" style={{ color: 'var(--text-main)' }}>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-semibold text-slate-200">{log.step}</span>
-                      <p className="text-[11px] text-slate-400">{log.detail}</p>
+                      <span className="font-semibold block">{log.step}</span>
+                      <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{log.detail}</p>
                     </div>
                   </div>
                 ))
@@ -368,65 +416,42 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
         {step === 'review' && generatedFramework && (
           <div className="flex-1 flex flex-col overflow-hidden max-w-6xl w-full mx-auto p-4 sm:p-6 space-y-4">
             {/* 框架五维审阅 Tab 切换 */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2 text-xs">
-                <button
-                  onClick={() => setActiveReviewTab('meta')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition ${
-                    activeReviewTab === 'meta'
-                      ? 'bg-indigo-600 text-white'
-                      : 'text-slate-400 hover:text-slate-200 bg-slate-900'
-                  }`}
-                >
-                  📋 基本信息与文风
-                </button>
-                <button
-                  onClick={() => setActiveReviewTab('rules')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition ${
-                    activeReviewTab === 'rules'
-                      ? 'bg-indigo-600 text-white'
-                      : 'text-slate-400 hover:text-slate-200 bg-slate-900'
-                  }`}
-                >
-                  🌌 世界法则设定 ({generatedFramework.worldSettings.length})
-                </button>
-                <button
-                  onClick={() => setActiveReviewTab('characters')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition ${
-                    activeReviewTab === 'characters'
-                      ? 'bg-indigo-600 text-white'
-                      : 'text-slate-400 hover:text-slate-200 bg-slate-900'
-                  }`}
-                >
-                  👥 角色阵营卡片 ({generatedFramework.characters.length})
-                </button>
-                <button
-                  onClick={() => setActiveReviewTab('outlines')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition ${
-                    activeReviewTab === 'outlines'
-                      ? 'bg-indigo-600 text-white'
-                      : 'text-slate-400 hover:text-slate-200 bg-slate-900'
-                  }`}
-                >
-                  📑 卷章大纲与分镜 ({generatedFramework.volumes.length}卷)
-                </button>
-                <button
-                  onClick={() => setActiveReviewTab('foreshadowing')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition ${
-                    activeReviewTab === 'foreshadowing'
-                      ? 'bg-indigo-600 text-white'
-                      : 'text-slate-400 hover:text-slate-200 bg-slate-900'
-                  }`}
-                >
-                  🎯 核心伏笔雷达 ({generatedFramework.foreshadowings.length})
-                </button>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-3" style={{ borderColor: 'var(--border-subtle)' }}>
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                {(
+                  [
+                    { key: 'meta', label: '📋 基本信息与文风' },
+                    { key: 'rules', label: `🌌 世界法则设定 (${generatedFramework.worldSettings.length})` },
+                    { key: 'characters', label: `👥 角色阵营卡片 (${generatedFramework.characters.length})` },
+                    { key: 'outlines', label: `📑 卷章大纲与分镜 (${generatedFramework.volumes.length}卷)` },
+                    { key: 'foreshadowing', label: `🎯 核心伏笔雷达 (${generatedFramework.foreshadowings.length})` },
+                  ] as const
+                ).map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveReviewTab(tab.key)}
+                    className="px-3 py-1.5 rounded-lg font-medium transition border"
+                    style={{
+                      backgroundColor: activeReviewTab === tab.key ? 'var(--accent-primary)' : 'var(--bg-card)',
+                      borderColor: activeReviewTab === tab.key ? 'transparent' : 'var(--border-subtle)',
+                      color: activeReviewTab === tab.key ? '#ffffff' : 'var(--text-muted)',
+                    }}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
 
               {/* 动作区 */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setStep('brainstorm')}
-                  className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 bg-slate-800 rounded-lg flex items-center gap-1 transition"
+                  className="px-3 py-1.5 text-xs rounded-lg flex items-center gap-1 transition border"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-muted)',
+                  }}
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>返回探讨微调</span>
@@ -434,7 +459,8 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
 
                 <button
                   onClick={handleAdoptFramework}
-                  className="px-5 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 rounded-lg shadow-lg shadow-emerald-950 flex items-center gap-1.5 transition hover:scale-105 active:scale-95"
+                  className="px-5 py-1.5 text-xs font-bold text-white rounded-lg shadow-md flex items-center gap-1.5 transition hover:scale-105 active:scale-95"
+                  style={{ backgroundColor: 'var(--accent-primary)' }}
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   <span>🎉 确认创建并进入新书创作</span>
@@ -447,56 +473,75 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
               {/* TAB 1: 基本信息 */}
               {activeReviewTab === 'meta' && (
                 <div className="space-y-4 max-w-3xl mx-auto">
-                  <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 space-y-3">
+                  <div
+                    className="rounded-2xl border p-5 space-y-3 shadow-sm"
+                    style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
+                  >
                     <div className="flex items-center justify-between">
-                      <span className="text-xl font-bold text-slate-100 font-serif">
+                      <span className="text-xl font-bold font-serif" style={{ color: 'var(--text-main)' }}>
                         《{generatedFramework.title}》
                       </span>
-                      <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-950 border border-indigo-700/60 text-indigo-300">
+                      <span
+                        className="text-xs px-2.5 py-0.5 rounded-full border font-medium"
+                        style={{
+                          backgroundColor: 'var(--accent-surface)',
+                          borderColor: 'var(--border-subtle)',
+                          color: 'var(--accent-primary)',
+                        }}
+                      >
                         {generatedFramework.genre}
                       </span>
                     </div>
 
                     {generatedFramework.subtitle && (
-                      <p className="text-xs text-amber-300 font-medium">
+                      <p className="text-xs text-amber-500 font-medium">
                         {generatedFramework.subtitle}
                       </p>
                     )}
 
-                    <div className="pt-2 border-t border-slate-800 space-y-2 text-xs">
+                    <div className="pt-2 border-t space-y-2 text-xs" style={{ borderColor: 'var(--border-subtle)' }}>
                       <div>
-                        <span className="text-slate-400 font-semibold block mb-0.5">
+                        <span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>
                           一句话核心故事梗概 (Logline)：
                         </span>
-                        <p className="text-slate-200 leading-relaxed bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <p
+                          className="leading-relaxed p-3 rounded-xl border"
+                          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+                        >
                           {generatedFramework.logline}
                         </p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 pt-2">
-                        <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                          <span className="text-slate-500 text-[11px] block">预期规划篇幅字数</span>
-                          <span className="text-slate-200 font-mono font-bold text-sm">
+                        <div
+                          className="p-2.5 rounded-xl border"
+                          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                        >
+                          <span className="text-[11px] block" style={{ color: 'var(--text-faint)' }}>预期规划篇幅字数</span>
+                          <span className="font-mono font-bold text-sm" style={{ color: 'var(--text-main)' }}>
                             {generatedFramework.targetWordCount.toLocaleString()} 字
                           </span>
                         </div>
-                        <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                          <span className="text-slate-500 text-[11px] block">叙事行文语调 (Tone)</span>
-                          <span className="text-slate-300 text-xs">
+                        <div
+                          className="p-2.5 rounded-xl border"
+                          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                        >
+                          <span className="text-[11px] block" style={{ color: 'var(--text-faint)' }}>叙事行文语调 (Tone)</span>
+                          <span className="text-xs" style={{ color: 'var(--text-main)' }}>
                             {generatedFramework.styleGuide.tone}
                           </span>
                         </div>
                       </div>
 
                       <div className="pt-2">
-                        <span className="text-slate-400 text-[11px] block mb-1">
+                        <span className="text-[11px] block mb-1" style={{ color: 'var(--text-muted)' }}>
                           违禁词与避讳库（防止网文水词与毒点）：
                         </span>
                         <div className="flex flex-wrap gap-1.5">
                           {generatedFramework.styleGuide.forbiddenPhrases.map((phrase, i) => (
                             <span
                               key={i}
-                              className="text-[10px] px-2 py-0.5 rounded bg-rose-950/60 border border-rose-800/60 text-rose-300"
+                              className="text-[10px] px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-500 font-medium"
                             >
                               ✕ {phrase}
                             </span>
@@ -514,25 +559,41 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
                   {generatedFramework.worldSettings.map((rule, idx) => (
                     <div
                       key={idx}
-                      className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2.5"
+                      className="rounded-2xl p-4 space-y-2.5 border shadow-sm"
+                      style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-100 text-sm font-serif flex items-center gap-1.5">
-                          <Shield className="w-4 h-4 text-indigo-400" />
+                        <span className="font-bold text-sm font-serif flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
+                          <Shield className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
                           <span>{rule.name}</span>
                         </span>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-slate-950 text-indigo-300 border border-slate-800">
+                        <span
+                          className="text-[10px] px-2 py-0.5 rounded border font-medium"
+                          style={{
+                            backgroundColor: 'var(--accent-surface)',
+                            borderColor: 'var(--border-subtle)',
+                            color: 'var(--accent-primary)',
+                          }}
+                        >
                           {rule.category}
                         </span>
                       </div>
-                      <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 whitespace-pre-wrap leading-relaxed">
+                      <div
+                        className="p-3 rounded-xl border text-xs whitespace-pre-wrap leading-relaxed"
+                        style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+                      >
                         {rule.content}
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {rule.tags.map((t, i) => (
                           <span
                             key={i}
-                            className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400"
+                            className="text-[9px] px-1.5 py-0.5 rounded border"
+                            style={{
+                              backgroundColor: 'var(--bg-card)',
+                              borderColor: 'var(--border-subtle)',
+                              color: 'var(--text-muted)',
+                            }}
                           >
                             {t}
                           </span>
@@ -549,47 +610,64 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
                   {generatedFramework.characters.map((cItem, idx) => (
                     <div
                       key={idx}
-                      className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3"
+                      className="rounded-2xl p-4 space-y-3 border shadow-sm"
+                      style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
                     >
-                      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: 'var(--border-subtle)' }}>
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-slate-100 font-serif">
+                          <span className="font-bold text-sm font-serif" style={{ color: 'var(--text-main)' }}>
                             {cItem.character.name}
                           </span>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 font-semibold border border-indigo-800/60">
+                          <span
+                            className="text-[10px] px-2 py-0.5 rounded font-semibold border"
+                            style={{
+                              backgroundColor: 'var(--accent-surface)',
+                              borderColor: 'var(--border-subtle)',
+                              color: 'var(--accent-primary)',
+                            }}
+                          >
                             {cItem.character.roleType}
                           </span>
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                             性别：{cItem.character.gender}
                           </span>
                         </div>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-medium">
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-medium">
                           初始战力：{cItem.initialState.combatPower}
                         </span>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                        <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                          <span className="text-slate-500 text-[10px] block font-semibold">
+                        <div
+                          className="p-2.5 rounded-xl border"
+                          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                        >
+                          <span className="text-[10px] block font-semibold" style={{ color: 'var(--text-muted)' }}>
                             核心动机
                           </span>
-                          <p className="text-slate-300 mt-0.5">
+                          <p className="mt-0.5" style={{ color: 'var(--text-main)' }}>
                             {cItem.character.profile.coreMotivation}
                           </p>
                         </div>
-                        <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                          <span className="text-rose-400/80 text-[10px] block font-semibold">
+                        <div
+                          className="p-2.5 rounded-xl border"
+                          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                        >
+                          <span className="text-rose-500 text-[10px] block font-semibold">
                             致命性格缺陷
                           </span>
-                          <p className="text-slate-300 mt-0.5">
+                          <p className="mt-0.5" style={{ color: 'var(--text-main)' }}>
                             {cItem.character.profile.fatalFlaw}
                           </p>
                         </div>
-                        <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                          <span className="text-slate-500 text-[10px] block font-semibold">
+                        <div
+                          className="p-2.5 rounded-xl border"
+                          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                        >
+                          <span className="text-[10px] block font-semibold" style={{ color: 'var(--text-muted)' }}>
                             语言习惯与口吻
                           </span>
-                          <p className="text-slate-300 mt-0.5">
+                          <p className="mt-0.5" style={{ color: 'var(--text-main)' }}>
                             {cItem.character.profile.voiceAndTone}
                           </p>
                         </div>
@@ -597,11 +675,16 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
 
                       {cItem.initialState.statusTags.length > 0 && (
                         <div className="flex items-center gap-1.5 pt-1">
-                          <span className="text-[10px] text-slate-500">初始状态标签：</span>
+                          <span className="text-[10px]" style={{ color: 'var(--text-faint)' }}>初始状态标签：</span>
                           {cItem.initialState.statusTags.map((tag, i) => (
                             <span
                               key={i}
-                              className="text-[9px] px-1.5 py-0.5 rounded bg-rose-950/60 text-rose-300 border border-rose-800/40"
+                              className="text-[9px] px-1.5 py-0.5 rounded border"
+                              style={{
+                                backgroundColor: 'var(--accent-surface)',
+                                borderColor: 'var(--border-subtle)',
+                                color: 'var(--accent-primary)',
+                              }}
                             >
                               {tag}
                             </span>
@@ -619,19 +702,20 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
                   {generatedFramework.volumes.map((vol, vIdx) => (
                     <div
                       key={vIdx}
-                      className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3"
+                      className="rounded-2xl p-4 space-y-3 border shadow-sm"
+                      style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
                     >
-                      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                        <span className="font-bold text-sm text-slate-100 font-serif">
+                      <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: 'var(--border-subtle)' }}>
+                        <span className="font-bold text-sm font-serif" style={{ color: 'var(--text-main)' }}>
                           第 {vol.volume.volumeIndex} 卷：{vol.volume.title}
                         </span>
-                        <span className="text-xs text-amber-300/80">
+                        <span className="text-xs text-amber-500 font-medium">
                           高潮预设：{vol.volume.targetClimax}
                         </span>
                       </div>
 
-                      <p className="text-xs text-slate-400">
-                        <span className="text-slate-500">主线核心矛盾：</span>
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                        <span style={{ color: 'var(--text-faint)' }}>主线核心矛盾：</span>
                         {vol.volume.mainConflict}
                       </p>
 
@@ -639,17 +723,18 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
                         {vol.chapters.map((chap, cIdx) => (
                           <div
                             key={cIdx}
-                            className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs space-y-2"
+                            className="rounded-xl p-3 text-xs space-y-2 border"
+                            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
                           >
                             <div className="flex items-center justify-between">
-                              <span className="font-bold text-slate-200">
+                              <span className="font-bold" style={{ color: 'var(--text-main)' }}>
                                 第 {chap.chapter.chapterIndex} 章：{chap.chapter.title}
                               </span>
-                              <span className="text-[10px] text-slate-500">
+                              <span className="text-[10px]" style={{ color: 'var(--text-faint)' }}>
                                 包含 {chap.scenes.length} 幕分镜节拍
                               </span>
                             </div>
-                            <p className="text-slate-400 text-[11px] leading-relaxed">
+                            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                               {chap.chapter.outline}
                             </p>
 
@@ -658,13 +743,14 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
                               {chap.scenes.map((sc, sIdx) => (
                                 <div
                                   key={sIdx}
-                                  className="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-[10px] space-y-1"
+                                  className="p-2.5 rounded-lg border text-[10px] space-y-1"
+                                  style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
                                 >
-                                  <div className="font-semibold text-indigo-300 flex items-center gap-1">
+                                  <div className="font-semibold flex items-center gap-1" style={{ color: 'var(--accent-primary)' }}>
                                     <Zap className="w-2.5 h-2.5" />
                                     <span>第 {sc.sceneIndex} 幕</span>
                                   </div>
-                                  <p className="text-slate-400 line-clamp-2">{sc.sceneGoal}</p>
+                                  <p className="line-clamp-2" style={{ color: 'var(--text-muted)' }}>{sc.sceneGoal}</p>
                                 </div>
                               ))}
                             </div>
@@ -682,19 +768,23 @@ export const ArchitectView: React.FC<ArchitectViewProps> = ({ onNavigateTab }) =
                   {generatedFramework.foreshadowings.map((fs, idx) => (
                     <div
                       key={idx}
-                      className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2 text-xs"
+                      className="rounded-2xl p-4 space-y-2 text-xs border shadow-sm"
+                      style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-amber-300 font-serif">{fs.title}</span>
-                        <span className="text-[10px] text-slate-500">
+                        <span className="font-bold text-amber-500 font-serif">{fs.title}</span>
+                        <span className="text-[10px]" style={{ color: 'var(--text-faint)' }}>
                           计划第 {fs.plannedResolveChapterIndex || '?'} 章回收
                         </span>
                       </div>
-                      <p className="text-slate-300 text-[11px] leading-relaxed bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                      <p
+                        className="text-[11px] leading-relaxed p-2.5 rounded-xl border"
+                        style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
+                      >
                         {fs.clueDescription}
                       </p>
                       {fs.notes && (
-                        <p className="text-[10px] text-slate-500">作者备忘：{fs.notes}</p>
+                        <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>作者备忘：{fs.notes}</p>
                       )}
                     </div>
                   ))}
