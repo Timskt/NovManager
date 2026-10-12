@@ -72,6 +72,46 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const quickActions = useMemo(() => {
     return [
       {
+        id: 'action-genesis',
+        title: '✨ 灵感创世大纲：一句话脑洞推演三卷与黄金三章 (Idea Genesis)',
+        category: '创制中枢',
+        icon: Sparkles,
+        action: () => {
+          onNavigateTab('GENESIS');
+          onClose();
+        },
+      },
+      {
+        id: 'action-style-dna',
+        title: '🧬 文风 DNA 仿生工坊：名家风格克隆与去 AI 翻译腔 (Style DNA)',
+        category: '文学工坊',
+        icon: Sparkles,
+        action: () => {
+          onNavigateTab('STYLE_DNA');
+          onClose();
+        },
+      },
+      {
+        id: 'action-model-hub',
+        title: '⚡ 多模型矩阵与高可用路由：多 Key 轮换与 429 容灾熔断 (Model Hub)',
+        category: 'AI 基础基座',
+        icon: Activity,
+        action: () => {
+          onNavigateTab('MODEL_HUB');
+          onClose();
+        },
+      },
+      {
+        id: 'action-gods-eye-sandbox',
+        title: '👁️ 上帝视角宏观沙盘：追读心理疲劳预警与信息不对称矩阵 (God\'s Eye)',
+        category: '宏观推演',
+        icon: Compass,
+        action: () => {
+          onNavigateTab('GODS_EYE_SANDBOX');
+          onClose();
+        },
+      },
+      {
         id: 'action-video-studio',
         title: '🎬 AI 视频多机位分镜工坊 (Storyboard Studio)',
         category: '影视视界',

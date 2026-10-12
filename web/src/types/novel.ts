@@ -319,3 +319,266 @@ export interface PolishTechniqueStats {
   top_techniques: PolishTechnique[];
 }
 
+// ==============================================================================
+// 1. 多模型矩阵与高可用容灾路由 (Multi-Model Hub & Resilience Router)
+// ==============================================================================
+
+export type ModelProviderType =
+  | 'OPENAI'
+  | 'ANTHROPIC'
+  | 'GEMINI'
+  | 'DEEPSEEK'
+  | 'SILICONFLOW'
+  | 'OLLAMA'
+  | 'CUSTOM';
+
+export type ModelCapabilityRole =
+  | 'PLANNER'        // 架构总监 / 大纲推演 (DeepSeek-R1 / Claude 3.7 Thinking)
+  | 'DRAFTER'        // 执笔起草 (Claude 3.5 Sonnet / GPT-4.5)
+  | 'STYLIST'        // 文学精修 / 文风融汇 (Claude 3.5 / DeepSeek V3)
+  | 'INSPECTOR'      // 设定稽查 / 战力合规 (Gemini 2.5 Pro)
+  | 'VIDEO_DIRECTOR';// 电影级分镜导演 (GPT-4o / Gemini Flash)
+
+export interface ModelProvider {
+  id: string;
+  name: string;
+  providerType: ModelProviderType;
+  baseUrl: string;
+  apiKeys: string[];
+  activeKeyIndex: number;
+  supportedModels: string[];
+  rpmLimit?: number;
+  tpmLimit?: number;
+  isEnabled: boolean;
+  healthStatus: 'HEALTHY' | 'DEGRADED' | 'QUOTA_EXHAUSTED' | 'OFFLINE';
+  latencyMs: number;
+  lastCheckedAt: string;
+}
+
+export interface ModelRoleAssignment {
+  role: ModelCapabilityRole;
+  primaryProviderId: string;
+  primaryModel: string;
+  fallbackProviderId: string;
+  fallbackModel: string;
+  temperature: number;
+  topP: number;
+  maxTokens: number;
+  timeoutMs: number;
+  retryCount: number;
+}
+
+export interface ModelTelemetry {
+  id: string;
+  providerId: string;
+  model: string;
+  role: ModelCapabilityRole;
+  requestType: string;
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number;
+  latencyMs: number;
+  statusCode: number;
+  errorMessage?: string;
+  timestamp: string;
+}
+
+// ==============================================================================
+// 2. 文风 DNA 解析与仿生克隆 (Style DNA Extraction & Mimicry)
+// ==============================================================================
+
+export interface StyleDnaProfile {
+  id: string;
+  name: string;
+  author: string;
+  sourceTitle: string;
+  sourceUrl?: string;
+  tags: string[];
+  sensoryDensity: number;      // 五感通感浓度 (0.0 - 1.0)
+  dialogueRatio: number;       // 对白/动作/白描占比 (0.0 - 1.0)
+  sentenceVariance: number;    // 句式长短节律方差 (0.0 - 1.0)
+  metaphorFrequency: number;   // 隐喻/修辞密度 (0.0 - 1.0)
+  pacingVelocity: number;      // 叙事推进推重比 (0.0 - 1.0)
+  vocabularyRichness: number;  // 词汇纯度与典雅度 (0.0 - 1.0)
+  forbiddenCliches: string[];  // 禁用翻译腔与AI套话
+  goldenExemplars: string[];   // 黄金高光典范段落
+  promptDirective: string;     // 提炼合成的系统提示指令
+  createdAt: string;
+}
+
+export interface StyleFusionRequest {
+  primaryDnaId: string;
+  secondaryDnaId: string;
+  blendRatio: number; // 0.0 - 1.0 (例如 0.6 表示 60% 风格 A, 40% 风格 B)
+  fusedName: string;
+}
+
+// ==============================================================================
+// 3. 灵感创世纪大纲生成系统 (Idea-to-Universe Genesis Engine)
+// ==============================================================================
+
+export interface IdeaGenesisInput {
+  logline: string;
+  genre: string;
+  targetWordCount: number;
+  tone: string;
+  coreHook: string;
+  tropes: string[];
+  goldenFingerType: string;
+}
+
+export interface CheatEvolutionNode {
+  tier: number;
+  name: string;
+  unlockCondition: string;
+  powerDescription: string;
+  sideEffectOrCost: string;
+}
+
+export interface MultiverseBranch {
+  branchId: string;
+  title: string;
+  divergencePoint: string;
+  summary: string;
+  climaxOutcome: string;
+  pros: string;
+  cons: string;
+}
+
+export interface IdeaGenesisResponse {
+  novelTitle: string;
+  synopsis: string;
+  goldenThreeChapters: Array<{
+    chapterIndex: number;
+    title: string;
+    hook: string;
+    conflict: string;
+    climaxPayoff: string;
+    cliffhanger: string;
+  }>;
+  volumes: Array<{
+    volumeIndex: number;
+    title: string;
+    summary: string;
+    mainConflict: string;
+    targetClimax: string;
+    boundaryConstraints: string;
+  }>;
+  worldSettings: Array<{
+    name: string;
+    category: LoreCategory;
+    content: string;
+  }>;
+  mainCharacters: Array<{
+    name: string;
+    roleType: RoleType;
+    appearance: string;
+    fatalFlaw: string;
+    catchphrases: string[];
+    background: string;
+  }>;
+  cheatSystem: {
+    systemName: string;
+    coreMechanism: string;
+    progressionNodes: CheatEvolutionNode[];
+  };
+  tensionCurvePreview: number[];
+}
+
+// ==============================================================================
+// 4. 上帝视角沙盘与追读心理力学 (God's Eye Sandbox & Reader Psychology)
+// ==============================================================================
+
+export interface ReaderPsychologyReport {
+  novelId: string;
+  chapterId?: string;
+  anticipationScore: number;     // 期待感/悬念张力值 (0 - 100)
+  fatigueRisk: number;           // 疲劳弃书预警度 (0 - 100)
+  payoffIndex: number;           // 爽点兑现比 (0 - 100)
+  dopamineIntervals: number[];   // 追读快感节拍间歇点 (字数或行数)
+  diagnosticAdvice: string[];    // 心理动力学干预建议
+}
+
+export interface InformationAsymmetryItem {
+  id: string;
+  novelId: string;
+  secretTitle: string;
+  readerKnows: boolean;
+  protagonistKnows: boolean;
+  antagonistKnows: boolean;
+  dramaticIronyScore: number; // 戏剧性讽刺系数 (0.0 - 1.0)
+  revelationPlanChapter?: number;
+}
+
+export interface OffscreenNewsEvent {
+  id: string;
+  novelId: string;
+  era: string;
+  region: string;
+  eventSummary: string;
+  factionInvolved: string;
+  tensionDelta: number;
+  timestamp: string;
+}
+
+// ==============================================================================
+// 5. 商业级 AI 视频分镜故事板 (Commercial AI Video Storyboard)
+// ==============================================================================
+
+export type VideoShotType =
+  | 'CLOSE_UP'
+  | 'MEDIUM'
+  | 'WIDE'
+  | 'EXTREME_CLOSE_UP'
+  | 'AERIAL'
+  | 'OVER_THE_SHOULDER';
+
+export type CameraMovement =
+  | 'DOLLY_IN'
+  | 'DOLLY_OUT'
+  | 'PAN_LEFT'
+  | 'PAN_RIGHT'
+  | 'TRACKING'
+  | 'ORBIT'
+  | 'VERTIGO_ZOOM'
+  | 'STATIC';
+
+export type VideoExportPlatform =
+  | 'SORA'
+  | 'KLING'
+  | 'RUNWAY_GEN3'
+  | 'HAILUO_MINIMAX'
+  | 'MIDJOURNEY'
+  | 'COMFYUI_JSON';
+
+export interface VideoShot {
+  id: string;
+  sceneId: string;
+  shotNumber: number;
+  durationSeconds: number;
+  shotType: VideoShotType;
+  cameraMovement: CameraMovement;
+  visualPrompt: string;
+  motionPrompt: string;
+  negativePrompt: string;
+  lighting: string;
+  characterReferences: string[];
+  soundCue?: string;
+  dialogueCue?: string;
+  createdAt: string;
+}
+
+export interface VideoStoryboard {
+  id: string;
+  novelId: string;
+  chapterId: string;
+  sceneId: string;
+  title: string;
+  aspectRatio: '16:9' | '9:16' | '2.39:1';
+  targetPlatform: VideoExportPlatform;
+  shots: VideoShot[];
+  totalDurationSeconds: number;
+  createdAt: string;
+  updatedAt: string;
+}
+

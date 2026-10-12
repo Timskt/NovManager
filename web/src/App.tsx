@@ -34,6 +34,10 @@ import { ProgressPulseView } from './components/narrative/ProgressPulseView';
 import { DungeonArcTrajectoryView } from './components/narrative/DungeonArcTrajectoryView';
 import { GodsEyeViewModal } from './components/narrative/GodsEyeViewModal';
 import { InSceneCharactersDrawer } from './components/narrative/InSceneCharactersDrawer';
+import { ModelHubView } from './components/models/ModelHubView';
+import { StyleDnaStudioView } from './components/style/StyleDnaStudioView';
+import { GenesisView } from './components/genesis/GenesisView';
+import { GodsEyeSandboxView } from './components/sandbox/GodsEyeSandboxView';
 
 const AppContent: React.FC = () => {
   const {
@@ -87,6 +91,10 @@ const AppContent: React.FC = () => {
         {activeTab === 'CANVAS' && (
           <StudioView onNavigateTab={setActiveTab} defaultStudioTab="canvas" />
         )}
+        {activeTab === 'GENESIS' && <GenesisView />}
+        {activeTab === 'STYLE_DNA' && <StyleDnaStudioView />}
+        {activeTab === 'MODEL_HUB' && <ModelHubView />}
+        {activeTab === 'GODS_EYE_SANDBOX' && <GodsEyeSandboxView />}
         {activeTab === 'VIDEO_STUDIO' && <VideoStoryboardStudio />}
         {activeTab === 'WORKFLOW' && <WorkflowOrchestratorView />}
         {activeTab === 'PROGRESS_PULSE' && <ProgressPulseView onNavigateTab={setActiveTab} />}

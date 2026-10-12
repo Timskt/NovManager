@@ -791,4 +791,343 @@ pub struct DungeonArc {
     pub created_at: String,
 }
 
+fn default_rpm() -> u32 {
+    60
+}
+fn default_tpm() -> u32 {
+    100_000
+}
+fn default_zero_u64() -> u64 {
+    0
+}
+fn default_zero_usize() -> usize {
+    0
+}
+fn default_zero_u32() -> u32 {
+    0
+}
+fn default_provider_type() -> String {
+    "OpenAI".to_string()
+}
+fn default_health_status() -> String {
+    "HEALTHY".to_string()
+}
+fn default_temp() -> f32 {
+    0.7
+}
+fn default_top_p() -> f32 {
+    0.9
+}
+fn default_max_tokens() -> u32 {
+    4000
+}
+fn default_timeout_ms() -> u64 {
+    30000
+}
+fn default_retry_count() -> u32 {
+    3
+}
+fn default_status_code() -> u16 {
+    200
+}
+fn default_zero_f64() -> f64 {
+    0.0
+}
+fn default_zero_f32() -> f32 {
+    0.0
+}
+fn default_half_f32() -> f32 {
+    0.5
+}
+
+// ----------------- Model Provider & Resilience Router Models -----------------
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModelProvider {
+    #[serde(default)]
+    pub id: String,
+    pub name: String,
+    #[serde(default = "default_provider_type", alias = "providerType")]
+    pub provider_type: String, // OpenAI, Anthropic, Gemini, DeepSeek, SiliconFlow, Ollama, Custom
+    #[serde(alias = "baseUrl")]
+    pub base_url: String,
+    #[serde(default, alias = "apiKeys")]
+    pub api_keys: Vec<String>,
+    #[serde(default = "default_zero_usize", alias = "activeKeyIndex")]
+    pub active_key_index: usize,
+    #[serde(default, alias = "supportedModels")]
+    pub supported_models: Vec<String>,
+    #[serde(default = "default_rpm", alias = "rpmLimit")]
+    pub rpm_limit: u32,
+    #[serde(default = "default_tpm", alias = "tpmLimit")]
+    pub tpm_limit: u32,
+    #[serde(default = "default_true", alias = "isEnabled")]
+    pub is_enabled: bool,
+    #[serde(default = "default_health_status", alias = "healthStatus")]
+    pub health_status: String, // HEALTHY, DEGRADED, RATE_LIMITED, ERROR
+    #[serde(default = "default_zero_u64", alias = "latencyMs")]
+    pub latency_ms: u64,
+    #[serde(default = "default_iso_now", alias = "lastCheckedAt")]
+    pub last_checked_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModelRoleAssignment {
+    pub role: String, // Planner, Drafter, Stylist, Inspector, VideoDirector
+    #[serde(alias = "primaryProviderId")]
+    pub primary_provider_id: String,
+    #[serde(alias = "primaryModel")]
+    pub primary_model: String,
+    #[serde(alias = "fallbackProviderId")]
+    pub fallback_provider_id: String,
+    #[serde(alias = "fallbackModel")]
+    pub fallback_model: String,
+    #[serde(default = "default_temp")]
+    pub temperature: f32,
+    #[serde(default = "default_top_p", alias = "topP")]
+    pub top_p: f32,
+    #[serde(default = "default_max_tokens", alias = "maxTokens")]
+    pub max_tokens: u32,
+    #[serde(default = "default_timeout_ms", alias = "timeoutMs")]
+    pub timeout_ms: u64,
+    #[serde(default = "default_retry_count", alias = "retryCount")]
+    pub retry_count: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModelTelemetry {
+    pub id: String,
+    #[serde(alias = "providerId")]
+    pub provider_id: String,
+    pub model: String,
+    pub role: String,
+    #[serde(alias = "requestType")]
+    pub request_type: String, // COMPLETION, EMBEDDING, EVALUATION, REASONING
+    #[serde(default = "default_zero_u32", alias = "inputTokens")]
+    pub input_tokens: u32,
+    #[serde(default = "default_zero_u32", alias = "outputTokens")]
+    pub output_tokens: u32,
+    #[serde(default = "default_zero_f64", alias = "costUsd")]
+    pub cost_usd: f64,
+    #[serde(default = "default_zero_u64", alias = "latencyMs")]
+    pub latency_ms: u64,
+    #[serde(default = "default_status_code", alias = "statusCode")]
+    pub status_code: u16,
+    #[serde(default, alias = "errorMessage")]
+    pub error_message: Option<String>,
+    #[serde(default = "default_iso_now")]
+    pub timestamp: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FallbackSimulateRequest {
+    pub role: String,
+    #[serde(default, alias = "simulateStatusCode")]
+    pub simulate_status_code: Option<u16>,
+    #[serde(default, alias = "promptTokens")]
+    pub prompt_tokens: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FallbackSimulateResponse {
+    pub success: bool,
+    #[serde(alias = "attemptedProviders")]
+    pub attempted_providers: Vec<String>,
+    #[serde(alias = "finalProviderId")]
+    pub final_provider_id: String,
+    #[serde(alias = "finalModel")]
+    pub final_model: String,
+    #[serde(alias = "circuitBroken")]
+    pub circuit_broken: bool,
+    pub message: String,
+    #[serde(alias = "latencyMs")]
+    pub latency_ms: u64,
+}
+
+// ----------------- Style DNA & Literary Mimicry Models -----------------
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StyleDnaProfile {
+    #[serde(default)]
+    pub id: String,
+    pub name: String,
+    pub author: String,
+    #[serde(default, alias = "sourceTitle")]
+    pub source_title: String,
+    #[serde(default, alias = "sourceUrl")]
+    pub source_url: Option<String>,
+    #[serde(default)]
+    pub tags: Vec<String>,
+    // 6-axis literary metrics (0.0 - 1.0)
+    #[serde(default = "default_half_f32", alias = "sensoryDensity")]
+    pub sensory_density: f32, // 感官密度 (视觉/听觉/嗅觉/触觉描写比例)
+    #[serde(default = "default_half_f32", alias = "dialogueRatio")]
+    pub dialogue_ratio: f32, // 对话比例 (对白在整体篇幅占比)
+    #[serde(default = "default_half_f32", alias = "sentenceVariance")]
+    pub sentence_variance: f32, // 句式长短句方差/韵律起伏
+    #[serde(default = "default_half_f32", alias = "metaphorFrequency")]
+    pub metaphor_frequency: f32, // 隐喻与意象密度
+    #[serde(default = "default_half_f32", alias = "pacingVelocity")]
+    pub pacing_velocity: f32, // 叙事推进行进速度 (慢热铺垫 vs 凌厉快推)
+    #[serde(default = "default_half_f32", alias = "vocabularyRichness")]
+    pub vocabulary_richness: f32, // 词汇典雅复杂度 (生僻成语/行业术语/文言词法)
+    #[serde(default, alias = "forbiddenCliches")]
+    pub forbidden_cliches: Vec<String>, // 负向毒点/陈词滥调黑名单
+    #[serde(default, alias = "goldenExemplars")]
+    pub golden_exemplars: Vec<String>, // 黄金经典段落摹写样本
+    #[serde(default, alias = "promptDirective")]
+    pub prompt_directive: String, // 用于大模型模仿该文风的 System Prompt 指令
+    #[serde(default = "default_iso_now", alias = "createdAt")]
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExtractStyleDnaRequest {
+    #[serde(alias = "sampleText", alias = "text")]
+    pub sample_text: String,
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub author: Option<String>,
+    #[serde(default, alias = "sourceTitle")]
+    pub source_title: Option<String>,
+    #[serde(default, alias = "sourceUrl")]
+    pub source_url: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StyleFusionRequest {
+    #[serde(alias = "primaryProfileId")]
+    pub primary_profile_id: String,
+    #[serde(alias = "secondaryProfileId")]
+    pub secondary_profile_id: String,
+    #[serde(default = "default_half_f32", alias = "fusionRatio")]
+    pub fusion_ratio: f32, // 0.0 - 1.0 (weight of primary)
+    #[serde(default, alias = "customName")]
+    pub custom_name: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StyleFusionResponse {
+    #[serde(alias = "fusedProfile")]
+    pub fused_profile: StyleDnaProfile,
+    #[serde(alias = "blendingNotes")]
+    pub blending_notes: String,
+}
+
+// ----------------- Idea-to-Universe Genesis Models -----------------
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IdeaGenesisRequest {
+    pub logline: String, // 核心一句话故事钩子
+    pub genre: String, // 题材分类 (玄幻修真、克苏鲁奇幻、赛博朋克、末世废土等)
+    #[serde(default = "default_target_words", alias = "targetWordCount")]
+    pub target_word_count: i64,
+    #[serde(default = "default_tone")]
+    pub tone: String,
+    #[serde(default, alias = "coreHook")]
+    pub core_hook: String,
+    #[serde(default)]
+    pub tropes: Vec<String>,
+    #[serde(default, alias = "goldenFingerType")]
+    pub golden_finger_type: String, // 金手指类型 (系统面板、太古残魂、时光重置、神级解析等)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IdeaGenesisResponse {
+    #[serde(alias = "novelTitle")]
+    pub novel_title: String,
+    pub synopsis: String,
+    #[serde(alias = "goldenThreeChapters")]
+    pub golden_three_chapters: Vec<Chapter>,
+    pub volumes: Vec<Volume>,
+    #[serde(alias = "worldSettings")]
+    pub world_settings: Vec<WorldSetting>,
+    #[serde(alias = "mainCharacters")]
+    pub main_characters: Vec<Character>,
+    #[serde(alias = "cheatSystem")]
+    pub cheat_system: serde_json::Value,
+    #[serde(alias = "tensionCurvePreview")]
+    pub tension_curve_preview: Vec<f32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MultiverseBranch {
+    #[serde(alias = "branchId")]
+    pub branch_id: String,
+    pub title: String,
+    #[serde(alias = "divergencePoint")]
+    pub divergence_point: String, // 关键分歧点 (如：主角第3章选择拒绝加入宗门)
+    pub summary: String,
+    #[serde(alias = "climaxOutcome")]
+    pub climax_outcome: String,
+    pub pros: Vec<String>,
+    pub cons: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MultiverseBranchRequest {
+    #[serde(alias = "novelId")]
+    pub novel_id: String,
+    #[serde(default, alias = "divergencePoint")]
+    pub divergence_point: Option<String>,
+}
+
+// ----------------- Reader Psychology & Information Asymmetry Models -----------------
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReaderPsychologyReport {
+    #[serde(alias = "novelId")]
+    pub novel_id: String,
+    #[serde(default, alias = "chapterId")]
+    pub chapter_id: Option<String>,
+    #[serde(alias = "anticipationScore")]
+    pub anticipation_score: f32, // 期待感指数 (0.0 - 1.0)
+    #[serde(alias = "fatigueRisk")]
+    pub fatigue_risk: f32, // 阅读疲劳风险 (0.0 - 1.0)
+    #[serde(alias = "payoffIndex")]
+    pub payoff_index: f32, // 爽点兑现率/报偿系数 (0.0 - 1.0)
+    #[serde(alias = "dopamineIntervals")]
+    pub dopamine_intervals: Vec<i64>, // 多巴胺高潮间歇字数分布
+    #[serde(alias = "diagnosticAdvice")]
+    pub diagnostic_advice: Vec<String>, // 毒点诊断与控场优化建议
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InformationAsymmetryItem {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default, alias = "novelId")]
+    pub novel_id: String,
+    #[serde(alias = "secretTitle")]
+    pub secret_title: String,
+    #[serde(default = "default_true", alias = "readerKnows")]
+    pub reader_knows: bool,
+    #[serde(default, alias = "protagonistKnows")]
+    pub protagonist_knows: bool,
+    #[serde(default, alias = "antagonistKnows")]
+    pub antagonist_knows: bool,
+    #[serde(default = "default_half_f32", alias = "dramaticIronyScore")]
+    pub dramatic_irony_score: f32, // 戏剧讽刺/信息差悬念张力分 (0.0 - 1.0)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OffscreenNewsEvent {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default, alias = "novelId")]
+    pub novel_id: String,
+    pub era: String,
+    pub region: String,
+    #[serde(alias = "eventSummary")]
+    pub event_summary: String,
+    #[serde(alias = "factionInvolved")]
+    pub faction_involved: String,
+    #[serde(default = "default_zero_f32", alias = "tensionDelta")]
+    pub tension_delta: f32,
+    #[serde(default = "default_iso_now")]
+    pub timestamp: String,
+}
+
+
 

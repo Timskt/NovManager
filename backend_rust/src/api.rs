@@ -13,6 +13,7 @@ use axum::{
     Router,
 };
 use futures_util::StreamExt;
+use serde::Deserialize;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -101,11 +102,33 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/doctor/dialogue", post(diagnose_dialogue))
         .route("/api/director/action", post(direct_action))
         .route("/api/export/typeset", post(typeset_novel))
+        // Multi-Provider Model Matrix & Resilience Router
+        .route("/api/models/providers", get(list_model_providers).post(create_model_provider))
+        .route("/api/models/providers/{id}", get(get_model_provider).put(update_model_provider).delete(delete_model_provider))
+        .route("/api/models/roles", get(list_model_roles).post(save_model_role))
+        .route("/api/models/simulate-fallback", post(simulate_fallback_handler))
+        .route("/api/models/telemetry", get(list_telemetry_handler))
+        // Style DNA & Literary Mimicry
+        .route("/api/style/profiles", get(list_style_profiles))
+        .route("/api/style/profiles/{id}", get(get_style_profile))
+        .route("/api/style/extract", post(extract_style_handler))
+        .route("/api/style/blend", post(blend_style_handler))
+        // Idea-to-Universe Genesis
+        .route("/api/genesis/outline", post(generate_idea_outline_handler))
+        .route("/api/genesis/multiverse", post(generate_multiverse_handler))
+        // Reader Psychology & Information Asymmetry
+        .route("/api/novels/{id}/reader-psychology", get(get_reader_psychology_handler))
+        .route("/api/novels/{id}/asymmetry", get(list_asymmetry_handler).post(save_asymmetry_handler))
+        .route("/api/novels/{id}/offscreen-news", get(list_offscreen_news_handler))
         // LLM Proxy
         .route("/api/llm/test-connection", post(test_llm_connection))
         .route("/api/llm/proxy", post(proxy_llm))
         .route("/api/llm/stream", post(stream_llm))
         .with_state(state)
+}
+
+pub fn app(state: Arc<AppState>) -> Router {
+    create_router(state)
 }
 
 
@@ -1009,4 +1032,218 @@ async fn save_dungeon_arc(
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
     }
 }
+
+// ----------------- Model Provider & Router Handlers -----------------
+
+async fn list_model_providers(
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.list_model_providers() {
+        Ok(providers) => Json(providers).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn get_model_provider(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.get_model_provider(&id) {
+        Ok(Some(p)) => Json(p).into_response(),
+        Ok(None) => (StatusCode::NOT_FOUND, Json(json!({"error": "Model provider not found"}))).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn create_model_provider(
+    State(state): State<Arc<AppState>>,
+    Json(provider): Json<ModelProvider>,
+) -> impl IntoResponse {
+    match state.storage.create_or_update_model_provider(provider) {
+        Ok(created) => (StatusCode::CREATED, Json(created)).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn update_model_provider(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Json(mut provider): Json<ModelProvider>,
+) -> impl IntoResponse {
+    provider.id = id;
+    match state.storage.create_or_update_model_provider(provider) {
+        Ok(updated) => Json(updated).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn delete_model_provider(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.delete_model_provider(&id) {
+        Ok(true) => Json(json!({"success": true, "deleted_id": id})).into_response(),
+        Ok(false) => (StatusCode::NOT_FOUND, Json(json!({"error": "Provider not found"}))).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn list_model_roles(
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.list_model_role_assignments() {
+        Ok(roles) => Json(roles).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn save_model_role(
+    State(state): State<Arc<AppState>>,
+    Json(assignment): Json<ModelRoleAssignment>,
+) -> impl IntoResponse {
+    match state.storage.save_model_role_assignment(assignment) {
+        Ok(saved) => Json(saved).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn simulate_fallback_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<FallbackSimulateRequest>,
+) -> impl IntoResponse {
+    match state.storage.simulate_model_fallback(req) {
+        Ok(res) => Json(res).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+#[derive(Deserialize)]
+struct TelemetryQuery {
+    limit: Option<usize>,
+}
+
+async fn list_telemetry_handler(
+    Query(q): Query<TelemetryQuery>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.list_model_telemetry(q.limit) {
+        Ok(list) => Json(list).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+// ----------------- Style DNA Handlers -----------------
+
+async fn list_style_profiles(
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.list_style_dna_profiles() {
+        Ok(profiles) => Json(profiles).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn get_style_profile(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.get_style_dna_profile(&id) {
+        Ok(Some(p)) => Json(p).into_response(),
+        Ok(None) => (StatusCode::NOT_FOUND, Json(json!({"error": "Style DNA profile not found"}))).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn extract_style_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<ExtractStyleDnaRequest>,
+) -> impl IntoResponse {
+    match state.storage.extract_style_dna(req) {
+        Ok(profile) => (StatusCode::CREATED, Json(profile)).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn blend_style_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<StyleFusionRequest>,
+) -> impl IntoResponse {
+    match state.storage.blend_style_dna(req) {
+        Ok(res) => Json(res).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+// ----------------- Idea-to-Universe Genesis Handlers -----------------
+
+async fn generate_idea_outline_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<IdeaGenesisRequest>,
+) -> impl IntoResponse {
+    match state.storage.generate_idea_universe(req) {
+        Ok(res) => Json(res).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn generate_multiverse_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<MultiverseBranchRequest>,
+) -> impl IntoResponse {
+    match state.storage.generate_multiverse_branches(&req.novel_id, req.divergence_point.as_deref()) {
+        Ok(branches) => Json(branches).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+// ----------------- Reader Psychology & Information Asymmetry Handlers -----------------
+
+#[derive(Deserialize)]
+struct ChapterOptionalQuery {
+    chapter_id: Option<String>,
+}
+
+async fn get_reader_psychology_handler(
+    Path(id): Path<String>,
+    Query(q): Query<ChapterOptionalQuery>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.get_reader_psychology_report(&id, q.chapter_id.as_deref()) {
+        Ok(report) => Json(report).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn list_asymmetry_handler(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.list_information_asymmetry(&id) {
+        Ok(list) => Json(list).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn save_asymmetry_handler(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    Json(mut item): Json<InformationAsymmetryItem>,
+) -> impl IntoResponse {
+    item.novel_id = id;
+    match state.storage.save_information_asymmetry(item) {
+        Ok(saved) => (StatusCode::CREATED, Json(saved)).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
+async fn list_offscreen_news_handler(
+    Path(id): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    match state.storage.list_offscreen_news_events(&id) {
+        Ok(events) => Json(events).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))).into_response(),
+    }
+}
+
 

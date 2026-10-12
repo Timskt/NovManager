@@ -37,6 +37,7 @@ import {
   Menu,
   X,
   SlidersHorizontal,
+  Cpu,
 } from 'lucide-react';
 
 export type NavTab =
@@ -45,6 +46,10 @@ export type NavTab =
   | 'STUDIO'
   | 'OUTLINES'
   | 'CANVAS'
+  | 'GENESIS'
+  | 'STYLE_DNA'
+  | 'MODEL_HUB'
+  | 'GODS_EYE_SANDBOX'
   | 'VIDEO_STUDIO'
   | 'WORKFLOW'
   | 'PROGRESS_PULSE'
@@ -92,6 +97,20 @@ export const DOMAIN_GROUPS: DomainGroup[] = [
         subtitle: '沉浸正文撰写 · 分镜节拍 · 战力微调',
         icon: <Feather className="w-4 h-4 text-amber-500" />,
         badge: '核心',
+      },
+      {
+        id: 'GENESIS',
+        title: '灵感创世大纲',
+        subtitle: '一句话脑洞 · 黄金三章 · 金手指五阶跃迁',
+        icon: <Sparkles className="w-4 h-4 text-indigo-400" />,
+        badge: '创世',
+      },
+      {
+        id: 'STYLE_DNA',
+        title: '文风 DNA 仿生工坊',
+        subtitle: '名家风格克隆 · 6维计量雷达 · 双流派熔炉',
+        icon: <Feather className="w-4 h-4 text-rose-400" />,
+        badge: '名家',
       },
       {
         id: 'VIDEO_STUDIO',
@@ -145,6 +164,13 @@ export const DOMAIN_GROUPS: DomainGroup[] = [
         subtitle: 'What-If 假设推演 · 蝴蝶效应分支验证',
         icon: <Sliders className="w-4 h-4 text-teal-400" />,
       },
+      {
+        id: 'GODS_EYE_SANDBOX',
+        title: '上帝视角宏观沙盘',
+        subtitle: '疲劳弃书预警 · 信息差矩阵 · 场外大势电报',
+        icon: <Eye className="w-4 h-4 text-emerald-400" />,
+        badge: '控场',
+      },
     ],
   },
   {
@@ -191,6 +217,13 @@ export const DOMAIN_GROUPS: DomainGroup[] = [
     icon: '📈',
     description: '戏剧张力、黄金三章、自我进化与效能分析',
     items: [
+      {
+        id: 'MODEL_HUB',
+        title: '多模型矩阵与高可用路由',
+        subtitle: '多Key轮换池 · 角色专精路由 · 429熔断接管',
+        icon: <Cpu className="w-4 h-4 text-indigo-400" />,
+        badge: '高可用',
+      },
       {
         id: 'PROGRESS_PULSE',
         title: '创作进度大盘',

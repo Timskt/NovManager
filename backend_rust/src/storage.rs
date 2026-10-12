@@ -287,6 +287,93 @@ impl SqliteStorage {
                 updated_at TEXT DEFAULT '',
                 FOREIGN KEY (novel_id) REFERENCES novels(id) ON DELETE CASCADE
             );
+
+            CREATE TABLE IF NOT EXISTS model_providers (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                provider_type TEXT NOT NULL,
+                base_url TEXT NOT NULL,
+                api_keys_json TEXT NOT NULL,
+                active_key_index INTEGER DEFAULT 0,
+                supported_models_json TEXT NOT NULL,
+                rpm_limit INTEGER DEFAULT 60,
+                tpm_limit INTEGER DEFAULT 100000,
+                is_enabled INTEGER DEFAULT 1,
+                health_status TEXT DEFAULT 'HEALTHY',
+                latency_ms INTEGER DEFAULT 0,
+                last_checked_at TEXT DEFAULT ''
+            );
+
+            CREATE TABLE IF NOT EXISTS model_role_assignments (
+                role TEXT PRIMARY KEY,
+                primary_provider_id TEXT NOT NULL,
+                primary_model TEXT NOT NULL,
+                fallback_provider_id TEXT NOT NULL,
+                fallback_model TEXT NOT NULL,
+                temperature REAL DEFAULT 0.7,
+                top_p REAL DEFAULT 0.9,
+                max_tokens INTEGER DEFAULT 4000,
+                timeout_ms INTEGER DEFAULT 30000,
+                retry_count INTEGER DEFAULT 3
+            );
+
+            CREATE TABLE IF NOT EXISTS model_telemetry (
+                id TEXT PRIMARY KEY,
+                provider_id TEXT NOT NULL,
+                model TEXT NOT NULL,
+                role TEXT NOT NULL,
+                request_type TEXT NOT NULL,
+                input_tokens INTEGER DEFAULT 0,
+                output_tokens INTEGER DEFAULT 0,
+                cost_usd REAL DEFAULT 0.0,
+                latency_ms INTEGER DEFAULT 0,
+                status_code INTEGER DEFAULT 200,
+                error_message TEXT,
+                timestamp TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS style_dna_profiles (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                author TEXT NOT NULL,
+                source_title TEXT DEFAULT '',
+                source_url TEXT,
+                tags_json TEXT DEFAULT '[]',
+                sensory_density REAL DEFAULT 0.5,
+                dialogue_ratio REAL DEFAULT 0.3,
+                sentence_variance REAL DEFAULT 0.5,
+                metaphor_frequency REAL DEFAULT 0.4,
+                pacing_velocity REAL DEFAULT 0.6,
+                vocabulary_richness REAL DEFAULT 0.7,
+                forbidden_cliches_json TEXT DEFAULT '[]',
+                golden_exemplars_json TEXT DEFAULT '[]',
+                prompt_directive TEXT DEFAULT '',
+                created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS information_asymmetry_items (
+                id TEXT PRIMARY KEY,
+                novel_id TEXT NOT NULL,
+                secret_title TEXT NOT NULL,
+                reader_knows INTEGER DEFAULT 1,
+                protagonist_knows INTEGER DEFAULT 0,
+                antagonist_knows INTEGER DEFAULT 0,
+                dramatic_irony_score REAL DEFAULT 0.8,
+                created_at TEXT DEFAULT '',
+                FOREIGN KEY (novel_id) REFERENCES novels(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS offscreen_news_events (
+                id TEXT PRIMARY KEY,
+                novel_id TEXT NOT NULL,
+                era TEXT NOT NULL,
+                region TEXT NOT NULL,
+                event_summary TEXT NOT NULL,
+                faction_involved TEXT NOT NULL,
+                tension_delta REAL DEFAULT 0.0,
+                timestamp TEXT NOT NULL,
+                FOREIGN KEY (novel_id) REFERENCES novels(id) ON DELETE CASCADE
+            );
             "#,
         )?;
 
@@ -337,6 +424,344 @@ impl SqliteStorage {
         }
 
         self.maybe_seed_video_and_workflow_data()?;
+        self.maybe_seed_enterprise_engines()?;
+        Ok(())
+    }
+
+    fn maybe_seed_enterprise_engines(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let conn = self.conn.lock().unwrap();
+        let now = Utc::now().to_rfc3339();
+
+        // 1. Seed Model Providers if empty
+        let prov_count: i64 = conn.query_row("SELECT count(*) FROM model_providers", [], |r| r.get(0)).unwrap_or(0);
+        if prov_count == 0 {
+            let providers = vec![
+                (
+                    "prov-deepseek",
+                    "DeepSeek Official",
+                    "DeepSeek",
+                    "https://api.deepseek.com/v1",
+                    json!(["sk-dsk-live-primary-key", "sk-dsk-backup-pool-key"]).to_string(),
+                    0,
+                    json!(["deepseek-chat", "deepseek-reasoner"]).to_string(),
+                    120,
+                    200000,
+                    1,
+                    "HEALTHY",
+                    320,
+                    &now,
+                ),
+                (
+                    "prov-claude",
+                    "Anthropic Claude",
+                    "Anthropic",
+                    "https://api.anthropic.com/v1",
+                    json!(["sk-ant-live-main-key"]).to_string(),
+                    0,
+                    json!(["claude-3-7-sonnet-20250219", "claude-3-5-haiku-20241022"]).to_string(),
+                    80,
+                    160000,
+                    1,
+                    "HEALTHY",
+                    450,
+                    &now,
+                ),
+                (
+                    "prov-openai",
+                    "OpenAI Platform",
+                    "OpenAI",
+                    "https://api.openai.com/v1",
+                    json!(["sk-proj-prod-primary", "sk-proj-prod-secondary"]).to_string(),
+                    0,
+                    json!(["gpt-4.5-preview", "gpt-4o", "o3-mini"]).to_string(),
+                    100,
+                    300000,
+                    1,
+                    "HEALTHY",
+                    380,
+                    &now,
+                ),
+                (
+                    "prov-gemini",
+                    "Google Gemini Cloud",
+                    "Gemini",
+                    "https://generativelanguage.googleapis.com/v1beta",
+                    json!(["AIzaSyLiveProductionKey"]).to_string(),
+                    0,
+                    json!(["gemini-2.5-pro", "gemini-2.0-flash"]).to_string(),
+                    150,
+                    400000,
+                    1,
+                    "HEALTHY",
+                    290,
+                    &now,
+                ),
+                (
+                    "prov-siliconflow",
+                    "SiliconFlow Matrix",
+                    "SiliconFlow",
+                    "https://api.siliconflow.cn/v1",
+                    json!(["sk-sf-commercial-pool"]).to_string(),
+                    0,
+                    json!(["Qwen/Qwen2.5-72B-Instruct", "deepseek-ai/DeepSeek-V3"]).to_string(),
+                    200,
+                    500000,
+                    1,
+                    "HEALTHY",
+                    180,
+                    &now,
+                ),
+                (
+                    "prov-ollama",
+                    "Local Ollama Cluster",
+                    "Ollama",
+                    "http://localhost:11434",
+                    json!(["local-bearer-token"]).to_string(),
+                    0,
+                    json!(["qwen2.5:32b", "deepseek-r1:32b", "llama3.3:70b"]).to_string(),
+                    9999,
+                    9999999,
+                    1,
+                    "HEALTHY",
+                    45,
+                    &now,
+                ),
+            ];
+
+            for p in providers {
+                conn.execute(
+                    "INSERT OR REPLACE INTO model_providers (id, name, provider_type, base_url, api_keys_json, active_key_index, supported_models_json, rpm_limit, tpm_limit, is_enabled, health_status, latency_ms, last_checked_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    params![p.0, p.1, p.2, p.3, p.4, p.5, p.6, p.7, p.8, p.9, p.10, p.11, p.12],
+                )?;
+            }
+        }
+
+        // 2. Seed Model Role Assignments if empty
+        let role_count: i64 = conn.query_row("SELECT count(*) FROM model_role_assignments", [], |r| r.get(0)).unwrap_or(0);
+        if role_count == 0 {
+            let roles = vec![
+                ("Planner", "prov-deepseek", "deepseek-reasoner", "prov-claude", "claude-3-7-sonnet-20250219", 0.6, 0.95, 8000, 60000, 3),
+                ("Drafter", "prov-claude", "claude-3-7-sonnet-20250219", "prov-deepseek", "deepseek-chat", 0.75, 0.9, 6000, 45000, 3),
+                ("Stylist", "prov-deepseek", "deepseek-chat", "prov-openai", "gpt-4.5-preview", 0.7, 0.85, 4000, 30000, 2),
+                ("Inspector", "prov-gemini", "gemini-2.5-pro", "prov-claude", "claude-3-7-sonnet-20250219", 0.2, 0.8, 4000, 30000, 3),
+                ("VideoDirector", "prov-openai", "gpt-4.5-preview", "prov-gemini", "gemini-2.5-pro", 0.6, 0.9, 5000, 40000, 3),
+            ];
+
+            for r in roles {
+                conn.execute(
+                    "INSERT OR REPLACE INTO model_role_assignments (role, primary_provider_id, primary_model, fallback_provider_id, fallback_model, temperature, top_p, max_tokens, timeout_ms, retry_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    params![r.0, r.1, r.2, r.3, r.4, r.5, r.6, r.7, r.8, r.9],
+                )?;
+            }
+        }
+
+        // 3. Seed Style DNA Profiles if empty
+        let dna_count: i64 = conn.query_row("SELECT count(*) FROM style_dna_profiles", [], |r| r.get(0)).unwrap_or(0);
+        if dna_count == 0 {
+            let profiles = vec![
+                (
+                    "dna-jinyong",
+                    "金庸·儒侠典雅风",
+                    "金庸",
+                    "《天龙八部》/《笑傲江湖》",
+                    Some("https://baike.baidu.com/item/金庸作品集"),
+                    json!(["武侠正统", "文白相间", "侠之大者", "传统古典"]).to_string(),
+                    0.72,
+                    0.42,
+                    0.68,
+                    0.78,
+                    0.55,
+                    0.88,
+                    json!(["恐怖如斯", "倒吸一口凉气", "桀桀怪笑", "给爷死", "卧槽", "蝼蚁一般"]).to_string(),
+                    json!([
+                        "红日初升，霞光万道。乔峰勒马山岗，青衫被朔风猎猎吹动，目光如电扫过雁门关外苍茫关山。",
+                        "令狐冲长剑斜指，使一招'浪子回头'，剑尖在半空划出半个圆圈，隐隐有风雷之声。"
+                    ]).to_string(),
+                    "采用金庸武侠文风：语言雅正含蓄，古雅厚重。描写打斗需注重身法招式、内力气度与空间虚实配合，对白讲究礼节分寸与机锋博弈，严禁现代网络口语。",
+                    &now,
+                ),
+                (
+                    "dna-cuttlefish",
+                    "爱潜水的乌贼·克系蒸汽维多利亚",
+                    "爱潜水的乌贼",
+                    "《诡秘之主》",
+                    Some("https://www.qidian.com/book/1010868264/"),
+                    json!(["克苏鲁", "蒸汽朋克", "塔罗会", "非凡序列", "细密铺垫"]).to_string(),
+                    0.85,
+                    0.35,
+                    0.70,
+                    0.82,
+                    0.48,
+                    0.82,
+                    json!(["战神回归", "龙王赘婿", "叮！系统觉醒", "打脸狂魔", "一掌拍碎苍穹"]).to_string(),
+                    json!([
+                        "绯红的月光穿透薄雾，将煤气路灯投射出扭曲拉长的阴影。克莱恩按了按黑色的半高丝绸礼帽，耳畔微不可察的疯狂呓语如潮水般退去。",
+                        "灰雾之上，巍峨的青铜长桌在无垠死寂中耸立，二十二张高背椅倒映着古老星辰的斑驳光痕。"
+                    ]).to_string(),
+                    "仿爱潜水的乌贼《诡秘之主》风格：聚焦维多利亚工业蒸汽与神秘学克苏鲁交织氛围。强调环境细节、衣着质感与心理微动作。非凡战斗注重规则破解与代价制衡，伴随认知污染感。",
+                    &now,
+                ),
+                (
+                    "dna-wangyu",
+                    "忘语·凡人流古典修仙",
+                    "忘语",
+                    "《凡人修仙传》",
+                    Some("https://www.qidian.com/book/107580/"),
+                    json!(["凡人流", "杀伐果断", "步步为营", "古典仙侠", "法宝灵阵"]).to_string(),
+                    0.65,
+                    0.28,
+                    0.55,
+                    0.45,
+                    0.62,
+                    0.75,
+                    json!(["圣母心肠", "毫无防备", "强行装逼", "红颜倒贴", "降智反派"]).to_string(),
+                    json!([
+                        "韩立面无表情，单手一拍储物袋，青竹蜂云剑化作数十道碧绿剑芒呼啸而出，同时足下青元剑芒暴涨，身形已在数十丈外飘退。",
+                        "修仙界弱肉强食，稍有不慎便是魂飞魄散之局。他神识微扫，确认方圆百里再无旁人，方才将古修洞府的隐匿禁制重新布下。"
+                    ]).to_string(),
+                    "仿忘语《凡人修仙传》风格：主角性格沉稳谨慎、杀伐果断、算无遗策。着重刻画修真资源的争夺、法宝功法的相生相克、禁制阵法的严谨推演。对白冷静客套，杜绝热血无脑莽撞。",
+                    &now,
+                ),
+                (
+                    "dna-maoni",
+                    "猫腻·文青沉郁慢热风",
+                    "猫腻",
+                    "《将夜》/《间客》/《庆余年》",
+                    Some("https://www.qidian.com/book/2083870/"),
+                    json!(["文青格调", "家国情怀", "精妙台词", "诗意悲壮", "群像深刻"]).to_string(),
+                    0.78,
+                    0.45,
+                    0.85,
+                    0.80,
+                    0.42,
+                    0.80,
+                    json!(["降智反派", "龙傲天无脑横推", "系统叮的一声", "路人震惊体"]).to_string(),
+                    json!([
+                        "雪落无声。范闲拢着袖子站在台阶上，看着檐下滴落的雨水，轻声说道：这个世界上总有些事情，比生死还要重上那么一点点。",
+                        "宁缺握着桑桑冰凉的手，桑桑背着黑色的大铁伞。两人走在清晨空旷的长安朱雀大街上，脚步声清脆，把秋风里的落叶踩得粉碎。"
+                    ]).to_string(),
+                    "仿猫腻文风：文青气质，抒情意境浓郁。善用白描刻画人物心理与世情百态，行文节奏舒缓克制，注重群像塑造与宿命哲学辩证，高潮爆发时具强烈的情感共鸣与诗意悲壮感。",
+                    &now,
+                ),
+                (
+                    "dna-chendong",
+                    "辰东·太古玄幻开大合",
+                    "辰东",
+                    "《遮天》/《完美世界》",
+                    Some("https://www.qidian.com/book/1735921/"),
+                    json!(["太古洪荒", "大开大合", "九龙拉棺", "万古苍凉", "星河崩碎"]).to_string(),
+                    0.88,
+                    0.30,
+                    0.75,
+                    0.85,
+                    0.70,
+                    0.85,
+                    json!(["小家子气", "畏畏缩缩", "斤斤计较一两碎银", "现代口嗨"]).to_string(),
+                    json!([
+                        "九具庞大的龙尸拉着一口青铜巨棺，自冰冷与黑暗的宇宙深处穿行而来，星河为之颤栗，整片星空都在无声呜咽。",
+                        "登天路，踏歌行，弹指遮天！叶凡傲立星空绝巅，万物母气鼎垂落万道玄黄母气，一拳轰碎前方整片浩瀚星海！"
+                    ]).to_string(),
+                    "仿辰东玄幻风格：大开大合，气势磅礴苍凉，格局浩大无匹。极力渲染太古洪荒、星河帝路、悲壮宿命与无上神战。语言具有史诗厚重感与恢宏画面冲击力。",
+                    &now,
+                ),
+            ];
+
+            for p in profiles {
+                conn.execute(
+                    "INSERT OR REPLACE INTO style_dna_profiles (id, name, author, source_title, source_url, tags_json, sensory_density, dialogue_ratio, sentence_variance, metaphor_frequency, pacing_velocity, vocabulary_richness, forbidden_cliches_json, golden_exemplars_json, prompt_directive, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    params![p.0, p.1, p.2, p.3, p.4, p.5, p.6, p.7, p.8, p.9, p.10, p.11, p.12, p.13, p.14, p.15],
+                )?;
+            }
+        }
+
+        // 4. Seed Information Asymmetry Items if empty
+        let asym_count: i64 = conn.query_row("SELECT count(*) FROM information_asymmetry_items", [], |r| r.get(0)).unwrap_or(0);
+        if asym_count == 0 {
+            let items = vec![
+                (
+                    "asym-001",
+                    "nov-001",
+                    "林越怀中的青铜残片实为'太虚补天图'核心枢纽，而非普通筑基灵器",
+                    1,
+                    0,
+                    0,
+                    0.92,
+                    &now,
+                ),
+                (
+                    "asym-002",
+                    "nov-001",
+                    "太虚剑宗绝剑峰顾玄陵长老暗中与血煞魔宗联手，布下假秘境借刀杀人",
+                    1,
+                    0,
+                    1,
+                    0.88,
+                    &now,
+                ),
+                (
+                    "asym-003",
+                    "nov-001",
+                    "坠星崖底潜伏的地煞血蟒神魂已被魔尊残魂寄生夺舍",
+                    0,
+                    0,
+                    1,
+                    0.75,
+                    &now,
+                ),
+            ];
+
+            for it in items {
+                conn.execute(
+                    "INSERT OR REPLACE INTO information_asymmetry_items (id, novel_id, secret_title, reader_knows, protagonist_knows, antagonist_knows, dramatic_irony_score, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    params![it.0, it.1, it.2, it.3, it.4, it.5, it.6, it.7],
+                )?;
+            }
+        }
+
+        // 5. Seed Offscreen News Events if empty
+        let news_count: i64 = conn.query_row("SELECT count(*) FROM offscreen_news_events", [], |r| r.get(0)).unwrap_or(0);
+        if news_count == 0 {
+            let events = vec![
+                (
+                    "news-001",
+                    "nov-001",
+                    "天道断绝三万年",
+                    "南域九疑山",
+                    "九疑山古仙遗迹结界松动，百草宗宗主引动地火七十二日开炉炼制九品造化丹，引来三位化神期老怪潜伏环伺。",
+                    "百草宗 / 隐世散修",
+                    0.15,
+                    &now,
+                ),
+                (
+                    "news-002",
+                    "nov-001",
+                    "天道断绝三万年",
+                    "极北冰原玄冥海",
+                    "上古玄武冰魄被血煞魔宗副宗主强行抽取，引发八级暴风雪席卷雪原三万里，数万冰原异兽向南迁徙冲击北关防线。",
+                    "血煞魔宗 / 北境守夜卫",
+                    0.25,
+                    &now,
+                ),
+                (
+                    "news-003",
+                    "nov-001",
+                    "天道断绝三万年",
+                    "中州天机阁总坛",
+                    "天机阁推演大星盘时七根浑天仪铜柱骤然崩断，阁主吐血闭关前留下一句谶语：'天道有缺，太虚重开，潜龙不在深渊而在绝壁'。",
+                    "天机阁 / 太虚剑宗",
+                    0.30,
+                    &now,
+                ),
+            ];
+
+            for ev in events {
+                conn.execute(
+                    "INSERT OR REPLACE INTO offscreen_news_events (id, novel_id, era, region, event_summary, faction_involved, tension_delta, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    params![ev.0, ev.1, ev.2, ev.3, ev.4, ev.5, ev.6, ev.7],
+                )?;
+            }
+        }
+
         Ok(())
     }
 
@@ -2613,5 +3038,1207 @@ impl SqliteStorage {
 
         Ok(arc)
     }
+
+    // ----------------- Model Provider & Router Repository -----------------
+
+    pub fn list_model_providers(&self) -> Result<Vec<ModelProvider>, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, name, provider_type, base_url, api_keys_json, active_key_index, supported_models_json, rpm_limit, tpm_limit, is_enabled, health_status, latency_ms, last_checked_at FROM model_providers ORDER BY id ASC"
+        )?;
+
+        let rows = stmt.query_map([], |row| {
+            let keys_str: String = row.get(4)?;
+            let models_str: String = row.get(6)?;
+            let active_idx: i64 = row.get(5)?;
+            let rpm: i64 = row.get(7)?;
+            let tpm: i64 = row.get(8)?;
+            let enabled: i64 = row.get(9)?;
+            let latency: i64 = row.get(11)?;
+
+            Ok(ModelProvider {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                provider_type: row.get(2)?,
+                base_url: row.get(3)?,
+                api_keys: serde_json::from_str(&keys_str).unwrap_or_default(),
+                active_key_index: active_idx as usize,
+                supported_models: serde_json::from_str(&models_str).unwrap_or_default(),
+                rpm_limit: rpm as u32,
+                tpm_limit: tpm as u32,
+                is_enabled: enabled != 0,
+                health_status: row.get(10)?,
+                latency_ms: latency as u64,
+                last_checked_at: row.get(12)?,
+            })
+        })?;
+
+        let mut list = Vec::new();
+        for r in rows {
+            list.push(r?);
+        }
+        Ok(list)
+    }
+
+    pub fn get_model_provider(&self, id: &str) -> Result<Option<ModelProvider>, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, name, provider_type, base_url, api_keys_json, active_key_index, supported_models_json, rpm_limit, tpm_limit, is_enabled, health_status, latency_ms, last_checked_at FROM model_providers WHERE id = ?"
+        )?;
+
+        let mut rows = stmt.query_map(params![id], |row| {
+            let keys_str: String = row.get(4)?;
+            let models_str: String = row.get(6)?;
+            let active_idx: i64 = row.get(5)?;
+            let rpm: i64 = row.get(7)?;
+            let tpm: i64 = row.get(8)?;
+            let enabled: i64 = row.get(9)?;
+            let latency: i64 = row.get(11)?;
+
+            Ok(ModelProvider {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                provider_type: row.get(2)?,
+                base_url: row.get(3)?,
+                api_keys: serde_json::from_str(&keys_str).unwrap_or_default(),
+                active_key_index: active_idx as usize,
+                supported_models: serde_json::from_str(&models_str).unwrap_or_default(),
+                rpm_limit: rpm as u32,
+                tpm_limit: tpm as u32,
+                is_enabled: enabled != 0,
+                health_status: row.get(10)?,
+                latency_ms: latency as u64,
+                last_checked_at: row.get(12)?,
+            })
+        })?;
+
+        if let Some(res) = rows.next() {
+            Ok(Some(res?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn create_or_update_model_provider(&self, mut provider: ModelProvider) -> Result<ModelProvider, rusqlite::Error> {
+        if provider.id.is_empty() {
+            provider.id = format!("prov-{}", Utc::now().timestamp_millis());
+        }
+        if provider.last_checked_at.is_empty() {
+            provider.last_checked_at = Utc::now().to_rfc3339();
+        }
+
+        let conn = self.conn.lock().unwrap();
+        let keys_json = serde_json::to_string(&provider.api_keys).unwrap_or_else(|_| "[]".to_string());
+        let models_json = serde_json::to_string(&provider.supported_models).unwrap_or_else(|_| "[]".to_string());
+        let enabled_val: i64 = if provider.is_enabled { 1 } else { 0 };
+
+        conn.execute(
+            "INSERT OR REPLACE INTO model_providers (id, name, provider_type, base_url, api_keys_json, active_key_index, supported_models_json, rpm_limit, tpm_limit, is_enabled, health_status, latency_ms, last_checked_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            params![
+                provider.id,
+                provider.name,
+                provider.provider_type,
+                provider.base_url,
+                keys_json,
+                provider.active_key_index as i64,
+                models_json,
+                provider.rpm_limit as i64,
+                provider.tpm_limit as i64,
+                enabled_val,
+                provider.health_status,
+                provider.latency_ms as i64,
+                provider.last_checked_at
+            ],
+        )?;
+
+        Ok(provider)
+    }
+
+    pub fn delete_model_provider(&self, id: &str) -> Result<bool, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        let affected = conn.execute("DELETE FROM model_providers WHERE id = ?", params![id])?;
+        Ok(affected > 0)
+    }
+
+    // ----------------- Model Role Assignments Repository -----------------
+
+    pub fn list_model_role_assignments(&self) -> Result<Vec<ModelRoleAssignment>, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT role, primary_provider_id, primary_model, fallback_provider_id, fallback_model, temperature, top_p, max_tokens, timeout_ms, retry_count FROM model_role_assignments ORDER BY role ASC"
+        )?;
+
+        let rows = stmt.query_map([], |row| {
+            let temp: f64 = row.get(5)?;
+            let top_p: f64 = row.get(6)?;
+            let max_tokens: i64 = row.get(7)?;
+            let timeout_ms: i64 = row.get(8)?;
+            let retry_count: i64 = row.get(9)?;
+
+            Ok(ModelRoleAssignment {
+                role: row.get(0)?,
+                primary_provider_id: row.get(1)?,
+                primary_model: row.get(2)?,
+                fallback_provider_id: row.get(3)?,
+                fallback_model: row.get(4)?,
+                temperature: temp as f32,
+                top_p: top_p as f32,
+                max_tokens: max_tokens as u32,
+                timeout_ms: timeout_ms as u64,
+                retry_count: retry_count as u32,
+            })
+        })?;
+
+        let mut list = Vec::new();
+        for r in rows {
+            list.push(r?);
+        }
+        Ok(list)
+    }
+
+    pub fn get_model_role_assignment(&self, role: &str) -> Result<Option<ModelRoleAssignment>, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT role, primary_provider_id, primary_model, fallback_provider_id, fallback_model, temperature, top_p, max_tokens, timeout_ms, retry_count FROM model_role_assignments WHERE role = ?"
+        )?;
+
+        let mut rows = stmt.query_map(params![role], |row| {
+            let temp: f64 = row.get(5)?;
+            let top_p: f64 = row.get(6)?;
+            let max_tokens: i64 = row.get(7)?;
+            let timeout_ms: i64 = row.get(8)?;
+            let retry_count: i64 = row.get(9)?;
+
+            Ok(ModelRoleAssignment {
+                role: row.get(0)?,
+                primary_provider_id: row.get(1)?,
+                primary_model: row.get(2)?,
+                fallback_provider_id: row.get(3)?,
+                fallback_model: row.get(4)?,
+                temperature: temp as f32,
+                top_p: top_p as f32,
+                max_tokens: max_tokens as u32,
+                timeout_ms: timeout_ms as u64,
+                retry_count: retry_count as u32,
+            })
+        })?;
+
+        if let Some(res) = rows.next() {
+            Ok(Some(res?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn save_model_role_assignment(&self, assignment: ModelRoleAssignment) -> Result<ModelRoleAssignment, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT OR REPLACE INTO model_role_assignments (role, primary_provider_id, primary_model, fallback_provider_id, fallback_model, temperature, top_p, max_tokens, timeout_ms, retry_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            params![
+                assignment.role,
+                assignment.primary_provider_id,
+                assignment.primary_model,
+                assignment.fallback_provider_id,
+                assignment.fallback_model,
+                assignment.temperature as f64,
+                assignment.top_p as f64,
+                assignment.max_tokens as i64,
+                assignment.timeout_ms as i64,
+                assignment.retry_count as i64,
+            ],
+        )?;
+        Ok(assignment)
+    }
+
+    // ----------------- Model Telemetry & Fallback Simulation -----------------
+
+    pub fn record_model_telemetry(&self, mut t: ModelTelemetry) -> Result<ModelTelemetry, rusqlite::Error> {
+        if t.id.is_empty() {
+            t.id = format!("tel-{}", Utc::now().timestamp_millis());
+        }
+        if t.timestamp.is_empty() {
+            t.timestamp = Utc::now().to_rfc3339();
+        }
+
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT OR REPLACE INTO model_telemetry (id, provider_id, model, role, request_type, input_tokens, output_tokens, cost_usd, latency_ms, status_code, error_message, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            params![
+                t.id,
+                t.provider_id,
+                t.model,
+                t.role,
+                t.request_type,
+                t.input_tokens as i64,
+                t.output_tokens as i64,
+                t.cost_usd,
+                t.latency_ms as i64,
+                t.status_code as i64,
+                t.error_message,
+                t.timestamp,
+            ],
+        )?;
+        Ok(t)
+    }
+
+    pub fn list_model_telemetry(&self, limit: Option<usize>) -> Result<Vec<ModelTelemetry>, rusqlite::Error> {
+        let lim = limit.unwrap_or(100).min(500) as i64;
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, provider_id, model, role, request_type, input_tokens, output_tokens, cost_usd, latency_ms, status_code, error_message, timestamp FROM model_telemetry ORDER BY timestamp DESC LIMIT ?"
+        )?;
+
+        let rows = stmt.query_map(params![lim], |row| {
+            let in_tok: i64 = row.get(5)?;
+            let out_tok: i64 = row.get(6)?;
+            let cost: f64 = row.get(7)?;
+            let lat: i64 = row.get(8)?;
+            let status: i64 = row.get(9)?;
+
+            Ok(ModelTelemetry {
+                id: row.get(0)?,
+                provider_id: row.get(1)?,
+                model: row.get(2)?,
+                role: row.get(3)?,
+                request_type: row.get(4)?,
+                input_tokens: in_tok as u32,
+                output_tokens: out_tok as u32,
+                cost_usd: cost,
+                latency_ms: lat as u64,
+                status_code: status as u16,
+                error_message: row.get(10)?,
+                timestamp: row.get(11)?,
+            })
+        })?;
+
+        let mut list = Vec::new();
+        for r in rows {
+            list.push(r?);
+        }
+        Ok(list)
+    }
+
+    pub fn simulate_model_fallback(&self, req: FallbackSimulateRequest) -> Result<FallbackSimulateResponse, Box<dyn std::error::Error + Send + Sync>> {
+        let assignment = self.get_model_role_assignment(&req.role)?
+            .unwrap_or_else(|| ModelRoleAssignment {
+                role: req.role.clone(),
+                primary_provider_id: "prov-deepseek".to_string(),
+                primary_model: "deepseek-reasoner".to_string(),
+                fallback_provider_id: "prov-claude".to_string(),
+                fallback_model: "claude-3-7-sonnet-20250219".to_string(),
+                temperature: 0.7,
+                top_p: 0.9,
+                max_tokens: 4000,
+                timeout_ms: 30000,
+                retry_count: 3,
+            });
+
+        let primary_opt = self.get_model_provider(&assignment.primary_provider_id)?;
+        let fallback_opt = self.get_model_provider(&assignment.fallback_provider_id)?;
+
+        let primary_name = primary_opt.as_ref().map(|p| p.name.clone()).unwrap_or_else(|| assignment.primary_provider_id.clone());
+        let fallback_name = fallback_opt.as_ref().map(|p| p.name.clone()).unwrap_or_else(|| assignment.fallback_provider_id.clone());
+
+        let p_lat = primary_opt.as_ref().map(|p| p.latency_ms).unwrap_or(320);
+        let f_lat = fallback_opt.as_ref().map(|p| p.latency_ms).unwrap_or(450);
+
+        let status_code = req.simulate_status_code.unwrap_or(200);
+        let prompt_tokens = req.prompt_tokens.unwrap_or(1500);
+
+        if status_code == 429 || status_code >= 400 {
+            // Record failure telemetry for primary
+            let _ = self.record_model_telemetry(ModelTelemetry {
+                id: format!("tel-fail-{}", Utc::now().timestamp_millis()),
+                provider_id: assignment.primary_provider_id.clone(),
+                model: assignment.primary_model.clone(),
+                role: req.role.clone(),
+                request_type: "REASONING".to_string(),
+                input_tokens: prompt_tokens,
+                output_tokens: 0,
+                cost_usd: 0.0,
+                latency_ms: p_lat,
+                status_code,
+                error_message: Some(format!("HTTP {} Rate limit/Quota exhausted on provider '{}'", status_code, primary_name)),
+                timestamp: Utc::now().to_rfc3339(),
+            });
+
+            // Rotate key or trip circuit breaker on primary provider
+            if let Some(mut p) = primary_opt {
+                if !p.api_keys.is_empty() {
+                    p.active_key_index = (p.active_key_index + 1) % p.api_keys.len();
+                }
+                p.health_status = "RATE_LIMITED".to_string();
+                let _ = self.create_or_update_model_provider(p);
+            }
+
+            // Record success telemetry on fallback
+            let _ = self.record_model_telemetry(ModelTelemetry {
+                id: format!("tel-fall-{}", Utc::now().timestamp_millis()),
+                provider_id: assignment.fallback_provider_id.clone(),
+                model: assignment.fallback_model.clone(),
+                role: req.role.clone(),
+                request_type: "REASONING".to_string(),
+                input_tokens: prompt_tokens,
+                output_tokens: 1800,
+                cost_usd: 0.015,
+                latency_ms: f_lat,
+                status_code: 200,
+                error_message: None,
+                timestamp: Utc::now().to_rfc3339(),
+            });
+
+            Ok(FallbackSimulateResponse {
+                success: true,
+                attempted_providers: vec![primary_name.clone(), fallback_name.clone()],
+                final_provider_id: assignment.fallback_provider_id.clone(),
+                final_model: assignment.fallback_model.clone(),
+                circuit_broken: true,
+                message: format!(
+                    "Primary provider '{}' encountered HTTP {} quota exhaustion. Multi-key pool rotated and circuit-breaker triggered failover to '{}' (model: '{}').",
+                    primary_name, status_code, fallback_name, assignment.fallback_model
+                ),
+                latency_ms: p_lat + f_lat + 75,
+            })
+        } else {
+            // Primary provider succeeded
+            let _ = self.record_model_telemetry(ModelTelemetry {
+                id: format!("tel-succ-{}", Utc::now().timestamp_millis()),
+                provider_id: assignment.primary_provider_id.clone(),
+                model: assignment.primary_model.clone(),
+                role: req.role.clone(),
+                request_type: "COMPLETION".to_string(),
+                input_tokens: prompt_tokens,
+                output_tokens: 2200,
+                cost_usd: 0.008,
+                latency_ms: p_lat,
+                status_code: 200,
+                error_message: None,
+                timestamp: Utc::now().to_rfc3339(),
+            });
+
+            Ok(FallbackSimulateResponse {
+                success: true,
+                attempted_providers: vec![primary_name.clone()],
+                final_provider_id: assignment.primary_provider_id.clone(),
+                final_model: assignment.primary_model.clone(),
+                circuit_broken: false,
+                message: format!("Dispatched to primary provider '{}' (model: '{}') successfully.", primary_name, assignment.primary_model),
+                latency_ms: p_lat + 15,
+            })
+        }
+    }
+
+    // ----------------- Style DNA & Literary Mimicry Repository -----------------
+
+    pub fn list_style_dna_profiles(&self) -> Result<Vec<StyleDnaProfile>, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, name, author, source_title, source_url, tags_json, sensory_density, dialogue_ratio, sentence_variance, metaphor_frequency, pacing_velocity, vocabulary_richness, forbidden_cliches_json, golden_exemplars_json, prompt_directive, created_at FROM style_dna_profiles ORDER BY created_at DESC"
+        )?;
+
+        let rows = stmt.query_map([], |row| {
+            let tags_str: String = row.get(5)?;
+            let cliches_str: String = row.get(12)?;
+            let exemplars_str: String = row.get(13)?;
+
+            let sensory: f64 = row.get(6)?;
+            let dialogue: f64 = row.get(7)?;
+            let variance: f64 = row.get(8)?;
+            let metaphor: f64 = row.get(9)?;
+            let pacing: f64 = row.get(10)?;
+            let vocab: f64 = row.get(11)?;
+
+            Ok(StyleDnaProfile {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                author: row.get(2)?,
+                source_title: row.get(3)?,
+                source_url: row.get(4)?,
+                tags: serde_json::from_str(&tags_str).unwrap_or_default(),
+                sensory_density: sensory as f32,
+                dialogue_ratio: dialogue as f32,
+                sentence_variance: variance as f32,
+                metaphor_frequency: metaphor as f32,
+                pacing_velocity: pacing as f32,
+                vocabulary_richness: vocab as f32,
+                forbidden_cliches: serde_json::from_str(&cliches_str).unwrap_or_default(),
+                golden_exemplars: serde_json::from_str(&exemplars_str).unwrap_or_default(),
+                prompt_directive: row.get(14)?,
+                created_at: row.get(15)?,
+            })
+        })?;
+
+        let mut list = Vec::new();
+        for r in rows {
+            list.push(r?);
+        }
+        Ok(list)
+    }
+
+    pub fn get_style_dna_profile(&self, id: &str) -> Result<Option<StyleDnaProfile>, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, name, author, source_title, source_url, tags_json, sensory_density, dialogue_ratio, sentence_variance, metaphor_frequency, pacing_velocity, vocabulary_richness, forbidden_cliches_json, golden_exemplars_json, prompt_directive, created_at FROM style_dna_profiles WHERE id = ?"
+        )?;
+
+        let mut rows = stmt.query_map(params![id], |row| {
+            let tags_str: String = row.get(5)?;
+            let cliches_str: String = row.get(12)?;
+            let exemplars_str: String = row.get(13)?;
+
+            let sensory: f64 = row.get(6)?;
+            let dialogue: f64 = row.get(7)?;
+            let variance: f64 = row.get(8)?;
+            let metaphor: f64 = row.get(9)?;
+            let pacing: f64 = row.get(10)?;
+            let vocab: f64 = row.get(11)?;
+
+            Ok(StyleDnaProfile {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                author: row.get(2)?,
+                source_title: row.get(3)?,
+                source_url: row.get(4)?,
+                tags: serde_json::from_str(&tags_str).unwrap_or_default(),
+                sensory_density: sensory as f32,
+                dialogue_ratio: dialogue as f32,
+                sentence_variance: variance as f32,
+                metaphor_frequency: metaphor as f32,
+                pacing_velocity: pacing as f32,
+                vocabulary_richness: vocab as f32,
+                forbidden_cliches: serde_json::from_str(&cliches_str).unwrap_or_default(),
+                golden_exemplars: serde_json::from_str(&exemplars_str).unwrap_or_default(),
+                prompt_directive: row.get(14)?,
+                created_at: row.get(15)?,
+            })
+        })?;
+
+        if let Some(res) = rows.next() {
+            Ok(Some(res?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn create_or_update_style_dna_profile(&self, mut profile: StyleDnaProfile) -> Result<StyleDnaProfile, rusqlite::Error> {
+        if profile.id.is_empty() {
+            profile.id = format!("dna-{}", Utc::now().timestamp_millis());
+        }
+        if profile.created_at.is_empty() {
+            profile.created_at = Utc::now().to_rfc3339();
+        }
+
+        let conn = self.conn.lock().unwrap();
+        let tags_json = serde_json::to_string(&profile.tags).unwrap_or_else(|_| "[]".to_string());
+        let cliches_json = serde_json::to_string(&profile.forbidden_cliches).unwrap_or_else(|_| "[]".to_string());
+        let exemplars_json = serde_json::to_string(&profile.golden_exemplars).unwrap_or_else(|_| "[]".to_string());
+
+        conn.execute(
+            "INSERT OR REPLACE INTO style_dna_profiles (id, name, author, source_title, source_url, tags_json, sensory_density, dialogue_ratio, sentence_variance, metaphor_frequency, pacing_velocity, vocabulary_richness, forbidden_cliches_json, golden_exemplars_json, prompt_directive, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            params![
+                profile.id,
+                profile.name,
+                profile.author,
+                profile.source_title,
+                profile.source_url,
+                tags_json,
+                profile.sensory_density as f64,
+                profile.dialogue_ratio as f64,
+                profile.sentence_variance as f64,
+                profile.metaphor_frequency as f64,
+                profile.pacing_velocity as f64,
+                profile.vocabulary_richness as f64,
+                cliches_json,
+                exemplars_json,
+                profile.prompt_directive,
+                profile.created_at
+            ],
+        )?;
+
+        Ok(profile)
+    }
+
+    pub fn extract_style_dna(&self, req: ExtractStyleDnaRequest) -> Result<StyleDnaProfile, Box<dyn std::error::Error + Send + Sync>> {
+        let text = req.sample_text.trim();
+        let total_chars = text.chars().count().max(1);
+
+        // 1. Dialogue Ratio
+        let mut in_quote = false;
+        let mut dialogue_chars = 0usize;
+        for c in text.chars() {
+            if c == '“' || c == '「' || c == '"' {
+                in_quote = true;
+            } else if c == '”' || c == '」' || c == '"' {
+                in_quote = false;
+            } else if in_quote {
+                dialogue_chars += 1;
+            }
+        }
+        let dialogue_ratio = ((dialogue_chars as f32 / total_chars as f32) * 1.2).clamp(0.05, 0.95);
+
+        // 2. Sensory Density
+        let sensory_chars = ['红', '黑', '白', '青', '蓝', '紫', '金', '银', '光', '影', '暗', '霞', '明', '映', '耀', '声', '音', '响', '鸣', '啸', '雷', '呼', '铃', '低', '嘶', '冷', '热', '寒', '温', '凉', '刺', '痛', '麻', '冰', '灼', '颤', '香', '腥', '臭', '甜', '苦', '焦', '酸'];
+        let mut sensory_count = 0usize;
+        for c in text.chars() {
+            if sensory_chars.contains(&c) {
+                sensory_count += 1;
+            }
+        }
+        let sensory_density = ((sensory_count as f32 * 25.0) / total_chars as f32).clamp(0.15, 0.95);
+
+        // 3. Sentence Variance
+        let sentences: Vec<&str> = text
+            .split(|c| c == '。' || c == '！' || c == '？' || c == '!' || c == '?' || c == '\n')
+            .map(|s| s.trim())
+            .filter(|s| !s.is_empty())
+            .collect();
+        let s_count = sentences.len().max(1);
+        let lengths: Vec<f32> = sentences.iter().map(|s| s.chars().count() as f32).collect();
+        let avg_len: f32 = lengths.iter().sum::<f32>() / s_count as f32;
+        let variance_val: f32 = lengths.iter().map(|l| (l - avg_len).powi(2)).sum::<f32>() / s_count as f32;
+        let std_dev = variance_val.sqrt();
+        let sentence_variance = (std_dev / avg_len.max(6.0)).clamp(0.1, 0.95);
+
+        // 4. Metaphor Frequency
+        let metaphor_words = ["如", "若", "似", "像", "仿佛", "犹如", "宛若", "如同", "恰似"];
+        let mut metaphor_hits = 0usize;
+        for m in &metaphor_words {
+            metaphor_hits += text.matches(m).count();
+        }
+        let metaphor_frequency = ((metaphor_hits as f32 * 2.0) / s_count as f32).clamp(0.1, 0.95);
+
+        // 5. Pacing Velocity
+        let action_verbs = ['斩', '拔', '杀', '破', '瞬', '闪', '遁', '跃', '裂', '冲', '轰', '掠', '疾', '刺', '暴', '退', '扑'];
+        let mut action_hits = 0usize;
+        for c in text.chars() {
+            if action_verbs.contains(&c) {
+                action_hits += 1;
+            }
+        }
+        let pacing_velocity = ((action_hits as f32 * 30.0) / total_chars as f32).clamp(0.2, 0.95);
+
+        // 6. Vocabulary Richness (TTR + classical particles)
+        let classical_particles = ['之', '乎', '者', '也', '乃', '其', '遂', '盖', '未', '甚', '且', '俱', '亦', '焉', '矣'];
+        let mut classical_count = 0usize;
+        for c in text.chars() {
+            if classical_particles.contains(&c) {
+                classical_count += 1;
+            }
+        }
+        let mut unique_chars = std::collections::HashSet::new();
+        for c in text.chars() {
+            if !c.is_whitespace() {
+                unique_chars.insert(c);
+            }
+        }
+        let ttr = unique_chars.len() as f32 / total_chars as f32;
+        let vocabulary_richness = (ttr * 0.7 + (classical_count as f32 * 10.0 / total_chars as f32) * 0.3).clamp(0.25, 0.95);
+
+        // Forbidden Cliches & Exemplars
+        let forbidden_cliches = vec![
+            "恐怖如斯".to_string(),
+            "倒吸一口凉气".to_string(),
+            "桀桀怪笑".to_string(),
+            "蝼蚁一般".to_string(),
+            "给爷死".to_string(),
+            "此子断不可留".to_string(),
+        ];
+
+        let mut exemplars = Vec::new();
+        for s in &sentences {
+            let clen = s.chars().count();
+            if clen >= 18 && clen <= 85 {
+                exemplars.push(s.to_string());
+                if exemplars.len() >= 3 {
+                    break;
+                }
+            }
+        }
+        if exemplars.is_empty() && !sentences.is_empty() {
+            exemplars.push(sentences[0].to_string());
+        }
+
+        let name = req.name.unwrap_or_else(|| {
+            format!("文风提取·{}", Utc::now().format("%m%d%H%M"))
+        });
+        let author = req.author.unwrap_or_else(|| "自析样本名家".to_string());
+        let source_title = req.source_title.unwrap_or_else(|| "用户上传典范文本".to_string());
+
+        let prompt_directive = format!(
+            "仿写文风指令【{}】：感官描写密度 {:.2}，对白叙事占比 {:.2}，句式长短起伏方差 {:.2}，隐喻意象频率 {:.2}，动作推进速率 {:.2}，文辞丰沛度 {:.2}。行文要求：融情入景，严禁现代网络烂梗及陈词滥调（如{}）。",
+            author, sensory_density, dialogue_ratio, sentence_variance, metaphor_frequency, pacing_velocity, vocabulary_richness, forbidden_cliches.join("、")
+        );
+
+        let profile = StyleDnaProfile {
+            id: format!("dna-ext-{}", Utc::now().timestamp_millis()),
+            name,
+            author,
+            source_title,
+            source_url: req.source_url,
+            tags: vec!["文本提取".to_string(), "深度文学DNA".to_string()],
+            sensory_density,
+            dialogue_ratio,
+            sentence_variance,
+            metaphor_frequency,
+            pacing_velocity,
+            vocabulary_richness,
+            forbidden_cliches,
+            golden_exemplars: exemplars,
+            prompt_directive,
+            created_at: Utc::now().to_rfc3339(),
+        };
+
+        self.create_or_update_style_dna_profile(profile)
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
+    }
+
+    pub fn blend_style_dna(&self, req: StyleFusionRequest) -> Result<StyleFusionResponse, Box<dyn std::error::Error + Send + Sync>> {
+        let p1 = self.get_style_dna_profile(&req.primary_profile_id)?
+            .ok_or_else(|| format!("Primary Style DNA profile not found: {}", req.primary_profile_id))?;
+        let p2 = self.get_style_dna_profile(&req.secondary_profile_id)?
+            .ok_or_else(|| format!("Secondary Style DNA profile not found: {}", req.secondary_profile_id))?;
+
+        let r = req.fusion_ratio.clamp(0.0, 1.0);
+        let inv = 1.0 - r;
+
+        let sensory_density = p1.sensory_density * r + p2.sensory_density * inv;
+        let dialogue_ratio = p1.dialogue_ratio * r + p2.dialogue_ratio * inv;
+        let sentence_variance = p1.sentence_variance * r + p2.sentence_variance * inv;
+        let metaphor_frequency = p1.metaphor_frequency * r + p2.metaphor_frequency * inv;
+        let pacing_velocity = p1.pacing_velocity * r + p2.pacing_velocity * inv;
+        let vocabulary_richness = p1.vocabulary_richness * r + p2.vocabulary_richness * inv;
+
+        let mut cliches_set = std::collections::HashSet::new();
+        for c in &p1.forbidden_cliches {
+            cliches_set.insert(c.clone());
+        }
+        for c in &p2.forbidden_cliches {
+            cliches_set.insert(c.clone());
+        }
+        let forbidden_cliches: Vec<String> = cliches_set.into_iter().collect();
+
+        let mut exemplars = Vec::new();
+        exemplars.extend(p1.golden_exemplars.iter().take(2).cloned());
+        exemplars.extend(p2.golden_exemplars.iter().take(2).cloned());
+
+        let mut tags = Vec::new();
+        tags.extend(p1.tags.iter().take(2).cloned());
+        tags.extend(p2.tags.iter().take(2).cloned());
+        tags.push("融合文风".to_string());
+
+        let custom_name = req.custom_name.unwrap_or_else(|| {
+            format!("{} × {} 融合典范", p1.name, p2.name)
+        });
+
+        let prompt_directive = format!(
+            "融合文风指令【{} ({:.0}%) + {} ({:.0}%)】：感官密度 {:.2}，对话比 {:.2}，句式方差 {:.2}，隐喻频率 {:.2}，节奏速率 {:.2}，典雅丰沛度 {:.2}。汲取{}的叙事底蕴与{}的张力行文，形成全新文风矩阵。",
+            p1.name, r * 100.0, p2.name, inv * 100.0, sensory_density, dialogue_ratio, sentence_variance, metaphor_frequency, pacing_velocity, vocabulary_richness, p1.author, p2.author
+        );
+
+        let fused_profile = StyleDnaProfile {
+            id: format!("dna-blend-{}", Utc::now().timestamp_millis()),
+            name: custom_name,
+            author: format!("{}+{}", p1.author, p2.author),
+            source_title: format!("{} / {}", p1.source_title, p2.source_title),
+            source_url: None,
+            tags,
+            sensory_density,
+            dialogue_ratio,
+            sentence_variance,
+            metaphor_frequency,
+            pacing_velocity,
+            vocabulary_richness,
+            forbidden_cliches,
+            golden_exemplars: exemplars,
+            prompt_directive,
+            created_at: Utc::now().to_rfc3339(),
+        };
+
+        let saved = self.create_or_update_style_dna_profile(fused_profile)?;
+        let notes = format!(
+            "成功融合文风 '{}' ({:.0}%) 与 '{}' ({:.0}%)。兼备首主创的文学骨架与次主创的感官张力，已入库 Style DNA 库。",
+            p1.name, r * 100.0, p2.name, inv * 100.0
+        );
+
+        Ok(StyleFusionResponse {
+            fused_profile: saved,
+            blending_notes: notes,
+        })
+    }
+
+    // ----------------- Idea-to-Universe Genesis Engine -----------------
+
+    pub fn generate_idea_universe(&self, req: IdeaGenesisRequest) -> Result<IdeaGenesisResponse, Box<dyn std::error::Error + Send + Sync>> {
+        let title = if !req.core_hook.is_empty() {
+            format!("《{}：{}》", req.genre, req.core_hook)
+        } else {
+            format!("《{}·太初破壁录》", req.genre)
+        };
+
+        let novel_id = format!("nov-gen-{}", Utc::now().timestamp_millis());
+        let vol_id_1 = format!("vol-{}-1", novel_id);
+        let vol_id_2 = format!("vol-{}-2", novel_id);
+        let vol_id_3 = format!("vol-{}-3", novel_id);
+
+        let synopsis = format!(
+            "【故事背景】在{}的恢宏大世中，天地秩序濒临破灭。主角怀揣核心机密【{}】，以【{}】为金手指依凭，自凡微尘埃中拔剑而起。主调风格【{}】，直面灭门与宿命大劫，打破上界禁锢，走出一条独属于自己的逆天伐道之路！",
+            req.genre, req.logline, req.golden_finger_type, req.tone
+        );
+
+        // 1. Golden Three Chapters
+        let chap1_id = format!("chap-{}-1", novel_id);
+        let chap2_id = format!("chap-{}-2", novel_id);
+        let chap3_id = format!("chap-{}-3", novel_id);
+
+        let c1_scenes = vec![
+            Scene {
+                id: format!("sc-{}-1", chap1_id),
+                chapter_id: chap1_id.clone(),
+                scene_index: 1,
+                scene_goal: "建立底层主角生死压迫，揭露反派逼杀动机".to_string(),
+                conflict: "宗门恶仆持死契上门逼迫交出祖传遗物".to_string(),
+                turn_point: "主角假意顺从，暗中引诱敌方踏入绝境死角".to_string(),
+                outcome: "拉扯出逃生破局时间差，但自身负伤濒危".to_string(),
+                involved_character_ids: vec!["char-protagonist".to_string(), "char-villain".to_string()],
+                location: "青石寒崖柴房".to_string(),
+                draft_content: "".to_string(),
+                agent_notes: Some("突出冷峻克制心性，不可无脑咆哮".to_string()),
+            },
+            Scene {
+                id: format!("sc-{}-2", chap1_id),
+                chapter_id: chap1_id.clone(),
+                scene_index: 2,
+                scene_goal: format!("濒死绝境中正式激活【{}】金手指", req.golden_finger_type),
+                conflict: "神魂剧痛与天地规则威压激烈冲撞".to_string(),
+                turn_point: "金手指面板破开识海迷雾，解析出敌方致命死穴破绽".to_string(),
+                outcome: "主角获得第一缕核心逆转生机，战力质变升华".to_string(),
+                involved_character_ids: vec!["char-protagonist".to_string()],
+                location: "断魂绝壁古岩裂隙".to_string(),
+                draft_content: "".to_string(),
+                agent_notes: Some("金手指能力展示需具备严谨代价与规则感".to_string()),
+            },
+        ];
+
+        let c2_scenes = vec![
+            Scene {
+                id: format!("sc-{}-1", chap2_id),
+                chapter_id: chap2_id.clone(),
+                scene_index: 1,
+                scene_goal: "实战检验金手指能力，诱杀第一重追杀者".to_string(),
+                conflict: "三名凶残追兵封锁峡谷出口，布设天罗地网".to_string(),
+                turn_point: "主角利用信息差制造地脉毒障，逐一分割孤立强敌".to_string(),
+                outcome: "干净利落实施首杀反杀，缴获珍贵古符与灵石".to_string(),
+                involved_character_ids: vec!["char-protagonist".to_string(), "char-hunter".to_string()],
+                location: "黑风谷迷瘴乱石林".to_string(),
+                draft_content: "".to_string(),
+                agent_notes: Some("战斗动作需凌厉简练，杀伐果断".to_string()),
+            },
+        ];
+
+        let c3_scenes = vec![
+            Scene {
+                id: format!("sc-{}-1", chap3_id),
+                chapter_id: chap3_id.clone(),
+                scene_index: 1,
+                scene_goal: "首卷黄金三章高潮爆点：逆斩头目并引爆世界宏观悬念".to_string(),
+                conflict: "敌对势力领队统领亲临，筑基大圆满威压封锁虚空".to_string(),
+                turn_point: "主角引动远古禁制核心，金手指超负荷解构对方命门法宝".to_string(),
+                outcome: "越级强势诛杀头目！夺得通往上古秘境的核心青铜古钥，震惊全场".to_string(),
+                involved_character_ids: vec!["char-protagonist".to_string(), "char-boss".to_string()],
+                location: "坠星崖古祭坛之巅".to_string(),
+                draft_content: "".to_string(),
+                agent_notes: Some("留下巨大宏观悬念钩子，促使读者强烈追更".to_string()),
+            },
+        ];
+
+        let golden_three_chapters = vec![
+            Chapter {
+                id: chap1_id.clone(),
+                volume_id: vol_id_1.clone(),
+                novel_id: novel_id.clone(),
+                chapter_index: 1,
+                title: "第1章 异兆初现与觉醒".to_string(),
+                outline: "主角绝境求生，在生死交界点引动上古因果，金手指首次觉醒。".to_string(),
+                pov_character_id: Some("char-protagonist".to_string()),
+                word_count_goal: 3000,
+                actual_word_count: 0,
+                status: "PLANNED".to_string(),
+                scenes: c1_scenes,
+            },
+            Chapter {
+                id: chap2_id.clone(),
+                volume_id: vol_id_1.clone(),
+                novel_id: novel_id.clone(),
+                chapter_index: 2,
+                title: "第2章 规则初探与暗流试探".to_string(),
+                outline: "掌握金手指初步律令，在黑风谷以弱胜强伏击追杀者。".to_string(),
+                pov_character_id: Some("char-protagonist".to_string()),
+                word_count_goal: 3200,
+                actual_word_count: 0,
+                status: "PLANNED".to_string(),
+                scenes: c2_scenes,
+            },
+            Chapter {
+                id: chap3_id.clone(),
+                volume_id: vol_id_1.clone(),
+                novel_id: novel_id.clone(),
+                chapter_index: 3,
+                title: "第3章 绝壁破局与大势初成".to_string(),
+                outline: "祭坛绝巅越阶诛杀头目，破开死局，引爆首卷最大宏观主线钩子。".to_string(),
+                pov_character_id: Some("char-protagonist".to_string()),
+                word_count_goal: 3500,
+                actual_word_count: 0,
+                status: "PLANNED".to_string(),
+                scenes: c3_scenes,
+            },
+        ];
+
+        // 2. Volumes
+        let volumes = vec![
+            Volume {
+                id: vol_id_1,
+                novel_id: novel_id.clone(),
+                volume_index: 1,
+                title: "第一卷 潜龙困渊·破壁觉醒".to_string(),
+                summary: Some("底层绝境求生，掌握核心金手指机密，反杀宗门恶徒，夺取进入上古秘境资格。".to_string()),
+                main_conflict: "宗门内部残酷倾轧与修道资源垄断".to_string(),
+                target_climax: "坠星崖祭坛血战逆斩筑基统领，夺得古修青铜密钥".to_string(),
+                boundary_constraints: Some("战力严格限制在练气至筑基初阶，金手指严守冷却限制".to_string()),
+                chapters: golden_three_chapters.clone(),
+            },
+            Volume {
+                id: vol_id_2,
+                novel_id: novel_id.clone(),
+                volume_index: 2,
+                title: "第二卷 风起云涌·群雄逐鹿".to_string(),
+                summary: Some("踏入宏大千州大域，卷入正邪道统争夺天道灵机之争，金手指进阶至第二层形态。".to_string()),
+                main_conflict: "隐世宗门与太古皇朝对古仙遗迹的博弈倾轧".to_string(),
+                target_climax: "万宗问鼎大典上力挽狂澜，镇压初代天骄".to_string(),
+                boundary_constraints: Some("战力推进至金丹元婴交锋，世界观拓展至大域法则".to_string()),
+                chapters: vec![],
+            },
+            Volume {
+                id: vol_id_3,
+                novel_id: novel_id.clone(),
+                volume_index: 3,
+                title: "第三卷 独断万古·天道争锋".to_string(),
+                summary: Some("纪元终极死劫降临，幕后黑手破封而出，主角执掌完整天道法则熔炉，独断天命。".to_string()),
+                main_conflict: "灭世大劫与天道规则终极坍塌".to_string(),
+                target_climax: "身化法则天道，超脱纪元宿命，重建宇宙新规".to_string(),
+                boundary_constraints: Some("化神及化道级因果法则博弈，神战终局".to_string()),
+                chapters: vec![],
+            },
+        ];
+
+        // 3. World Settings
+        let world_settings = vec![
+            WorldSetting {
+                id: format!("ws-{}-1", novel_id),
+                novel_id: novel_id.clone(),
+                category: "POWER_SYSTEM".to_string(),
+                name: format!("{}·九境通天修炼位阶", req.genre),
+                aliases: vec!["境界体系".to_string(), "位阶法则".to_string()],
+                content: "筑基、凝丹、神照、归墟、破妄、化神、返虚、合道、大乘。每一大境九小重，晋级需淬炼神魂因果与天地道意。".to_string(),
+                priority: 90,
+                tags: vec!["修仙".to_string(), "战力阶梯".to_string()],
+            },
+            WorldSetting {
+                id: format!("ws-{}-2", novel_id),
+                novel_id: novel_id.clone(),
+                category: "GEOGRAPHY".to_string(),
+                name: "三千道州与无垠大荒格局".to_string(),
+                aliases: vec!["地理版图".to_string()],
+                content: "中央神庭掌控九百神州，四极边荒遍布古遗迹与神魔古战场，地脉禁制遍布，常年风暴不歇。".to_string(),
+                priority: 80,
+                tags: vec!["地理".to_string(), "势力".to_string()],
+            },
+            WorldSetting {
+                id: format!("ws-{}-3", novel_id),
+                novel_id: novel_id.clone(),
+                category: "CHEAT_RULE".to_string(),
+                name: format!("{}·等价平衡铁律", req.golden_finger_type),
+                aliases: vec!["金手指法则".to_string()],
+                content: format!("核心能力：{}。任何推演与规则改写均受因果守恒定律制约，必须提供心神魂力或天地异宝作为能级代偿。", req.golden_finger_type),
+                priority: 95,
+                tags: vec!["金手指".to_string(), "底牌约束".to_string()],
+            },
+        ];
+
+        // 4. Characters
+        let main_characters = vec![
+            Character {
+                id: "char-protagonist".to_string(),
+                novel_id: novel_id.clone(),
+                name: "顾长青".to_string(),
+                role_type: "PROTAGONIST".to_string(),
+                gender: "男".to_string(),
+                profile: CharacterProfile {
+                    identity: Some("破落古修世家唯一遗孤".to_string()),
+                    appearance: "清瘦坚毅，墨发披肩，眼神冷峻如古潭之冰".to_string(),
+                    personality_traits: vec!["冷峻克制".to_string(), "杀伐果断".to_string(), "心机深沉".to_string(), "重诺守信".to_string()],
+                    voice_and_tone: "嗓音低沉平稳，字句间极具定力".to_string(),
+                    core_motivation: "超脱宿命棋局，斩断天道枷锁".to_string(),
+                    fatal_flaw: "极度缺乏信任感，习惯独自行走于险境".to_string(),
+                    catchphrases: vec!["事已至此，唯有拔剑。".to_string(), "天地为棋，我当执子。".to_string()],
+                },
+                background: "幼年目睹家族因怀璧之罪覆灭，隐忍多年，只为求取通天大道。".to_string(),
+                created_at: Utc::now().to_rfc3339(),
+            },
+            Character {
+                id: "char-ally".to_string(),
+                novel_id: novel_id.clone(),
+                name: "云霄子".to_string(),
+                role_type: "SUPPORTING".to_string(),
+                gender: "男".to_string(),
+                profile: CharacterProfile {
+                    identity: Some("游方残魂 / 隐世阵道大宗师".to_string()),
+                    appearance: "白发青袍虚影，手握紫金拂尘".to_string(),
+                    personality_traits: vec!["诙谐通透".to_string(), "老辣狡黠".to_string()],
+                    voice_and_tone: "轻慢慵懒，实则字字切中要害".to_string(),
+                    core_motivation: "寻觅古仙崩塌真相，重塑道统".to_string(),
+                    fatal_flaw: "神魂残缺，受限于阴阳界限".to_string(),
+                    catchphrases: vec!["小家伙，这修仙界的浑水可深得很呐。".to_string()],
+                },
+                background: "千年前天道大劫中的幸存者，寄宿于古铜佩中。".to_string(),
+                created_at: Utc::now().to_rfc3339(),
+            },
+            Character {
+                id: "char-antagonist".to_string(),
+                novel_id: novel_id.clone(),
+                name: "厉无涯".to_string(),
+                role_type: "ANTAGONIST".to_string(),
+                gender: "男".to_string(),
+                profile: CharacterProfile {
+                    identity: Some("血冥魔宗暗部首座 / 宗门长老".to_string()),
+                    appearance: "面容阴鸷，黑袍绣金，右手常年缠绕幽冥血煞".to_string(),
+                    personality_traits: vec!["贪婪残忍".to_string(), "权谋至上".to_string()],
+                    voice_and_tone: "嘶哑森冷，压迫感十足".to_string(),
+                    core_motivation: "攫取古修造化以突破天人寿元大限".to_string(),
+                    fatal_flaw: "轻视底层蝼蚁，盲目自信于血煞魔功".to_string(),
+                    catchphrases: vec!["螳臂当车，逆天者死！".to_string()],
+                },
+                background: "为延寿不择手段，布局多年欲夺取主角家族古宝。".to_string(),
+                created_at: Utc::now().to_rfc3339(),
+            },
+        ];
+
+        // 5. Cheat System
+        let cheat_system = json!({
+            "system_name": format!("{}·天道中枢架构", req.golden_finger_type),
+            "tier_level": 1,
+            "max_tier": 9,
+            "core_ability": "破绽洞察、因果推演与机缘回溯",
+            "activation_cost": "神念心力与天道气运点",
+            "backlash_warning": "过度超前推演将诱发识海崩碎与古仙道化反噬",
+            "upgrade_milestones": [
+                {"tier": 1, "unlock": "看破微观功法漏洞与敌方出招前摇"},
+                {"tier": 3, "unlock": "逆转三炷香时空因果线"},
+                {"tier": 6, "unlock": "神念具现为太初法则熔炉"}
+            ]
+        });
+
+        // 6. Tension Curve (30 chapters)
+        let tension_curve_preview = vec![
+            0.65, 0.78, 0.92, 0.50, 0.58, 0.72, 0.85, 0.94, 0.55, 0.62,
+            0.75, 0.88, 0.95, 0.52, 0.60, 0.74, 0.86, 0.96, 0.58, 0.66,
+            0.78, 0.89, 0.97, 0.60, 0.70, 0.82, 0.90, 0.95, 0.98, 0.70,
+        ];
+
+        Ok(IdeaGenesisResponse {
+            novel_title: title,
+            synopsis,
+            golden_three_chapters,
+            volumes,
+            world_settings,
+            main_characters,
+            cheat_system,
+            tension_curve_preview,
+        })
+    }
+
+    pub fn generate_multiverse_branches(&self, _novel_id: &str, divergence_point: Option<&str>) -> Result<Vec<MultiverseBranch>, Box<dyn std::error::Error + Send + Sync>> {
+        let dp = divergence_point.unwrap_or("主角在第三章面对绝杀之局时的抉择分水岭");
+
+        let branches = vec![
+            MultiverseBranch {
+                branch_id: "branch-alpha".to_string(),
+                title: "宇宙分支α：极道逆斩·以杀证道主线".to_string(),
+                divergence_point: dp.to_string(),
+                summary: "主角放弃遁走，当场引爆九重秘术极限反杀首领，逼退整支追兵并震动宗门高层。".to_string(),
+                climax_outcome: "名声大噪，但自身神魂受创三个月，提早引来大能夺舍危机。".to_string(),
+                pros: vec!["爽点密集爆发，读者期待值极速拉满".to_string(), "主角杀伐果断人设立体鲜明".to_string()],
+                cons: vec!["后期战力膨胀速度过快，需加速扩展更高位面".to_string()],
+            },
+            MultiverseBranch {
+                branch_id: "branch-beta".to_string(),
+                title: "宇宙分支β：韬光养晦·暗度陈仓智斗线".to_string(),
+                divergence_point: dp.to_string(),
+                summary: "主角借假死脱身遁入暗流，化名潜入敌对宗门藏经阁，暗中蚕食对方气运与传承。".to_string(),
+                climax_outcome: "半年后以幕后黑手姿态反向诛杀仇敌全族，底牌毫无泄露。".to_string(),
+                pros: vec!["智斗悬念强烈，信息差戏剧张力极高".to_string(), "世界观展现细腻丰富".to_string()],
+                cons: vec!["前中期即时爽点兑现稍有延迟，需精细控制节奏".to_string()],
+            },
+            MultiverseBranch {
+                branch_id: "branch-gamma".to_string(),
+                title: "宇宙分支γ：规则颠覆·以诡破劫奇幻线".to_string(),
+                divergence_point: dp.to_string(),
+                summary: "主角不遵传统修仙常理，利用金手指反向污染敌对阵法，引来未知古神眷族互相制衡。".to_string(),
+                climax_outcome: "战场彻底异化为不可名状的荒诞秘境，主角借混乱规则火中取栗。".to_string(),
+                pros: vec!["脑洞极其惊艳，克系与玄幻碰撞出极高辨识度".to_string(), "出人意料反套路".to_string()],
+                cons: vec!["对文风驾驭与逻辑闭环能力要求极高".to_string()],
+            },
+        ];
+
+        Ok(branches)
+    }
+
+    // ----------------- Reader Psychology & Information Asymmetry Repository -----------------
+
+    pub fn get_reader_psychology_report(&self, novel_id: &str, chapter_id: Option<&str>) -> Result<ReaderPsychologyReport, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(novel_id));
+
+        // Query asymmetry items count to gauge dramatic irony
+        let asym_count: i64 = {
+            let conn = self.conn.lock().unwrap();
+            conn.query_row("SELECT count(*) FROM information_asymmetry_items WHERE novel_id = ?", params![resolved], |r| r.get(0)).unwrap_or(3)
+        };
+
+        let anticipation_score = (0.75 + (asym_count as f32 * 0.04)).clamp(0.1, 0.96);
+        let fatigue_risk = 0.24;
+        let payoff_index = 0.86;
+        let dopamine_intervals = vec![2200, 3100, 2800];
+
+        let diagnostic_advice = vec![
+            "【期待感指数优秀】读者掌握的信息优势与主角的未知险境构成强烈戏剧讽刺，极大激发追读欲望。".to_string(),
+            "【疲劳风险受控】当前章节张弛有度，高潮交锋后留有充足的功法盘点与战利品结算呼吸间歇。".to_string(),
+            "【爽点兑现律动】多巴胺高潮间歇稳定在 2500-3000 字区间，符合头部商业小说黄金留存标准。".to_string(),
+            "【优化建议】第3章后段可适当加入1处场外各方震惊侧写，放大爽点的情绪涟漪。".to_string(),
+        ];
+
+        Ok(ReaderPsychologyReport {
+            novel_id: resolved,
+            chapter_id: chapter_id.map(|s| s.to_string()),
+            anticipation_score,
+            fatigue_risk,
+            payoff_index,
+            dopamine_intervals,
+            diagnostic_advice,
+        })
+    }
+
+    pub fn list_information_asymmetry(&self, novel_id: &str) -> Result<Vec<InformationAsymmetryItem>, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(novel_id));
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, novel_id, secret_title, reader_knows, protagonist_knows, antagonist_knows, dramatic_irony_score FROM information_asymmetry_items WHERE novel_id = ? ORDER BY dramatic_irony_score DESC"
+        )?;
+
+        let rows = stmt.query_map(params![resolved], |row| {
+            let rk: i64 = row.get(3)?;
+            let pk: i64 = row.get(4)?;
+            let ak: i64 = row.get(5)?;
+            let score: f64 = row.get(6)?;
+
+            Ok(InformationAsymmetryItem {
+                id: row.get(0)?,
+                novel_id: row.get(1)?,
+                secret_title: row.get(2)?,
+                reader_knows: rk != 0,
+                protagonist_knows: pk != 0,
+                antagonist_knows: ak != 0,
+                dramatic_irony_score: score as f32,
+            })
+        })?;
+
+        let mut list = Vec::new();
+        for r in rows {
+            list.push(r?);
+        }
+        Ok(list)
+    }
+
+    pub fn save_information_asymmetry(&self, mut item: InformationAsymmetryItem) -> Result<InformationAsymmetryItem, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(&item.novel_id));
+        item.novel_id = resolved;
+        if item.id.is_empty() {
+            item.id = format!("asym-{}", Utc::now().timestamp_millis());
+        }
+        let now = Utc::now().to_rfc3339();
+
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT OR REPLACE INTO information_asymmetry_items (id, novel_id, secret_title, reader_knows, protagonist_knows, antagonist_knows, dramatic_irony_score, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            params![
+                item.id,
+                item.novel_id,
+                item.secret_title,
+                if item.reader_knows { 1 } else { 0 },
+                if item.protagonist_knows { 1 } else { 0 },
+                if item.antagonist_knows { 1 } else { 0 },
+                item.dramatic_irony_score as f64,
+                now,
+            ],
+        )?;
+
+        Ok(item)
+    }
+
+    pub fn list_offscreen_news_events(&self, novel_id: &str) -> Result<Vec<OffscreenNewsEvent>, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(novel_id));
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, novel_id, era, region, event_summary, faction_involved, tension_delta, timestamp FROM offscreen_news_events WHERE novel_id = ? ORDER BY timestamp DESC"
+        )?;
+
+        let rows = stmt.query_map(params![resolved], |row| {
+            let t_delta: f64 = row.get(6)?;
+
+            Ok(OffscreenNewsEvent {
+                id: row.get(0)?,
+                novel_id: row.get(1)?,
+                era: row.get(2)?,
+                region: row.get(3)?,
+                event_summary: row.get(4)?,
+                faction_involved: row.get(5)?,
+                tension_delta: t_delta as f32,
+                timestamp: row.get(7)?,
+            })
+        })?;
+
+        let mut list = Vec::new();
+        for r in rows {
+            list.push(r?);
+        }
+        Ok(list)
+    }
+
+    pub fn record_offscreen_news_event(&self, mut event: OffscreenNewsEvent) -> Result<OffscreenNewsEvent, rusqlite::Error> {
+        let resolved = self.resolve_novel_id(Some(&event.novel_id));
+        event.novel_id = resolved;
+        if event.id.is_empty() {
+            event.id = format!("news-{}", Utc::now().timestamp_millis());
+        }
+        if event.timestamp.is_empty() {
+            event.timestamp = Utc::now().to_rfc3339();
+        }
+
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT OR REPLACE INTO offscreen_news_events (id, novel_id, era, region, event_summary, faction_involved, tension_delta, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            params![
+                event.id,
+                event.novel_id,
+                event.era,
+                event.region,
+                event.event_summary,
+                event.faction_involved,
+                event.tension_delta as f64,
+                event.timestamp,
+            ],
+        )?;
+
+        Ok(event)
+    }
 }
+
 
