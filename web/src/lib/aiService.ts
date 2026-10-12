@@ -23,6 +23,11 @@ import {
   PolishResult,
 } from '../types/novel';
 import { normalizeEndpoint } from './aiPresets';
+import {
+  buildCompactGroundedContext,
+  compressChatHistoryForTokenSaving,
+  auditAndSanitizeHallucinations,
+} from './llmMemoryGuard';
 
 export interface AgentExecutionLog {
   step: string;
@@ -825,23 +830,35 @@ ${customDirection ? `【作者指定的推演偏向/脑洞要求】：${customDi
       onProgress?.(log);
     };
 
+    const memoryReport = buildCompactGroundedContext({
+      novel,
+      volumes: volume ? [volume] : [],
+      activeChapter: chapter,
+      activeScene: scene,
+      characters,
+      characterStates: states,
+      worldSettings: rules,
+      foreshadowings,
+      recentDraftText: previousSceneDraftSnippet || '',
+    });
+
     emit({
-      step: '注入结构化世界观与人物上下文',
-      detail: `已加载世界规则 ${rules.length} 条，在场角色状态 ${states.length} 条，激活伏笔 ${foreshadowings.length} 条`,
+      step: '🧠 四级记忆分层召回与 Token 精算压缩',
+      detail: `原始上下文 ${memoryReport.totalRawTokens} Tokens → 压缩后 ${memoryReport.totalCompressedTokens} Tokens（节省 ${memoryReport.compressionRatioPercent}%，KV前缀缓存命中率 ${memoryReport.prefixCacheHitRatePercent}%）`,
       status: 'done',
       timestamp: new Date().toLocaleTimeString(),
     });
-    await new Promise((r) => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 220));
 
     // 状态硬约束提取
     const povState = states.find((s) => s.characterId === scene.involvedCharacterIds?.[0]);
     emit({
-      step: '提取状态机硬约束与镜头工笔密度',
-      detail: `主视角状态：${povState ? `【${povState.combatPower}，健康: ${povState.healthStatus}，标签: ${povState.statusTags.join('/')}】` : '默认正常'} | 单幕工笔目标：不少于 ${targetWordCount} 字`,
+      step: '🛡️ 挂载防幻觉事实锚点与状态机红线',
+      detail: `已锁定 ${memoryReport.activeFactAnchors.length} 条硬性事实锚点 | 主视角：${povState ? `【${povState.combatPower}，健康: ${povState.healthStatus}】` : '默认正常'}`,
       status: 'done',
       timestamp: new Date().toLocaleTimeString(),
     });
-    await new Promise((r) => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 220));
 
     if (volume?.boundaryConstraints) {
       emit({
@@ -850,7 +867,7 @@ ${customDirection ? `【作者指定的推演偏向/脑洞要求】：${customDi
         status: 'done',
         timestamp: new Date().toLocaleTimeString(),
       });
-      await new Promise((r) => setTimeout(r, 300));
+      await new Promise((r) => setTimeout(r, 200));
     }
 
     emit({
@@ -859,7 +876,7 @@ ${customDirection ? `【作者指定的推演偏向/脑洞要求】：${customDi
       status: 'done',
       timestamp: new Date().toLocaleTimeString(),
     });
-    await new Promise((r) => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 200));
 
     emit({
       step: '模型起草工笔级正文生成中',
@@ -867,42 +884,31 @@ ${customDirection ? `【作者指定的推演偏向/脑洞要求】：${customDi
       status: 'running',
       timestamp: new Date().toLocaleTimeString(),
     });
-    await new Promise((r) => setTimeout(r, 600));
+    await new Promise((r) => setTimeout(r, 450));
 
-    // 如果启用了真实 API
+    // 如果启用了真实 API：使用 KV-Cache 友好的高压缩四级记忆 Prompt
     if (!this.settings.useMock && this.settings.apiKey) {
       try {
         const generated = await this.callRealLLM(
-          `你是一位硬核长篇网络小说白金作家。请根据以下结构化大纲与严苛的字数/描写要求，撰写【第 ${scene.sceneIndex} 幕】的工笔级小说正文：\n` +
-          `【题材】：${novel.genre}\n` +
-          `【文风基调】：${novel.styleGuide.tone}\n` +
-          (volume?.summary ? `【所属分卷故事概要】：${volume.summary}\n` : '') +
-          (volume?.boundaryConstraints ? `【分卷出场边界与防早现禁忌（严禁超前登场角色/宝物/越级战力）】：\n${volume.boundaryConstraints}\n` : '') +
-          `【章节标题】：第 ${chapter.chapterIndex} 章《${chapter.title}》\n` +
-          `【场景目标 (Goal)】：${scene.sceneGoal}\n` +
-          `【场景冲突 (Conflict)】：${scene.conflict}\n` +
-          `【转折高潮 (Turn Point)】：${scene.turnPoint}\n` +
-          `【场景结局 (Outcome)】：${scene.outcome}\n` +
-          (scene.location ? `【发生地点】：${scene.location}\n` : '') +
-          `【在场登场角色】：${characters.map((c) => `${c.name}(${c.roleType}): ${c.profile.personalityTraits.join(',')}`).join('; ')}\n` +
-          `【角色的即时物理状态】：${states.map((s) => `${s.combatPower}, 标签: ${s.statusTags.join(',')}`).join('; ')}\n` +
-          (previousSceneDraftSnippet ? `【上一幕结尾正文片段（请自然无缝承接）】：\n${previousSceneDraftSnippet.slice(-350)}\n` : '') +
-          `\n【字数与描写颗粒度核心控制标准】：\n` +
-          `1. 本幕目标字数：不少于 ${targetWordCount} 字（全章通过 3~4 幕因果递进，总计达到 3000~3500+ 字标准网文大章）；\n` +
-          `2. 严禁使用大纲式总结、缩写式概括语句（严禁出现“经过一番激战”、“二人交手了数十回合”这类省略语句）；\n` +
-          `3. 必须采用工笔级慢镜头细致拆解：\n` +
-          `   - 场景与五感氛围渲染（风声煞气、光影变幻、温度冷暖、空气中的血腥与焦糊感）；\n` +
-          `   - 招式动作慢放与法宝气劲对轰（起手式、气机牵引、招式拆解、兵刃交击的力道与反震、经脉撕扯剧痛）；\n` +
-          `   - 心理博弈与语言交锋（多轮言语刺探、虚实掩饰、内心杀机与利弊算计）；\n` +
-          `4. 严禁使用俗套违禁词（如：恐怖如斯、倒吸一口凉气），文风严格遵照：${novel.styleGuide.tone}。请直接输出正文小说段落：`
+          `${memoryReport.assembledCompactPrompt}\n\n` +
+          `【字数与描写颗粒度核心控制标准】：\n` +
+          `1. 本幕目标字数：不少于 ${targetWordCount} 字；\n` +
+          `2. 严禁使用大纲式总结或缩写概括语句，必须采用工笔级慢镜头拆解五感氛围、招式力道与心理博弈；\n` +
+          `3. 严禁违背上方【L4 铁律与防幻觉护栏】中的境界上限、生死状态与信息差保密锁，严禁使用违禁词（${novel.styleGuide.forbiddenPhrases.join('、')}）。请直接输出正文小说段落：`
         );
+        const audit = auditAndSanitizeHallucinations({
+          draftText: generated,
+          factAnchors: memoryReport.activeFactAnchors,
+          protagonistName: characters[0]?.name || '林越',
+          currentRealm: povState?.combatPower || '筑基初期',
+        });
         emit({
-          step: '正文起草完成',
-          detail: `成功从 API 获取工笔正文，共计 ${generated.length} 字（单幕达标）`,
+          step: '🛡️ 生成后防幻觉自检与正文定稿',
+          detail: `事实忠实度 ${audit.faithfulnessScore}%（拦截并自愈 ${audit.findings.length} 处潜在幻觉），共计 ${audit.sanitizedDraft.length} 字`,
           status: 'done',
           timestamp: new Date().toLocaleTimeString(),
         });
-        return { content: generated, logs };
+        return { content: audit.sanitizedDraft, logs };
       } catch (err: any) {
         emit({
           step: 'API 调用失败，回退至智能工笔模拟器',
@@ -1583,12 +1589,13 @@ ${draftText}
 3. 遵循因果严密、拒绝陈词滥调、杜绝AI腔与套话。`;
 
       try {
-        const lastUser = messages[messages.length - 1]?.content || '';
-        const history = messages
+        const { compressedMessages } = compressChatHistoryForTokenSaving(messages, 4);
+        const lastUser = compressedMessages[compressedMessages.length - 1]?.content || '';
+        const history = compressedMessages
           .slice(0, -1)
           .map((m) => `${m.role === 'user' ? '作者' : '参谋'}: ${m.content}`)
           .join('\n\n');
-        const prompt = `${history ? `【对话前情】：\n${history}\n\n` : ''}【当前编辑器已有字数】：${context.editorContent.length}字\n【作者提问或想法】：\n${lastUser}`;
+        const prompt = `${history ? `【对话前情（滚动摘要记忆）】：\n${history}\n\n` : ''}【当前编辑器已有字数】：${context.editorContent.length}字\n【作者提问或想法】：\n${lastUser}`;
         const reply = await this.callRealLLM(prompt, systemPrompt);
         if (reply && reply.trim()) return reply;
       } catch (err) {
@@ -1653,8 +1660,9 @@ ${draftText}
 3. 避免陈词滥调，注重反套路与严密的内在逻辑闭环。`;
 
       try {
-        const lastUser = messages[messages.length - 1]?.content || '';
-        const historyContext = messages
+        const { compressedMessages } = compressChatHistoryForTokenSaving(messages, 4);
+        const lastUser = compressedMessages[compressedMessages.length - 1]?.content || '';
+        const historyContext = compressedMessages
           .slice(0, -1)
           .map((m) => `${m.role === 'user' ? '作者' : '主编'}: ${m.content}`)
           .join('\n\n');

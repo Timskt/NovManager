@@ -40,7 +40,10 @@ import {
   Zap,
   Award,
   Search,
+  Feather,
+  Rocket,
 } from 'lucide-react';
+import { NavTab } from '../Header';
 
 const CATEGORY_META: Record<
   CreationSkillCategory,
@@ -88,7 +91,11 @@ const CATEGORY_META: Record<
   },
 };
 
-export const CentralSkillVaultView: React.FC = () => {
+interface CentralSkillVaultViewProps {
+  onNavigateTab?: (tab: NavTab) => void;
+}
+
+export const CentralSkillVaultView: React.FC<CentralSkillVaultViewProps> = ({ onNavigateTab }) => {
   const { novel, activeChapter, activeScene, editorContent } = useNovel();
 
   const [skills, setSkills] = useState<CreationSkillItem[]>([]);
@@ -309,12 +316,50 @@ export const CentralSkillVaultView: React.FC = () => {
             反套路变异引擎
           </button>
         </div>
+
+        {/* 跨页携带技能一键跳转按钮 */}
+        {onNavigateTab && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onNavigateTab('STUDIO')}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 flex items-center gap-1.5 transition-colors"
+            >
+              <Feather className="w-3.5 h-3.5" />
+              <span>携 {enabledCount} 项勾选技能去【创作台】→</span>
+            </button>
+            <button
+              onClick={() => onNavigateTab('AUTOPILOT')}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition-colors"
+            >
+              <Rocket className="w-3.5 h-3.5" />
+              <span>携勾选技能去【无人巡航】→</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {toastMessage && (
-        <div className="bg-indigo-500/15 border-b border-indigo-500/30 px-6 py-2.5 text-xs text-indigo-300 flex items-center gap-2 font-medium">
-          <Sparkles className="w-4 h-4 text-indigo-400" />
-          {toastMessage}
+        <div className="bg-indigo-500/15 border-b border-indigo-500/30 px-6 py-2.5 text-xs text-indigo-300 flex flex-wrap items-center justify-between gap-2 font-medium">
+          <span className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-indigo-400" />
+            {toastMessage}
+          </span>
+          {onNavigateTab && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onNavigateTab('STUDIO')}
+                className="px-2.5 py-1 rounded bg-indigo-500 text-white hover:bg-indigo-600 transition-colors"
+              >
+                去创作台实战 →
+              </button>
+              <button
+                onClick={() => onNavigateTab('AUTOPILOT')}
+                className="px-2.5 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-500 transition-colors"
+              >
+                去无人巡航自动码字 →
+              </button>
+            </div>
+          )}
         </div>
       )}
 

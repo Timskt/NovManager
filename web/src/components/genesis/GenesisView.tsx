@@ -35,9 +35,16 @@ import {
   Sliders,
   Workflow,
   Plus,
+  Feather,
+  Rocket,
 } from 'lucide-react';
+import { NavTab } from '../Header';
 
-export const GenesisView: React.FC = () => {
+interface GenesisViewProps {
+  onNavigateTab?: (tab: NavTab) => void;
+}
+
+export const GenesisView: React.FC<GenesisViewProps> = ({ onNavigateTab }) => {
   const { createNovelFromFramework } = useNovel();
 
   const [logline, setLogline] = useState<string>(
@@ -221,7 +228,7 @@ export const GenesisView: React.FC = () => {
         </div>
 
         {genesisData && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleDeployToStudio}
               className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-medium rounded-lg text-xs shadow-md flex items-center gap-1.5 transition-all"
@@ -238,6 +245,30 @@ export const GenesisView: React.FC = () => {
                 </>
               )}
             </button>
+            {onNavigateTab && (
+              <>
+                <button
+                  onClick={() => {
+                    handleDeployToStudio();
+                    onNavigateTab('STUDIO');
+                  }}
+                  className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg text-xs shadow-md flex items-center gap-1.5 transition-all"
+                >
+                  <Feather className="w-3.5 h-3.5" />
+                  <span>部署并打开【创作台】→</span>
+                </button>
+                <button
+                  onClick={() => {
+                    handleDeployToStudio();
+                    onNavigateTab('AUTOPILOT');
+                  }}
+                  className="px-3.5 py-2 bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 font-medium rounded-lg text-xs flex items-center gap-1.5 transition-all"
+                >
+                  <Rocket className="w-3.5 h-3.5" />
+                  <span>部署并启动【无人巡航】→</span>
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

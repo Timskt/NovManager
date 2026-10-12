@@ -45,7 +45,9 @@ import {
   EyeOff,
   Radio,
   SlidersHorizontal,
+  Feather,
 } from 'lucide-react';
+import { NavTab } from '../Header';
 
 const ROLE_META: Record<
   ModelCapabilityRole,
@@ -83,7 +85,11 @@ const ROLE_META: Record<
   },
 };
 
-export const ModelHubView: React.FC = () => {
+interface ModelHubViewProps {
+  onNavigateTab?: (tab: NavTab) => void;
+}
+
+export const ModelHubView: React.FC<ModelHubViewProps> = ({ onNavigateTab }) => {
   const [providers, setProviders] = useState<ModelProvider[]>([]);
   const [roles, setRoles] = useState<ModelRoleAssignment[]>([]);
   const [telemetry, setTelemetry] = useState<ModelTelemetry[]>([]);
@@ -239,6 +245,25 @@ export const ModelHubView: React.FC = () => {
             双模型比武场
           </button>
         </div>
+
+        {onNavigateTab && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onNavigateTab('MEMORY_GUARD')}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition-colors"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>四级记忆压缩与防幻觉护栏 →</span>
+            </button>
+            <button
+              onClick={() => onNavigateTab('STUDIO')}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 flex items-center gap-1.5 transition-colors"
+            >
+              <Feather className="w-3.5 h-3.5" />
+              <span>去创作台 →</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 主体视图区域 */}

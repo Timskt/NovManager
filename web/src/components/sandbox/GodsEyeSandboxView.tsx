@@ -34,9 +34,16 @@ import {
   RefreshCw,
   Sliders,
   Sparkles,
+  ShieldCheck,
+  Feather,
 } from 'lucide-react';
+import { NavTab } from '../Header';
 
-export const GodsEyeSandboxView: React.FC = () => {
+interface GodsEyeSandboxViewProps {
+  onNavigateTab?: (tab: NavTab) => void;
+}
+
+export const GodsEyeSandboxView: React.FC<GodsEyeSandboxViewProps> = ({ onNavigateTab }) => {
   const { novel, activeChapter } = useNovel();
 
   const [psychology, setPsychology] = useState<ReaderPsychologyReport | null>(null);
@@ -147,6 +154,25 @@ export const GodsEyeSandboxView: React.FC = () => {
             场外势力大势电报 ({offscreenNews.length})
           </button>
         </div>
+
+        {onNavigateTab && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onNavigateTab('MEMORY_GUARD')}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition-colors"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>认知壁垒防剧透锁 →</span>
+            </button>
+            <button
+              onClick={() => onNavigateTab('STUDIO')}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 flex items-center gap-1.5 transition-colors"
+            >
+              <Feather className="w-3.5 h-3.5" />
+              <span>去创作台 →</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 主工作区 */}

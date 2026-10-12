@@ -72,6 +72,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const quickActions = useMemo(() => {
     return [
       {
+        id: 'action-memory-guard',
+        title: '🛡️ 四级记忆压缩、节省 Token 与防幻觉熔断护栏 (Memory & Anti-Hallucination)',
+        category: '记忆与防幻觉',
+        icon: Sparkles,
+        action: () => {
+          onNavigateTab('MEMORY_GUARD');
+          onClose();
+        },
+      },
+      {
         id: 'action-autopilot',
         title: '🚀 全自动无人巡航码字舱：零输入码满整小时 / 参考数据投喂 (Autopilot)',
         category: '全托管码字',

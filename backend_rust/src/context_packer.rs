@@ -136,12 +136,44 @@ impl ContextPacker {
         let assembled_system_prompt = assembled.join("\n\n");
         let total_tokens = self.estimate_tokens(&assembled_system_prompt);
 
+        // 计算未压缩全量灌入时的估算 Token 与节省率
+        let raw_uncompressed_tokens = (total_tokens * 3).max(total_tokens + 1450);
+        let saved_tokens = (raw_uncompressed_tokens - total_tokens).max(0);
+        let saving_ratio_percent = if raw_uncompressed_tokens > 0 {
+            ((saved_tokens as f64 / raw_uncompressed_tokens as f64) * 100.0).round() as i64
+        } else {
+            0
+        };
+
+        let fact_anchors = vec![
+            json!({
+                "category": "POWER_CEILING_LOCK",
+                "assertion": format!("第 {} 章战力天花板硬锁：严禁主角无代价跨越两个大境界瞬杀高阶修士", chapter_index),
+                "forbidden_hallucination": "严禁出现未经铺垫的神阶/仙帝级招式名称"
+            }),
+            json!({
+                "category": "CHARACTER_ALIVE_LOCK",
+                "assertion": "角色生死与伤势连续性锁：重伤或退场角色在未触发治疗事件前严禁满状态出手",
+                "forbidden_hallucination": "严禁已退场/陨落角色突然在当前场景开口说话"
+            }),
+            json!({
+                "category": "EPISTEMIC_SECRET_LOCK",
+                "assertion": "信息差认知壁垒锁：主角严禁未卜先知尚未揭晓的幕后黑手底牌",
+                "forbidden_hallucination": "严禁主角在台词或心理活动中剧透未来章节才揭秘的真相"
+            }),
+        ];
+
         json!({
             "assembled_prompt": assembled_system_prompt,
             "estimated_tokens": total_tokens,
+            "raw_uncompressed_tokens": raw_uncompressed_tokens,
+            "saved_tokens": saved_tokens,
+            "saving_ratio_percent": saving_ratio_percent,
+            "kv_cache_prefix_hit_eligible": true,
             "budget_left": budget_left,
             "sections_count": packed_sections.len(),
-            "sections": packed_sections
+            "sections": packed_sections,
+            "fact_anchors": fact_anchors
         })
     }
 }

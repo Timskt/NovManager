@@ -753,4 +753,75 @@ export interface TropeSubversionVariant {
   dramaticPayoff: string;     // 带来的新鲜爽感与戏剧张力
 }
 
+// ==============================================================================
+// 9. 大模型四级记忆、Token 精算压缩与防幻觉护栏 (LLM Memory, Token & Anti-Hallucination)
+// ==============================================================================
+
+export type MemoryTierLevel =
+  | 'L1_WORKING_MEMORY'    // 瞬时工作记忆：当前分镜节拍、上一幕末尾300字精准接龙锚点
+  | 'L2_EPISODIC_SUMMARY'  // 滚动章节摘要：前序章节浓缩为 80 字/章的因果骨架，替代全文灌入
+  | 'L3_SEMANTIC_RECALL'   // 语义按需召回：仅召回当前场景实际出场/提及的角色、道具与伏笔
+  | 'L4_CANONICAL_REDLINE';// 不可变铁律红线：境界天花板、生死簿、信息差保密锁与禁止幻觉清单
+
+export interface MemoryFactAnchor {
+  id: string;
+  tier: MemoryTierLevel;
+  category: 'CHARACTER_ALIVE_LOCK' | 'POWER_CEILING_LOCK' | 'INVENTORY_LOCK' | 'EPISTEMIC_SECRET_LOCK' | 'TIMELINE_SPATIAL_LOCK';
+  entityName: string;
+  hardConstraint: string;      // 硬性事实约束（如：林越当前为筑基初期，严禁出现金丹瞬移）
+  violationPattern: string[];  // 幻觉违规触发词（如：['金丹神识', '御剑万里', '元婴出窍']）
+  isActive: boolean;
+}
+
+export interface TokenCompressionSlice {
+  tier: MemoryTierLevel;
+  label: string;
+  rawTokens: number;
+  compressedTokens: number;
+  prunedEntitiesCount: number;
+  compressedPreview: string;
+}
+
+export interface TokenCompressionReport {
+  novelId: string;
+  chapterId?: string;
+  totalRawTokens: number;
+  totalCompressedTokens: number;
+  savedTokens: number;
+  compressionRatioPercent: number;  // 节省比例，例如 68%
+  prefixCacheHitRatePercent: number;// KV Prefix Cache 命中率，例如 84%
+  estimatedCostSavedUsd: number;
+  slices: TokenCompressionSlice[];
+  assembledCompactPrompt: string;
+  activeFactAnchors: MemoryFactAnchor[];
+}
+
+export type HallucinationSeverity = 'CRITICAL' | 'WARNING' | 'INFO';
+
+export interface HallucinationFinding {
+  id: string;
+  severity: HallucinationSeverity;
+  hallucinationType:
+    | 'DEAD_CHARACTER_RESURRECTION' // 已故/退场角色诈尸出场
+    | 'REALM_POWER_INFLATION'       // 战力跨阶/未解锁技能幻觉
+    | 'UNOWNED_ITEM_USAGE'          // 凭空捏造或已消耗道具复现
+    | 'EPISTEMIC_SPOILER_LEAK'      // 视角越界：主角提前知道了只有读者知道的秘密
+    | 'SPATIAL_TELEPORT_GLITCH'     // 空间瞬移：地理距离与时间不匹配
+    | 'WORLD_LORE_CONTRADICTION';   // 违背世界观底层法则
+  offendingSnippet: string;
+  factViolated: string;
+  autoFixReplacement: string;
+}
+
+export interface HallucinationAuditReport {
+  draftLength: number;
+  faithfulnessScore: number;        // 事实忠实度 (0 - 100)
+  hallucinationRiskPercent: number; // 幻觉风险率 (0 - 100)
+  findings: HallucinationFinding[];
+  sanitizedDraft: string;
+  checkedAnchorsCount: number;
+  timestamp: string;
+}
+
+
 

@@ -13,8 +13,12 @@ import {
   Cpu,
   BookOpen,
   PlusCircle,
+  ExternalLink,
+  ShieldCheck,
+  Feather,
 } from 'lucide-react';
 import { useNovel } from '../../context/NovelContext';
+import { NavTab } from '../Header';
 import {
   EpiphanySpark,
   CreationSkillItem,
@@ -65,7 +69,11 @@ const PACING_OPTIONS: {
   },
 ];
 
-export const AutopilotCockpitView: React.FC = () => {
+interface AutopilotCockpitViewProps {
+  onNavigateTab?: (tab: NavTab) => void;
+}
+
+export const AutopilotCockpitView: React.FC<AutopilotCockpitViewProps> = ({ onNavigateTab }) => {
   const {
     novel,
     volumes,
@@ -780,19 +788,43 @@ export const AutopilotCockpitView: React.FC = () => {
               padding: '16px',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '6px' }}>
               <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Layers size={15} color="var(--accent-primary)" />
                 2. 技能中心库勾选 ({checkedSkills.length} 项已勾选)
               </span>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={autoSelectSkills}
-                  onChange={(e) => setAutoSelectSkills(e.target.checked)}
-                />
-                AI 自动按场景补齐勾选
-              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={autoSelectSkills}
+                    onChange={(e) => setAutoSelectSkills(e.target.checked)}
+                  />
+                  AI 自动补齐
+                </label>
+                {onNavigateTab && (
+                  <button
+                    onClick={() => onNavigateTab('SKILL_VAULT')}
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: 'var(--accent-primary)',
+                      background: 'var(--accent-surface)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '6px',
+                      padding: '2px 7px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '3px',
+                    }}
+                    title="跳转到跨作品技能与套路中心库管理所有 Skill"
+                  >
+                    <span>管理中心库</span>
+                    <ExternalLink size={11} />
+                  </button>
+                )}
+              </div>
             </div>
 
             <div
@@ -863,24 +895,48 @@ export const AutopilotCockpitView: React.FC = () => {
 
             {/* Active Sparks Queue */}
             <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border-subtle)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '6px' }}>
                 <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <Sparkles size={13} color="#d97706" />
-                  待自动织入的灵光一现 / 读者热议 ({activeSparks.length} 条)
+                  待自动织入的灵光一现 ({activeSparks.length} 条)
                 </span>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={autoWeaveSparks}
-                    onChange={(e) => setAutoWeaveSparks(e.target.checked)}
-                  />
-                  巡航时自动穿插
-                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={autoWeaveSparks}
+                      onChange={(e) => setAutoWeaveSparks(e.target.checked)}
+                    />
+                    自动穿插
+                  </label>
+                  {onNavigateTab && (
+                    <button
+                      onClick={() => onNavigateTab('SPARK_HUB')}
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        color: '#d97706',
+                        background: 'rgba(217, 119, 6, 0.1)',
+                        border: '1px solid rgba(217, 119, 6, 0.3)',
+                        borderRadius: '6px',
+                        padding: '2px 7px',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                      }}
+                    >
+                      <span>去灵感中枢</span>
+                      <ExternalLink size={11} />
+                    </button>
+                  )}
+                </div>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                 {activeSparks.slice(0, 4).map((sp) => (
-                  <span
+                  <button
                     key={sp.id}
+                    onClick={() => onNavigateTab?.('SPARK_HUB')}
                     style={{
                       fontSize: '11px',
                       padding: '3px 8px',
@@ -888,10 +944,12 @@ export const AutopilotCockpitView: React.FC = () => {
                       background: 'rgba(217, 119, 6, 0.1)',
                       color: '#d97706',
                       border: '1px solid rgba(217, 119, 6, 0.25)',
+                      cursor: 'pointer',
                     }}
+                    title="点击跳转到灵光一现与读者热议中枢查看详情"
                   >
                     ⚡ {sp.title}
-                  </span>
+                  </button>
                 ))}
               </div>
             </div>
@@ -906,9 +964,32 @@ export const AutopilotCockpitView: React.FC = () => {
               padding: '16px',
             }}
           >
-            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Cpu size={15} color="var(--accent-primary)" />
-              3. 六阶自治码字流水线实时遥测
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '6px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Cpu size={15} color="var(--accent-primary)" />
+                3. 六阶自治码字流水线实时遥测
+              </span>
+              {onNavigateTab && (
+                <button
+                  onClick={() => onNavigateTab('MEMORY_GUARD')}
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: '#059669',
+                    background: 'rgba(5, 150, 105, 0.1)',
+                    border: '1px solid rgba(5, 150, 105, 0.3)',
+                    borderRadius: '6px',
+                    padding: '2px 7px',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                  }}
+                >
+                  <ShieldCheck size={12} />
+                  <span>记忆与防幻觉护栏</span>
+                </button>
+              )}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {stageLogs.map((st) => (
@@ -1102,8 +1183,9 @@ export const AutopilotCockpitView: React.FC = () => {
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
                         {activeSegment.appliedSkills.map((skName, i) => (
-                          <span
+                          <button
                             key={i}
+                            onClick={() => onNavigateTab?.('SKILL_VAULT')}
                             style={{
                               fontSize: '11px',
                               padding: '2px 8px',
@@ -1111,14 +1193,18 @@ export const AutopilotCockpitView: React.FC = () => {
                               background: 'var(--accent-surface)',
                               color: 'var(--accent-primary)',
                               fontWeight: 600,
+                              border: 'none',
+                              cursor: 'pointer',
                             }}
+                            title="点击跳转到技能中心库查看该技能详情"
                           >
-                            🧩 挂载技能：{skName}
-                          </span>
+                            🧩 挂载技能：{skName} ↗
+                          </button>
                         ))}
                         {activeSegment.incorporatedSparks.map((spName, i) => (
-                          <span
+                          <button
                             key={i}
+                            onClick={() => onNavigateTab?.('SPARK_HUB')}
                             style={{
                               fontSize: '11px',
                               padding: '2px 8px',
@@ -1126,33 +1212,62 @@ export const AutopilotCockpitView: React.FC = () => {
                               background: 'rgba(217, 119, 6, 0.12)',
                               color: '#d97706',
                               fontWeight: 600,
+                              border: 'none',
+                              cursor: 'pointer',
                             }}
+                            title="点击跳转到灵光一现中枢查看该灵感详情"
                           >
-                            ⚡ 织入灵感：{spName}
-                          </span>
+                            ⚡ 织入灵感：{spName} ↗
+                          </button>
                         ))}
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handleCommitToNovel(activeSegment)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '9px 16px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        background: '#059669',
-                        color: '#fff',
-                        fontSize: '12.5px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <CheckCircle2 size={15} />
-                      一键写入小说正式章节树
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        onClick={() => handleCommitToNovel(activeSegment)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '9px 14px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: '#059669',
+                          color: '#fff',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <CheckCircle2 size={15} />
+                        一键写入小说正式章节树
+                      </button>
+                      {onNavigateTab && (
+                        <button
+                          onClick={() => {
+                            handleCommitToNovel(activeSegment);
+                            onNavigateTab('STUDIO');
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '9px 14px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            background: 'var(--accent-primary)',
+                            color: '#fff',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <Feather size={14} />
+                          写入并打开【创作台】精修 →
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Full Manuscript Content Viewer / Editor */}

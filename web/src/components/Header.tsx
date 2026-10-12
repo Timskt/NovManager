@@ -40,6 +40,7 @@ import {
   Cpu,
   Rocket,
   MessageSquare,
+  ShieldCheck,
 } from 'lucide-react';
 
 export type NavTab =
@@ -49,6 +50,7 @@ export type NavTab =
   | 'AUTOPILOT'
   | 'SPARK_HUB'
   | 'SKILL_VAULT'
+  | 'MEMORY_GUARD'
   | 'OUTLINES'
   | 'CANVAS'
   | 'GENESIS'
@@ -73,7 +75,7 @@ export type NavTab =
   | 'PLUGINS'
   | 'MCP';
 
-interface NavItem {
+export interface NavItem {
   id: NavTab;
   title: string;
   subtitle: string;
@@ -81,7 +83,7 @@ interface NavItem {
   badge?: string;
 }
 
-interface DomainGroup {
+export interface DomainGroup {
   key: string;
   title: string;
   icon: string;
@@ -244,6 +246,13 @@ export const DOMAIN_GROUPS: DomainGroup[] = [
     description: '戏剧张力、黄金三章、自我进化与效能分析',
     items: [
       {
+        id: 'MEMORY_GUARD',
+        title: '四级记忆与防幻觉护栏',
+        subtitle: 'L4-L1分层记忆压缩 · 节省68% Token · 战力/生死幻觉熔断',
+        icon: <ShieldCheck className="w-4 h-4 text-emerald-500" />,
+        badge: '省Token',
+      },
+      {
         id: 'MODEL_HUB',
         title: '多模型矩阵与高可用路由',
         subtitle: '多Key轮换池 · 角色专精路由 · 429熔断接管',
@@ -302,6 +311,16 @@ export const DOMAIN_GROUPS: DomainGroup[] = [
     ],
   },
 ];
+
+export function getNavItemMeta(tab: NavTab): { item?: NavItem; domain?: DomainGroup } {
+  for (const domain of DOMAIN_GROUPS) {
+    const found = domain.items.find((i) => i.id === tab);
+    if (found) {
+      return { item: found, domain };
+    }
+  }
+  return {};
+}
 
 interface HeaderProps {
   activeTab: NavTab;

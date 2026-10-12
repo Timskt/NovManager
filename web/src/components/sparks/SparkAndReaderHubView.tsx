@@ -39,7 +39,10 @@ import {
   Feather,
   Filter,
   GitMerge,
+  Rocket,
+  Radar,
 } from 'lucide-react';
+import { NavTab } from '../Header';
 
 const SPARK_TYPE_META: Record<
   EpiphanySparkType,
@@ -77,8 +80,12 @@ const SPARK_TYPE_META: Record<
   },
 };
 
-export const SparkAndReaderHubView: React.FC = () => {
-  const { novel, volumes, editorContent, setEditorContent, addForeshadowing } = useNovel();
+interface SparkAndReaderHubViewProps {
+  onNavigateTab?: (tab: NavTab) => void;
+}
+
+export const SparkAndReaderHubView: React.FC<SparkAndReaderHubViewProps> = ({ onNavigateTab }) => {
+  const { novel, volumes, editorContent, setEditorContent, addForeshadowing, setActiveChapterId } = useNovel();
 
   const [sparks, setSparks] = useState<EpiphanySpark[]>([]);
   const [discussions, setDiscussions] = useState<ReaderDiscussionComment[]>([]);
@@ -330,15 +337,60 @@ export const SparkAndReaderHubView: React.FC = () => {
             双灵感对撞反应堆
           </button>
         </div>
+
+        {/* 跨视图快捷跳转按钮组 */}
+        {onNavigateTab && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onNavigateTab('STUDIO')}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1.5 transition-colors"
+            >
+              <Feather className="w-3.5 h-3.5" />
+              <span>去创作台</span>
+            </button>
+            <button
+              onClick={() => onNavigateTab('AUTOPILOT')}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition-colors"
+            >
+              <Rocket className="w-3.5 h-3.5" />
+              <span>去无人巡航自动穿插</span>
+            </button>
+            <button
+              onClick={() => onNavigateTab('FORESHADOWING')}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center gap-1.5 transition-colors"
+            >
+              <Radar className="w-3.5 h-3.5" />
+              <span>伏笔雷达</span>
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* 顶部动态通知横幅 */}
+      {/* 顶部动态通知横幅（含一键跨页跳转） */}
       {wovenNotice && (
-        <div className="bg-emerald-500/15 border-b border-emerald-500/30 px-6 py-2.5 text-xs text-emerald-300 flex items-center justify-between">
+        <div className="bg-emerald-500/15 border-b border-emerald-500/30 px-6 py-2.5 text-xs text-emerald-300 flex flex-wrap items-center justify-between gap-3">
           <span className="flex items-center gap-2 font-medium">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             {wovenNotice}
           </span>
+          {onNavigateTab && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onNavigateTab('STUDIO')}
+                className="px-2.5 py-1 rounded bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition-colors flex items-center gap-1"
+              >
+                <Feather className="w-3 h-3" />
+                <span>立即去【创作台】查看织入段落 →</span>
+              </button>
+              <button
+                onClick={() => onNavigateTab('FORESHADOWING')}
+                className="px-2.5 py-1 rounded bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 font-semibold hover:bg-emerald-500/30 transition-colors flex items-center gap-1"
+              >
+                <Radar className="w-3 h-3" />
+                <span>去【伏笔雷达】查看 →</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -491,10 +543,22 @@ export const SparkAndReaderHubView: React.FC = () => {
                                 {meta.label}
                               </span>
                               {sp.targetChapterIndex && (
-                                <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 font-mono flex items-center gap-1">
+                                <button
+                                  onClick={() => {
+                                    const targetChap = allChapters.find(
+                                      (c) => c.chapterIndex === sp.targetChapterIndex
+                                    );
+                                    if (targetChap) {
+                                      setActiveChapterId(targetChap.id);
+                                    }
+                                    onNavigateTab?.('STUDIO');
+                                  }}
+                                  className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 font-mono flex items-center gap-1 cursor-pointer transition-colors"
+                                  title="点击直接定位到该章节并打开创作台"
+                                >
                                   <Anchor className="w-3 h-3" />
-                                  锚定第 {sp.targetChapterIndex} 章
-                                </span>
+                                  锚定第 {sp.targetChapterIndex} 章 ↗
+                                </button>
                               )}
                               {sp.status === 'WOVEN' && (
                                 <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
@@ -550,13 +614,26 @@ export const SparkAndReaderHubView: React.FC = () => {
                             ))}
                           </div>
 
-                          <button
-                            onClick={() => handleWeaveIntoManuscript(sp)}
-                            className="px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 text-xs font-medium flex items-center gap-1.5 transition-colors"
-                          >
-                            <Feather className="w-3.5 h-3.5" />
-                            一键织入当前正文 & 埋设伏笔
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleWeaveIntoManuscript(sp)}
+                              className="px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 text-xs font-medium flex items-center gap-1.5 transition-colors"
+                            >
+                              <Feather className="w-3.5 h-3.5" />
+                              一键织入当前正文 & 埋设伏笔
+                            </button>
+                            {onNavigateTab && (
+                              <button
+                                onClick={() => {
+                                  handleWeaveIntoManuscript(sp);
+                                  onNavigateTab('STUDIO');
+                                }}
+                                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium flex items-center gap-1 transition-colors"
+                              >
+                                <span>织入并去创作台 →</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );

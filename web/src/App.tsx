@@ -1,12 +1,14 @@
 // ==============================================================================
 // NovManager 前端主应用入口 (App Master Component)
-// 彻底去除 AI 模版气味，搭载人文文学主题引擎、全局穿梭 Omnibar 与 20+ 重磅创作功能
+// 搭载人文文学主题引擎、URL Hash 深度路由、多标签工作区导航栏、
+// 四级记忆与防幻觉中枢、全局穿梭 Omnibar 与全链路跨视图跳转体系
 // ==============================================================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { NovelProvider, useNovel } from './context/NovelContext';
-import { ThemeProvider, useTheme } from './context/ThemeContext';
-import { Header, NavTab } from './components/Header';
+import { ThemeProvider } from './context/ThemeContext';
+import { Header, NavTab, DOMAIN_GROUPS, getNavItemMeta } from './components/Header';
+import { WorkspaceTabBar } from './components/common/WorkspaceTabBar';
 import { LibraryView } from './components/library/LibraryView';
 import { ArchitectView } from './components/architect/ArchitectView';
 import { StudioView } from './components/studio/StudioView';
@@ -42,6 +44,32 @@ import { AutopilotCockpitView } from './components/autopilot/AutopilotCockpitVie
 import { SparkAndReaderHubView } from './components/sparks/SparkAndReaderHubView';
 import { CentralSkillVaultView } from './components/skills/CentralSkillVaultView';
 import { FloatingSparkCapsule } from './components/sparks/FloatingSparkCapsule';
+import { MemoryTokenAntiHallucinationView } from './components/memory/MemoryTokenAntiHallucinationView';
+
+const ALL_VALID_TABS: Set<string> = new Set(
+  DOMAIN_GROUPS.flatMap((g) => g.items.map((i) => i.id)).concat(['OUTLINES'])
+);
+
+function parseTabFromHash(): NavTab {
+  if (typeof window === 'undefined') return 'STUDIO';
+  const raw = window.location.hash.replace(/^#\/?/, '').trim().toUpperCase().replace(/-/g, '_');
+  if (raw && ALL_VALID_TABS.has(raw)) {
+    return raw as NavTab;
+  }
+  return 'STUDIO';
+}
+
+function formatTabToHash(tab: NavTab): string {
+  return `#${tab.toLowerCase().replace(/_/g, '-')}`;
+}
+
+const DEFAULT_PINNED_TABS: NavTab[] = [
+  'STUDIO',
+  'AUTOPILOT',
+  'SPARK_HUB',
+  'SKILL_VAULT',
+  'MEMORY_GUARD',
+];
 
 const AppContent: React.FC = () => {
   const {
@@ -49,24 +77,143 @@ const AppContent: React.FC = () => {
     openSettingsModal,
     closeSettingsModal,
   } = useNovel();
-  const [activeTab, setActiveTab] = useState<NavTab>('STUDIO');
+
+  const initialTab = parseTabFromHash();
+  const [activeTab, setActiveTabState] = useState<NavTab>(initialTab);
+  const [historyStack, setHistoryStack] = useState<NavTab[]>([initialTab]);
+  const [historyIndex, setHistoryIndex] = useState<number>(0);
+
+  const [pinnedTabs, setPinnedTabs] = useState<NavTab[]>(DEFAULT_PINNED_TABS);
+  const [openTabs, setOpenTabs] = useState<NavTab[]>(() => {
+    const base = [...DEFAULT_PINNED_TABS];
+    if (!base.includes(initialTab)) base.push(initialTab);
+    return base;
+  });
+
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isZenOpen, setIsZenOpen] = useState(false);
   const [isExportStudioOpen, setIsExportStudioOpen] = useState(false);
   const [isGodsEyeOpen, setIsGodsEyeOpen] = useState(false);
   const [isInSceneOpen, setIsInSceneOpen] = useState(false);
 
-  // 全局 Cmd+K / Ctrl+K 监听
+  // Unified navigation handler with history stack + open tab dock + URL hash sync
+  const navigateToTab = useCallback(
+    (nextTab: NavTab, options?: { skipHistoryPush?: boolean }) => {
+      setActiveTabState(nextTab);
+      setOpenTabs((prev) => (prev.includes(nextTab) ? prev : [...prev, nextTab]));
+
+      if (!options?.skipHistoryPush) {
+        setHistoryStack((prev) => {
+          const sliced = prev.slice(0, historyIndex + 1);
+          if (sliced[sliced.length - 1] === nextTab) return sliced;
+          const nextStack = [...sliced, nextTab];
+          setHistoryIndex(nextStack.length - 1);
+          return nextStack;
+        });
+
+        const nextHash = formatTabToHash(nextTab);
+        if (typeof window !== 'undefined' && window.location.hash !== nextHash) {
+          window.history.pushState({ tab: nextTab }, '', nextHash);
+        }
+      }
+    },
+    [historyIndex]
+  );
+
+  const canGoBack = historyIndex > 0;
+  const canGoForward = historyIndex < historyStack.length - 1;
+
+  const handleGoBack = useCallback(() => {
+    if (historyIndex <= 0) return;
+    const prevIdx = historyIndex - 1;
+    const targetTab = historyStack[prevIdx];
+    setHistoryIndex(prevIdx);
+    setActiveTabState(targetTab);
+    setOpenTabs((prev) => (prev.includes(targetTab) ? prev : [...prev, targetTab]));
+    const nextHash = formatTabToHash(targetTab);
+    if (typeof window !== 'undefined' && window.location.hash !== nextHash) {
+      window.history.replaceState({ tab: targetTab }, '', nextHash);
+    }
+  }, [historyIndex, historyStack]);
+
+  const handleGoForward = useCallback(() => {
+    if (historyIndex >= historyStack.length - 1) return;
+    const nextIdx = historyIndex + 1;
+    const targetTab = historyStack[nextIdx];
+    setHistoryIndex(nextIdx);
+    setActiveTabState(targetTab);
+    setOpenTabs((prev) => (prev.includes(targetTab) ? prev : [...prev, targetTab]));
+    const nextHash = formatTabToHash(targetTab);
+    if (typeof window !== 'undefined' && window.location.hash !== nextHash) {
+      window.history.replaceState({ tab: targetTab }, '', nextHash);
+    }
+  }, [historyIndex, historyStack]);
+
+  const handleCloseTab = useCallback(
+    (tabToClose: NavTab, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (pinnedTabs.includes(tabToClose)) return;
+      setOpenTabs((prev) => {
+        if (prev.length <= 1) return prev;
+        const idx = prev.indexOf(tabToClose);
+        const nextList = prev.filter((t) => t !== tabToClose);
+        if (tabToClose === activeTab) {
+          const fallbackTab = nextList[Math.max(0, idx - 1)] || 'STUDIO';
+          navigateToTab(fallbackTab);
+        }
+        return nextList;
+      });
+    },
+    [pinnedTabs, activeTab, navigateToTab]
+  );
+
+  const handleTogglePinTab = useCallback((tabToPin: NavTab, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPinnedTabs((prev) =>
+      prev.includes(tabToPin) ? prev.filter((t) => t !== tabToPin) : [...prev, tabToPin]
+    );
+  }, []);
+
+  // Listen to browser Back/Forward / hashchange
+  useEffect(() => {
+    const handleHashChange = () => {
+      const parsed = parseTabFromHash();
+      if (parsed !== activeTab) {
+        navigateToTab(parsed, { skipHistoryPush: true });
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleHashChange);
+    };
+  }, [activeTab, navigateToTab]);
+
+  // Global keyboard shortcuts: Cmd+K (Command Palette), Alt+Left (Back), Alt+Right (Forward)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
+      } else if (e.altKey && e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handleGoBack();
+      } else if (e.altKey && e.key === 'ArrowRight') {
+        e.preventDefault();
+        handleGoForward();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [handleGoBack, handleGoForward]);
+
+  const previousTabTitle = canGoBack
+    ? getNavItemMeta(historyStack[historyIndex - 1]).item?.title
+    : undefined;
+  const nextTabTitle = canGoForward
+    ? getNavItemMeta(historyStack[historyIndex + 1]).item?.title
+    : undefined;
 
   return (
     <div
@@ -78,7 +225,7 @@ const AppContent: React.FC = () => {
     >
       <Header
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={navigateToTab}
         onOpenSettings={openSettingsModal}
         onOpenZen={() => setIsZenOpen(true)}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
@@ -87,30 +234,51 @@ const AppContent: React.FC = () => {
         onOpenInScene={() => setIsInSceneOpen(true)}
       />
 
+      {/* 多标签工作区导航栏 + 历史后退/前进 + 跨视图章节切换面包屑 + 实时记忆防幻觉胶囊 */}
+      <WorkspaceTabBar
+        activeTab={activeTab}
+        openTabs={openTabs}
+        pinnedTabs={pinnedTabs}
+        canGoBack={canGoBack}
+        canGoForward={canGoForward}
+        previousTabTitle={previousTabTitle}
+        nextTabTitle={nextTabTitle}
+        onSelectTab={navigateToTab}
+        onCloseTab={handleCloseTab}
+        onTogglePinTab={handleTogglePinTab}
+        onGoBack={handleGoBack}
+        onGoForward={handleGoForward}
+      />
+
       <div className="flex-1 flex overflow-hidden pb-16 md:pb-0">
-        {activeTab === 'LIBRARY' && <LibraryView onNavigateTab={setActiveTab} />}
-        {activeTab === 'ARCHITECT' && <ArchitectView onNavigateTab={setActiveTab} />}
-        {activeTab === 'STUDIO' && <StudioView onNavigateTab={setActiveTab} />}
-        {activeTab === 'AUTOPILOT' && <AutopilotCockpitView />}
-        {activeTab === 'SPARK_HUB' && <SparkAndReaderHubView />}
-        {activeTab === 'SKILL_VAULT' && <CentralSkillVaultView />}
-        {activeTab === 'OUTLINES' && <StudioView onNavigateTab={setActiveTab} />}
-        {activeTab === 'CANVAS' && (
-          <StudioView onNavigateTab={setActiveTab} defaultStudioTab="canvas" />
+        {activeTab === 'LIBRARY' && <LibraryView onNavigateTab={navigateToTab} />}
+        {activeTab === 'ARCHITECT' && <ArchitectView onNavigateTab={navigateToTab} />}
+        {activeTab === 'STUDIO' && <StudioView onNavigateTab={navigateToTab} />}
+        {activeTab === 'AUTOPILOT' && <AutopilotCockpitView onNavigateTab={navigateToTab} />}
+        {activeTab === 'SPARK_HUB' && <SparkAndReaderHubView onNavigateTab={navigateToTab} />}
+        {activeTab === 'SKILL_VAULT' && <CentralSkillVaultView onNavigateTab={navigateToTab} />}
+        {activeTab === 'MEMORY_GUARD' && (
+          <MemoryTokenAntiHallucinationView onNavigateTab={navigateToTab} />
         )}
-        {activeTab === 'GENESIS' && <GenesisView />}
-        {activeTab === 'STYLE_DNA' && <StyleDnaStudioView />}
-        {activeTab === 'MODEL_HUB' && <ModelHubView />}
-        {activeTab === 'GODS_EYE_SANDBOX' && <GodsEyeSandboxView />}
+        {activeTab === 'OUTLINES' && <StudioView onNavigateTab={navigateToTab} />}
+        {activeTab === 'CANVAS' && (
+          <StudioView onNavigateTab={navigateToTab} defaultStudioTab="canvas" />
+        )}
+        {activeTab === 'GENESIS' && <GenesisView onNavigateTab={navigateToTab} />}
+        {activeTab === 'STYLE_DNA' && <StyleDnaStudioView onNavigateTab={navigateToTab} />}
+        {activeTab === 'MODEL_HUB' && <ModelHubView onNavigateTab={navigateToTab} />}
+        {activeTab === 'GODS_EYE_SANDBOX' && (
+          <GodsEyeSandboxView onNavigateTab={navigateToTab} />
+        )}
         {activeTab === 'VIDEO_STUDIO' && <VideoStoryboardStudio />}
         {activeTab === 'WORKFLOW' && <WorkflowOrchestratorView />}
-        {activeTab === 'PROGRESS_PULSE' && <ProgressPulseView onNavigateTab={setActiveTab} />}
+        {activeTab === 'PROGRESS_PULSE' && <ProgressPulseView onNavigateTab={navigateToTab} />}
         {activeTab === 'DUNGEONS' && <DungeonArcTrajectoryView />}
         {activeTab === 'CHARACTERS' && <CharacterView />}
         {activeTab === 'RELATIONS' && <CharacterRelationGraph />}
-        {activeTab === 'TIMELINE' && <TimelineMatrixView onNavigateTab={setActiveTab} />}
-        {activeTab === 'TENSION' && <TensionCurveView onNavigateTab={setActiveTab} />}
-        {activeTab === 'FORESHADOWING' && <ForeshadowingRadar onNavigateTab={setActiveTab} />}
+        {activeTab === 'TIMELINE' && <TimelineMatrixView onNavigateTab={navigateToTab} />}
+        {activeTab === 'TENSION' && <TensionCurveView onNavigateTab={navigateToTab} />}
+        {activeTab === 'FORESHADOWING' && <ForeshadowingRadar onNavigateTab={navigateToTab} />}
         {activeTab === 'MAP' && <WorldMapView />}
         {activeTab === 'SANDBOX' && <WhatIfSandboxView />}
         {activeTab === 'EVOLUTION' && <SelfIterationView />}
@@ -122,10 +290,10 @@ const AppContent: React.FC = () => {
       </div>
 
       {/* 全局悬浮灵光一现速记胶囊与技能库/无人巡航快捷入口 */}
-      <FloatingSparkCapsule onNavigateTab={setActiveTab} />
+      <FloatingSparkCapsule onNavigateTab={navigateToTab} />
 
       {/* 移动端底部原生触控导航 */}
-      <MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+      <MobileBottomNav activeTab={activeTab} setActiveTab={navigateToTab} />
 
       {/* 模型配置弹窗 */}
       <SettingsModal
@@ -137,12 +305,12 @@ const AppContent: React.FC = () => {
       <CommandPalette
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
-        onNavigateTab={setActiveTab}
+        onNavigateTab={navigateToTab}
         onOpenZen={() => setIsZenOpen(true)}
         onOpenExport={() => setIsExportStudioOpen(true)}
-        onOpenGraph={() => setActiveTab('RELATIONS')}
-        onOpenTension={() => setActiveTab('TENSION')}
-        onOpenSelfIteration={() => setActiveTab('EVOLUTION')}
+        onOpenGraph={() => navigateToTab('RELATIONS')}
+        onOpenTension={() => navigateToTab('TENSION')}
+        onOpenSelfIteration={() => navigateToTab('EVOLUTION')}
         onOpenGodsEye={() => setIsGodsEyeOpen(true)}
         onOpenInScene={() => setIsInSceneOpen(true)}
       />

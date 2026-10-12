@@ -30,8 +30,13 @@ import {
   FileText,
   SlidersHorizontal,
 } from 'lucide-react';
+import { NavTab } from '../Header';
 
-export const StyleDnaStudioView: React.FC = () => {
+interface StyleDnaStudioViewProps {
+  onNavigateTab?: (tab: NavTab) => void;
+}
+
+export const StyleDnaStudioView: React.FC<StyleDnaStudioViewProps> = ({ onNavigateTab }) => {
   const [profiles, setProfiles] = useState<StyleDnaProfile[]>([]);
   const [selectedProfileId, setSelectedProfileId] = useState<string>('dna-wujie');
   const [activeTab, setActiveTab] = useState<'LIBRARY' | 'EXTRACTOR' | 'BLENDER' | 'BLACKLIST'>('LIBRARY');
@@ -310,6 +315,25 @@ export const StyleDnaStudioView: React.FC = () => {
             去 AI 翻译腔黑名单
           </button>
         </div>
+
+        {onNavigateTab && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onNavigateTab('STUDIO')}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-500 border border-amber-500/30 flex items-center gap-1.5 transition-colors"
+            >
+              <Feather className="w-3.5 h-3.5" />
+              <span>带此文风去【创作台】→</span>
+            </button>
+            <button
+              onClick={() => onNavigateTab('SKILL_VAULT')}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-400 border border-indigo-500/30 flex items-center gap-1.5 transition-colors"
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>去【技能中心库】→</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 主工作区 */}
