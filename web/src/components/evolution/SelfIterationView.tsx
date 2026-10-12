@@ -42,7 +42,7 @@ export const SelfIterationView: React.FC = () => {
   const handleRunEvaluation = async () => {
     setIsEvaluating(true);
     try {
-      const res = await fetch('http://localhost:8000/api/evolution/evaluate', {
+      const res = await fetch('/api/evolution/evaluate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

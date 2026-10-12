@@ -33,7 +33,8 @@ import {
   TropeSubversionVariant,
 } from '../types/novel';
 
-const API_BASE = 'http://localhost:8000/api';
+export const API_BASE: string =
+  (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE_URL || '/api';
 
 async function safeFetch<T>(
   endpoint: string,

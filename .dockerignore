@@ -1,0 +1,10 @@
+# Ignore build artifacts, dependencies, and virtualenvs to keep Docker build context minimal
+**/node_modules
+**/target
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/dist
+.git
+.DS_Store
+*.log

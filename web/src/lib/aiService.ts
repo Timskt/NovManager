@@ -554,7 +554,7 @@ ${customDirection ? `【作者指定的推演偏向/脑洞要求】：${customDi
 
         let response: Response;
         if (effectiveSettings.useBackendProxy) {
-          response = await fetch('http://localhost:8000/api/llm/stream', {
+          response = await fetch('/api/llm/stream', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2285,7 +2285,7 @@ ${genre ? `【题材偏好】：${genre}\n` : ''}
 
     // 1. 如果用户显式启用了后端中转代理
     if (this.settings.useBackendProxy) {
-      const resp = await fetch('http://localhost:8000/api/llm/proxy', {
+      const resp = await fetch('/api/llm/proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -2333,7 +2333,7 @@ ${genre ? `【题材偏好】：${genre}\n` : ''}
     } catch (err: any) {
       // 若直连遇到浏览器 CORS 限制 (Failed to fetch)，自动尝试通过本地后端代理兜底重试
       try {
-        const fallbackResp = await fetch('http://localhost:8000/api/llm/proxy', {
+        const fallbackResp = await fetch('/api/llm/proxy', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

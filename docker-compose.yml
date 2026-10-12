@@ -1,62 +1,119 @@
-version: "3.8"
+# ==============================================================================
+# 墨枢 · InkVerse (By Timskt) — 全栈容器化编排 (Docker Compose)
+#
+# 快速启动 (默认 Rust 2.0 高性能引擎 + SQLite WAL + Git VCS + Nginx 前端工作台):
+#   docker compose up -d --build
+#
+# 启动完整扩展集群 (额外包含 Python FastAPI MCP 网关 + PostgreSQL 16 pgvector):
+#   docker compose --profile full up -d --build
+# ==============================================================================
 
 services:
   # ----------------------------------------------------------------------------
-  # 1. 生产级关系数据库：PostgreSQL 16 + pgvector 语义检索扩展
-  # ----------------------------------------------------------------------------
-  postgres:
-    image: pgvector/pgvector:pg16
-    container_name: novmanager-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: novadmin
-      POSTGRES_PASSWORD: novpassword123
-      POSTGRES_DB: novmanager
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U novadmin -d novmanager"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  # ----------------------------------------------------------------------------
-  # 2. NovManager 后端服务 (FastAPI + MCP Server)
+  # 1. 墨枢 · InkVerse Rust 2.0 高性能核心后端 (Axum + SQLite WAL + Git VCS)
   # ----------------------------------------------------------------------------
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
-    container_name: novmanager-backend
+      context: ./backend_rust
+      dockerfile: Dockerfile
+    image: inkverse/backend-rust:2.0.0
+    container_name: inkverse-backend
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql+psycopg://novadmin:novpassword123@postgres:5432/novmanager
-      HOST: "0.0.0.0"
       PORT: "8000"
+      NOV_DB_PATH: "/app/data/novmanager_local.db"
+      NOV_REPO_DIR: "/app/manuscripts"
+      RUST_LOG: "${RUST_LOG:-nov_server=info,tower_http=info}"
     ports:
-      - "8000:8000"
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - "${BACKEND_PORT:-8000}:8000"
     volumes:
-      - ./backend/data:/app/backend/data
+      - ./backend/data:/app/data
+      - ./manuscripts:/app/manuscripts
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/health"]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 5
+    networks:
+      - inkverse-net
 
   # ----------------------------------------------------------------------------
-  # 3. 前端工作台应用 (Vite + React + Tailwind CSS)
+  # 2. 墨枢 · InkVerse 前端文学创作工作台 (React 19 + Tailwind v4 + Nginx)
   # ----------------------------------------------------------------------------
   frontend:
     build:
       context: ./web
       dockerfile: Dockerfile
-    container_name: novmanager-frontend
+      args:
+        VITE_API_BASE_URL: "/api"
+    image: inkverse/frontend-web:2.0.0
+    container_name: inkverse-web
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - "${FRONTEND_PORT:-3000}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:80/healthz"]
+      interval: 10s
+      timeout: 5s
+      start_period: 5s
+      retries: 3
+    networks:
+      - inkverse-net
+
+  # ----------------------------------------------------------------------------
+  # 3. [可选 Profile: full] PostgreSQL 16 + pgvector 向量数据库
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: inkverse-postgres
+    profiles: ["full"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-novadmin}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-novpassword123}"
+      POSTGRES_DB: "${POSTGRES_DB:-novmanager}"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-novadmin} -d ${POSTGRES_DB:-novmanager}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - inkverse-net
+
+  # ----------------------------------------------------------------------------
+  # 4. [可选 Profile: full / mcp] Python FastAPI + MCP SSE 独立协议网关
+  # ----------------------------------------------------------------------------
+  mcp-python:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: inkverse/mcp-python:2.0.0
+    container_name: inkverse-mcp-python
+    profiles: ["full", "mcp"]
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgresql+psycopg://${POSTGRES_USER:-novadmin}:${POSTGRES_PASSWORD:-novpassword123}@postgres:5432/${POSTGRES_DB:-novmanager}"
+      HOST: "0.0.0.0"
+      PORT: "8000"
+    ports:
+      - "${MCP_PORT:-8001}:8000"
+    volumes:
+      - ./backend/data:/app/backend/data
+    networks:
+      - inkverse-net
 
 volumes:
   pgdata:
     driver: local
+
+networks:
+  inkverse-net:
+    driver: bridge

@@ -14,7 +14,12 @@
     "dev": "pnpm --prefix web dev",
     "build": "pnpm --prefix web build",
     "preview": "pnpm --prefix web preview",
-    "logo:gen": "swift scripts/generate_brand_assets.swift web/public/logo.png docs/images/logo.png web/public/icon-512.png"
+    "logo:gen": "swift scripts/generate_brand_assets.swift web/public/logo.png docs/images/logo.png web/public/icon-512.png",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:full": "docker compose --profile full up -d --build"
   },
   "keywords": [
     "inkverse",

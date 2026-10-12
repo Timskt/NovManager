@@ -188,21 +188,44 @@ NovManager 引入了**自主进化闭环 (Autonomous Self-Evolution Loop)**，�
 
 ## 🚀 快速启动
 
-### 方式一：一键启动 (推荐，Rust 原生高性能模式)
+### 方式一：Docker Compose 容器化一键部署 (生产推荐)
+
+```bash
+# 1. 可选：复制并按需修改端口与环境变量配置
+cp .env.example .env
+
+# 2. 构建并后台启动全栈服务 (Rust 2.0 后端 + React/Nginx 前端代理)
+docker compose up -d --build
+# 或使用快捷命令：pnpm docker:up
+
+# 3. 可选：启动包含 Python MCP 服务与 PostgreSQL + pgvector 的完整栈
+docker compose --profile full up -d --build
+# 或使用快捷命令：pnpm docker:full
+
+# 查看服务日志 / 停止服务
+docker compose logs -f
+docker compose down
+```
+
+- **前端工作台（含 `/api` Nginx 反向代理）**：`http://localhost:3000`
+- **Rust 2.0 高性能后端 API**：`http://localhost:8000/api/health`
+- **持久化数据卷**：SQLite WAL 数据库自动挂载至 `./backend/data`，Git 文学手稿库挂载至 `./manuscripts`。
+
+### 方式二：本地一键启动 (Rust 原生高性能模式)
 
 ```bash
 # 赋予权限并启动 Rust 原生后端与文人前端
 ./scripts/start_rust.sh
 ```
 
-### 方式二：Python / FastAPI 兼容模式
+### 方式三：Python / FastAPI 兼容模式
 
 ```bash
 # 启动 Python FastAPI 后端与前端工作台
 ./scripts/start_all.sh
 ```
 
-### 方式三：手动分步启动
+### 方式四：手动分步启动
 
 ```bash
 # 1. 启动 Rust 后端

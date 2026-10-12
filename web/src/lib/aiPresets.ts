@@ -120,7 +120,7 @@ export async function testLLMConnection(
   // 1. 如果指定走后端代理
   if (useBackendProxy) {
     try {
-      const resp = await fetch('http://localhost:8000/api/llm/test-connection', {
+      const resp = await fetch('/api/llm/test-connection', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -185,7 +185,7 @@ export async function testLLMConnection(
     // 若浏览器直连被 CORS 拦截（常见于某些第三方代理未配 Access-Control-Allow-Origin）
     // 自动尝试后端代理测试一次
     try {
-      const proxyResp = await fetch('http://localhost:8000/api/llm/test-connection', {
+      const proxyResp = await fetch('/api/llm/test-connection', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

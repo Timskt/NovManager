@@ -557,7 +557,7 @@ export const NovelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         versions,
         isActive: true,
       };
-      await fetch('http://localhost:8000/api/novels/sync', {
+      await fetch('/api/novels/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bundle),
@@ -570,7 +570,7 @@ export const NovelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const syncFromBackend = async (): Promise<boolean> => {
     try {
       // 1. 同步后端的小说列表并进行双向去重合并
-      const listRes = await fetch('http://localhost:8000/api/novels');
+      const listRes = await fetch('/api/novels');
       if (listRes.ok) {
         const backendNovels = await listRes.json();
 
@@ -610,7 +610,7 @@ export const NovelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               const localDataRaw = localStorage.getItem(NOVEL_DATA_PREFIX + ls.id);
               if (localDataRaw) {
                 const localBundle = JSON.parse(localDataRaw);
-                fetch('http://localhost:8000/api/novels/sync', {
+                fetch('/api/novels/sync', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(localBundle),
@@ -648,7 +648,7 @@ export const NovelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // 2. 当前活跃小说数据完整加载
       const activeId = localStorage.getItem(ACTIVE_NOVEL_ID_KEY) || novel.id || 'nov-001';
       try {
-        const bundleRes = await fetch(`http://localhost:8000/api/novels/${activeId}/bundle`);
+        const bundleRes = await fetch(`/api/novels/${activeId}/bundle`);
         if (bundleRes.ok) {
           const bundleData = await bundleRes.json();
           const mapped = mapBackendBundleToFrontend(bundleData);
@@ -1275,7 +1275,7 @@ export const NovelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const nid = targetNovelId || novel.id;
     if (!nid) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/novels/${nid}/techniques`);
+      const res = await fetch(`/api/novels/${nid}/techniques`);
       if (res.ok) {
         const data = await res.json();
         setSavedPolishTechniques(data);
@@ -1289,7 +1289,7 @@ export const NovelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const nid = targetNovelId || novel.id;
     if (!nid) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/novels/${nid}/techniques/stats`);
+      const res = await fetch(`/api/novels/${nid}/techniques/stats`);
       if (res.ok) {
         const data = await res.json();
         setTechniqueStats(data);
@@ -1306,7 +1306,7 @@ export const NovelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   ) => {
     if (!techniques || techniques.length === 0) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/novels/${targetNovelId}/techniques`, {
+      const res = await fetch(`/api/novels/${targetNovelId}/techniques`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1544,7 +1544,7 @@ export const NovelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // 3. 若本地无数据或大纲为空，从后端拉取完整 bundle
     if (!targetData || !targetData.volumes || targetData.volumes.length === 0) {
       try {
-        const res = await fetch(`http://localhost:8000/api/novels/${targetId}/bundle`);
+        const res = await fetch(`/api/novels/${targetId}/bundle`);
         if (res.ok) {
           const bundle = await res.json();
           targetData = mapBackendBundleToFrontend(bundle);
@@ -1666,7 +1666,7 @@ export const NovelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.error('更新本地存储失败:', e);
     }
 
-    fetch(`http://localhost:8000/api/novels/${targetId}/active`, { method: 'POST' }).catch(() => {});
+    fetch(`/api/novels/${targetId}/active`, { method: 'POST' }).catch(() => {});
     return true;
   };
 
@@ -1964,7 +1964,7 @@ export const NovelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setNovelList(updatedList);
     localStorage.setItem(NOVELS_INDEX_KEY, JSON.stringify(updatedList));
     localStorage.removeItem(NOVEL_DATA_PREFIX + novelId);
-    fetch(`http://localhost:8000/api/novels/${novelId}`, { method: 'DELETE' }).catch(() => {});
+    fetch(`/api/novels/${novelId}`, { method: 'DELETE' }).catch(() => {});
 
     if (novelId === novel.id) {
       const nextNovel = updatedList[0];

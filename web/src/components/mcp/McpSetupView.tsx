@@ -85,7 +85,7 @@ export const McpSetupView: React.FC<McpSetupViewProps> = ({ onGoToInspector }) =
   const [serverConfigs, setServerConfigs] = useState<McpBackendConfigs | null>(null);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/mcp/configs')
+    fetch('/api/mcp/configs')
       .then((res) => res.json())
       .then((data) => setServerConfigs(data))
       .catch(() => {});

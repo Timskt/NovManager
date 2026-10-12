@@ -81,7 +81,7 @@ export const McpInspectorInnerView: React.FC<McpInspectorInnerViewProps> = ({ on
   const handleSimulateTool = async (toolName: string) => {
     if (toolName === 'list_novels') {
       try {
-        const res = await fetch('http://localhost:8000/api/novels');
+        const res = await fetch('/api/novels');
         if (res.ok) {
           const backendNovels = await res.json();
           const activeNovelId = novel.id;
