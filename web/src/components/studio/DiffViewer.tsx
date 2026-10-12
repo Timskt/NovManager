@@ -286,23 +286,36 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
       style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}
     >
       {/* 1. Gerrit 风格审查控制顶栏 */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950/70 to-slate-900 border-b border-indigo-900/60 px-4 py-3 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+      <div
+        className="border-b px-4 py-3 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3"
+        style={{
+          backgroundColor: 'var(--bg-card)',
+          borderColor: 'var(--border-subtle)',
+        }}
+      >
         {/* 左侧状态与字数增减统计 */}
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-200">
-            <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-            <span className="text-xs font-semibold">{agentName} 差异审查</span>
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-semibold"
+            style={{
+              backgroundColor: 'var(--accent-surface)',
+              borderColor: 'color-mix(in srgb, var(--accent-primary) 30%, var(--border-subtle))',
+              color: 'var(--accent-primary)',
+            }}
+          >
+            <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: 'var(--accent-primary)' }} />
+            <span>{agentName} 差异审查</span>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-mono px-2.5 py-1 rounded-md border" style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}>
+          <div className="flex items-center gap-2 text-xs font-mono px-2.5 py-1 rounded-md border" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }}>
             <span>原 {stats.origLen} 字</span>
-            <ArrowRight className="w-3 h-3 text-slate-500" />
+            <ArrowRight className="w-3 h-3" style={{ color: 'var(--text-muted)' }} />
             <span>新 {stats.newLen} 字</span>
             <span
-              className={`font-semibold px-1.5 py-0.2 rounded text-[11px] ${
+              className={`font-semibold px-1.5 py-0.5 rounded text-[11px] border ${
                 stats.delta >= 0
-                  ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/60'
-                  : 'bg-rose-950 text-rose-300 border border-rose-800/60'
+                  ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                  : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30'
               }`}
             >
               {stats.delta >= 0 ? `+${stats.delta}` : stats.delta}
@@ -310,8 +323,8 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
           </div>
 
           <div className="hidden sm:flex items-center gap-2 text-[11px]" style={{ color: 'var(--text-muted)' }}>
-            <span className="text-emerald-400 font-mono">+{stats.addedTokensCount} 增润</span>
-            <span className="text-rose-400 font-mono">-{stats.deletedTokensCount} 删简</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-mono">+{stats.addedTokensCount} 增润</span>
+            <span className="text-rose-600 dark:text-rose-400 font-mono">-{stats.deletedTokensCount} 删简</span>
           </div>
         </div>
 
@@ -382,19 +395,20 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
         <div className="border-b px-4 py-3" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span className="text-xs font-semibold text-amber-200">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <span className="text-xs font-semibold" style={{ color: 'var(--text-main)' }}>
                 ✨ 本次润色运用的文学技法 ({techniques.length} 项)
               </span>
               {summary && (
-                <span className="text-[11px] text-slate-400 hidden md:inline truncate max-w-md">
+                <span className="text-[11px] hidden md:inline truncate max-w-md" style={{ color: 'var(--text-muted)' }}>
                   · {summary}
                 </span>
               )}
             </div>
             <button
               onClick={() => setIsTechniquesExpanded(!isTechniquesExpanded)}
-              className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition"
+              className="text-xs flex items-center gap-1 transition font-medium hover:underline cursor-pointer"
+              style={{ color: 'var(--accent-primary)' }}
             >
               <span>{isTechniquesExpanded ? '收起技法卡片' : '展开技法卡片'}</span>
               {isTechniquesExpanded ? (
@@ -417,13 +431,20 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                     onClick={() => toggleTechnique(techKey)}
                     className={`p-2.5 rounded-xl border transition cursor-pointer select-none flex flex-col justify-between gap-2 ${
                       isChecked
-                        ? 'bg-indigo-950/50 border-indigo-500/60 shadow-md shadow-indigo-950/40'
-                        : 'hover:border-indigo-500/40'
+                        ? 'shadow-sm ring-1'
+                        : 'hover:opacity-90'
                     }`}
                     style={
-                      !isChecked
-                        ? { backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
-                        : undefined
+                      isChecked
+                        ? {
+                            backgroundColor: 'var(--accent-surface)',
+                            borderColor: 'var(--accent-primary)',
+                          }
+                        : {
+                            backgroundColor: 'var(--bg-surface)',
+                            borderColor: 'var(--border-subtle)',
+                            color: 'var(--text-muted)',
+                          }
                     }
                   >
                     <div>
@@ -522,7 +543,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                   共 {originalText.split('\n').length} 行
                 </span>
               </div>
-              <div className="divide-y divide-slate-900/60">
+              <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
                 {diffRows.map((row, idx) => {
                   const isDeleted = row.type === 'deleted';
                   const isModified = row.type === 'modified';
@@ -533,11 +554,11 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                       key={`left-${idx}`}
                       className={`flex items-start transition-colors ${
                         isDeleted
-                          ? 'bg-rose-950/30 text-rose-200'
+                          ? 'bg-rose-500/10 text-rose-700 dark:text-rose-300'
                           : isModified
-                          ? 'bg-rose-950/20 text-rose-200'
+                          ? 'bg-rose-500/10 text-rose-700 dark:text-rose-300'
                           : isAdded
-                          ? 'opacity-30 text-slate-500'
+                          ? 'opacity-40'
                           : 'hover:bg-black/5 dark:hover:bg-white/5'
                       }`}
                       style={!isDeleted && !isModified && !isAdded ? { color: 'var(--text-main)' } : undefined}
@@ -547,20 +568,20 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                         {row.oldLineNumber ?? ''}
                       </span>
                       {/* 标记指示符 */}
-                      <span className="w-5 flex-shrink-0 text-center py-1 text-slate-500 select-none font-bold">
+                      <span className="w-5 flex-shrink-0 text-center py-1 text-rose-500 select-none font-bold">
                         {isDeleted || isModified ? '-' : ''}
                       </span>
                       {/* 内容 */}
                       <div className="flex-1 py-1 pr-3 leading-relaxed whitespace-pre-wrap break-words">
                         {isAdded ? (
-                          <span className="text-slate-800 italic select-none">···</span>
+                          <span className="opacity-40 italic select-none">···</span>
                         ) : isModified && row.oldTokens ? (
                           row.oldTokens.map((tok, tIdx) => (
                             <span
                               key={tIdx}
                               className={
                                 tok.type === 'deleted'
-                                  ? 'bg-rose-900/70 text-rose-100 line-through px-0.5 rounded font-semibold'
+                                  ? 'bg-rose-500/25 text-rose-800 dark:text-rose-200 line-through px-0.5 rounded font-semibold'
                                   : ''
                               }
                             >
@@ -569,7 +590,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                           ))
                         ) : (
                           row.rawOld || (
-                            <span className="text-slate-700 italic select-none">（空行）</span>
+                            <span className="opacity-40 italic select-none">（空行）</span>
                           )
                         )}
                       </div>
@@ -581,16 +602,16 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
 
             {/* 右侧栏：润色后新候选正文 (Proposed Patchset) */}
             <div>
-              <div className="sticky top-0 z-10 backdrop-blur px-3 py-1.5 border-b text-[11px] font-semibold text-emerald-400 flex items-center justify-between" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}>
+              <div className="sticky top-0 z-10 backdrop-blur px-3 py-1.5 border-b text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-between" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   润色候选新文 (Proposed)
                 </span>
                 <span className="text-[10px] font-normal" style={{ color: 'var(--text-muted)' }}>
                   共 {newDraft.split('\n').length} 行
                 </span>
               </div>
-              <div className="divide-y divide-slate-900/60">
+              <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
                 {diffRows.map((row, idx) => {
                   const isDeleted = row.type === 'deleted';
                   const isModified = row.type === 'modified';
@@ -601,11 +622,11 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                       key={`right-${idx}`}
                       className={`flex items-start transition-colors ${
                         isAdded
-                          ? 'bg-emerald-950/30 text-emerald-200'
+                          ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300'
                           : isModified
-                          ? 'bg-emerald-950/20 text-emerald-100'
+                          ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300'
                           : isDeleted
-                          ? 'opacity-30 text-slate-500'
+                          ? 'opacity-40'
                           : 'hover:bg-black/5 dark:hover:bg-white/5'
                       }`}
                       style={!isAdded && !isModified && !isDeleted ? { color: 'var(--text-main)' } : undefined}
@@ -649,7 +670,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
           </div>
         ) : (
           /* ================= 单栏内联 (Unified) ================= */
-          <div className="divide-y divide-slate-900/70">
+          <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
             <div className="sticky top-0 z-10 backdrop-blur px-3 py-1.5 border-b text-[11px] font-semibold flex items-center justify-between" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}>
               <span>单栏综合差异流 (Unified Diff)</span>
               <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
@@ -670,7 +691,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                     <span className="w-9 text-right pr-1.5 py-1 text-[10px] select-none border-r" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}>
                       {row.newLineNumber}
                     </span>
-                    <span className="w-6 text-center py-1 text-slate-600 select-none"> </span>
+                    <span className="w-6 text-center py-1 select-none opacity-40"> </span>
                     <div className="flex-1 py-1 pr-3 leading-relaxed whitespace-pre-wrap break-words">
                       {row.rawOld}
                     </div>
@@ -682,15 +703,15 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                 return (
                   <div
                     key={`unified-${idx}-del`}
-                    className="flex items-start bg-rose-950/30 text-rose-200"
+                    className="flex items-start bg-rose-500/10 text-rose-700 dark:text-rose-300"
                   >
-                    <span className="w-9 text-right pr-1.5 py-1 text-[10px] text-rose-400/80 select-none">
+                    <span className="w-9 text-right pr-1.5 py-1 text-[10px] text-rose-500 select-none">
                       {row.oldLineNumber}
                     </span>
-                    <span className="w-9 text-right pr-1.5 py-1 text-[10px] text-slate-700 select-none border-r border-rose-950">
+                    <span className="w-9 text-right pr-1.5 py-1 text-[10px] select-none border-r" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}>
                       -
                     </span>
-                    <span className="w-6 text-center py-1 text-rose-400 select-none font-bold">
+                    <span className="w-6 text-center py-1 text-rose-500 select-none font-bold">
                       -
                     </span>
                     <div className="flex-1 py-1 pr-3 leading-relaxed whitespace-pre-wrap break-words line-through decoration-rose-500/60">
@@ -704,15 +725,15 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                 return (
                   <div
                     key={`unified-${idx}-add`}
-                    className="flex items-start bg-emerald-950/30 text-emerald-200"
+                    className="flex items-start bg-emerald-500/10 text-emerald-800 dark:text-emerald-300"
                   >
-                    <span className="w-9 text-right pr-1.5 py-1 text-[10px] text-slate-700 select-none">
+                    <span className="w-9 text-right pr-1.5 py-1 text-[10px] select-none" style={{ color: 'var(--text-muted)' }}>
                       +
                     </span>
-                    <span className="w-9 text-right pr-1.5 py-1 text-[10px] text-emerald-400/80 select-none border-r border-emerald-950">
+                    <span className="w-9 text-right pr-1.5 py-1 text-[10px] text-emerald-600 dark:text-emerald-400 select-none border-r" style={{ borderColor: 'var(--border-subtle)' }}>
                       {row.newLineNumber}
                     </span>
-                    <span className="w-6 text-center py-1 text-emerald-400 select-none font-bold">
+                    <span className="w-6 text-center py-1 text-emerald-600 dark:text-emerald-400 select-none font-bold">
                       +
                     </span>
                     <div className="flex-1 py-1 pr-3 leading-relaxed whitespace-pre-wrap break-words font-medium">
@@ -725,14 +746,14 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
               // modified: 输出旧行 (带高亮删除) 与 新行 (带高亮新增)
               return (
                 <React.Fragment key={`unified-${idx}-mod`}>
-                  <div className="flex items-start bg-rose-950/25 text-rose-200">
-                    <span className="w-9 text-right pr-1.5 py-1 text-[10px] text-rose-400/80 select-none">
+                  <div className="flex items-start bg-rose-500/10 text-rose-700 dark:text-rose-300">
+                    <span className="w-9 text-right pr-1.5 py-1 text-[10px] text-rose-500 select-none">
                       {row.oldLineNumber}
                     </span>
-                    <span className="w-9 text-right pr-1.5 py-1 text-[10px] text-slate-700 select-none border-r border-rose-950">
+                    <span className="w-9 text-right pr-1.5 py-1 text-[10px] select-none border-r" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}>
                       -
                     </span>
-                    <span className="w-6 text-center py-1 text-rose-400 select-none font-bold">
+                    <span className="w-6 text-center py-1 text-rose-500 select-none font-bold">
                       -
                     </span>
                     <div className="flex-1 py-1 pr-3 leading-relaxed whitespace-pre-wrap break-words">
@@ -741,7 +762,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                           key={tIdx}
                           className={
                             tok.type === 'deleted'
-                              ? 'bg-rose-900/70 text-rose-100 line-through px-0.5 rounded font-semibold'
+                              ? 'bg-rose-500/25 text-rose-800 dark:text-rose-200 line-through px-0.5 rounded font-semibold'
                               : ''
                           }
                         >
@@ -751,14 +772,14 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex items-start bg-emerald-950/25 text-emerald-100">
-                    <span className="w-9 text-right pr-1.5 py-1 text-[10px] text-slate-700 select-none">
+                  <div className="flex items-start bg-emerald-500/10 text-emerald-800 dark:text-emerald-300">
+                    <span className="w-9 text-right pr-1.5 py-1 text-[10px] select-none" style={{ color: 'var(--text-muted)' }}>
                       +
                     </span>
-                    <span className="w-9 text-right pr-1.5 py-1 text-[10px] text-emerald-400/80 select-none border-r border-emerald-950">
+                    <span className="w-9 text-right pr-1.5 py-1 text-[10px] text-emerald-600 dark:text-emerald-400 select-none border-r" style={{ borderColor: 'var(--border-subtle)' }}>
                       {row.newLineNumber}
                     </span>
-                    <span className="w-6 text-center py-1 text-emerald-400 select-none font-bold">
+                    <span className="w-6 text-center py-1 text-emerald-600 dark:text-emerald-400 select-none font-bold">
                       +
                     </span>
                     <div className="flex-1 py-1 pr-3 leading-relaxed whitespace-pre-wrap break-words">
@@ -767,7 +788,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                           key={tIdx}
                           className={
                             tok.type === 'added'
-                              ? 'bg-emerald-800/80 text-emerald-50 font-bold px-0.5 rounded shadow-sm'
+                              ? 'bg-emerald-500/25 text-emerald-800 dark:text-emerald-200 px-0.5 rounded font-semibold'
                               : ''
                           }
                         >

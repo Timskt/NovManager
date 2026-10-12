@@ -124,18 +124,37 @@ export const ConsistencyGuardModal: React.FC<ConsistencyGuardModalProps> = ({
               return (
                 <div
                   key={issue.id}
-                  className="p-4 rounded-xl border space-y-2"
-                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                  className="p-4 rounded-xl border space-y-3 transition shadow-xs"
+                  style={{
+                    backgroundColor:
+                      issue.severity === 'CRITICAL'
+                        ? 'color-mix(in srgb, #ef4444 5%, var(--bg-card))'
+                        : 'color-mix(in srgb, #f59e0b 5%, var(--bg-card))',
+                    borderColor:
+                      issue.severity === 'CRITICAL'
+                        ? 'color-mix(in srgb, #ef4444 25%, var(--border-subtle))'
+                        : 'color-mix(in srgb, #f59e0b 25%, var(--border-subtle))',
+                  }}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm font-literary-serif flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${issue.severity === 'CRITICAL' ? 'bg-rose-500' : 'bg-amber-500'}`} />
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-bold text-sm font-literary-serif flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
+                      <span className={`w-2 h-2 rounded-full shrink-0 ${issue.severity === 'CRITICAL' ? 'bg-rose-500' : 'bg-amber-500'}`} />
                       <span>{issue.title}</span>
+                      <span
+                        className="text-[10px] px-1.5 py-0.5 rounded font-mono font-medium border"
+                        style={{
+                          backgroundColor: 'var(--bg-surface)',
+                          borderColor: 'var(--border-subtle)',
+                          color: issue.severity === 'CRITICAL' ? '#ef4444' : '#f59e0b',
+                        }}
+                      >
+                        {issue.severity === 'CRITICAL' ? '高危硬伤' : '风格建议'}
+                      </span>
                     </span>
                     <button
                       onClick={() => handleFix(issue)}
                       disabled={isFixed}
-                      className="px-3 py-1 rounded-lg text-xs font-bold text-white flex items-center gap-1.5 transition disabled:opacity-50"
+                      className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer shadow-xs hover:opacity-90 active:scale-[0.98]"
                       style={{ backgroundColor: isFixed ? '#10b981' : 'var(--accent-primary)' }}
                     >
                       {isFixed ? <CheckCircle className="w-3.5 h-3.5" /> : <Wrench className="w-3.5 h-3.5" />}
@@ -143,11 +162,27 @@ export const ConsistencyGuardModal: React.FC<ConsistencyGuardModalProps> = ({
                     </button>
                   </div>
 
-                  <p className="text-xs font-literary-sans opacity-80">{issue.explanation}</p>
+                  <p className="text-xs font-literary-sans leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                    {issue.explanation}
+                  </p>
 
-                  <div className="text-xs p-2.5 rounded-lg border font-literary-serif space-y-1" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
-                    <div className="text-rose-500">原文片段：“{issue.snippet}”</div>
-                    <div className="text-emerald-600">自愈修补：“{issue.autoFixText}”</div>
+                  <div className="text-xs p-3 rounded-lg border font-literary-serif space-y-2" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
+                    <div className="flex items-start gap-1.5">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono shrink-0 font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                        原文
+                      </span>
+                      <span className="leading-relaxed" style={{ color: 'var(--text-main)' }}>
+                        “{issue.snippet}”
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono shrink-0 font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                        修正
+                      </span>
+                      <span className="leading-relaxed font-medium" style={{ color: 'var(--text-main)' }}>
+                        “{issue.autoFixText}”
+                      </span>
+                    </div>
                   </div>
                 </div>
               );

@@ -149,7 +149,7 @@ export const TechniqueRepositoryModal: React.FC<TechniqueRepositoryModalProps> =
             className="border p-2.5 rounded-xl flex items-center gap-3"
             style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
           >
-            <div className="w-8 h-8 rounded-lg bg-indigo-950 flex items-center justify-center text-indigo-400">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/15 flex items-center justify-center text-indigo-500">
               <BookmarkCheck className="w-4 h-4" />
             </div>
             <div>
@@ -164,12 +164,12 @@ export const TechniqueRepositoryModal: React.FC<TechniqueRepositoryModalProps> =
             className="border p-2.5 rounded-xl flex items-center gap-3"
             style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
           >
-            <div className="w-8 h-8 rounded-lg bg-emerald-950 flex items-center justify-center text-emerald-400">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-500">
               <Flame className="w-4 h-4" />
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>全书累计应用</div>
-              <div className="text-base font-bold text-emerald-400 font-mono">
+              <div className="text-base font-bold text-emerald-600 dark:text-emerald-400 font-mono">
                 {techniqueStats?.total_applied_count ?? savedPolishTechniques.reduce((sum, t) => sum + (t.appliedCount || 1), 0)} <span className="text-xs font-normal" style={{ color: 'var(--text-muted)' }}>次</span>
               </div>
             </div>
@@ -179,12 +179,12 @@ export const TechniqueRepositoryModal: React.FC<TechniqueRepositoryModalProps> =
             className="border p-2.5 rounded-xl flex items-center gap-3"
             style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
           >
-            <div className="w-8 h-8 rounded-lg bg-purple-950 flex items-center justify-center text-purple-400">
+            <div className="w-8 h-8 rounded-lg bg-purple-500/15 flex items-center justify-center text-purple-500">
               <Zap className="w-4 h-4" />
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>当前待复用</div>
-              <div className="text-base font-bold text-purple-300 font-mono">
+              <div className="text-base font-bold text-purple-600 dark:text-purple-400 font-mono">
                 {selectedTechniquesForReuse.length} <span className="text-xs font-normal" style={{ color: 'var(--text-muted)' }}>项已选</span>
               </div>
             </div>
@@ -194,12 +194,12 @@ export const TechniqueRepositoryModal: React.FC<TechniqueRepositoryModalProps> =
             className="border p-2.5 rounded-xl flex items-center gap-3"
             style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
           >
-            <div className="w-8 h-8 rounded-lg bg-amber-950 flex items-center justify-center text-amber-400">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center text-amber-500">
               <BarChart3 className="w-4 h-4" />
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>覆盖文学维度</div>
-              <div className="text-base font-bold text-amber-300 font-mono">
+              <div className="text-base font-bold text-amber-600 dark:text-amber-400 font-mono">
                 {categories.length > 1 ? categories.length - 1 : 1} <span className="text-xs font-normal" style={{ color: 'var(--text-muted)' }}>类</span>
               </div>
             </div>
@@ -268,19 +268,32 @@ export const TechniqueRepositoryModal: React.FC<TechniqueRepositoryModalProps> =
                     onClick={() => toggleReuseTechnique(tech.name)}
                     className={`p-4 rounded-xl border transition cursor-pointer select-none flex flex-col justify-between gap-3 ${
                       isSelected
-                        ? 'bg-indigo-950/40 border-indigo-500/70 shadow-lg shadow-indigo-950/30 ring-1 ring-indigo-500/30'
-                        : 'hover:border-indigo-500/40'
+                        ? 'shadow-md ring-1'
+                        : 'hover:opacity-90'
                     }`}
                     style={
-                      !isSelected
-                        ? { backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }
-                        : undefined
+                      isSelected
+                        ? {
+                            backgroundColor: 'var(--accent-surface)',
+                            borderColor: 'var(--accent-primary)',
+                          }
+                        : {
+                            backgroundColor: 'var(--bg-surface)',
+                            borderColor: 'var(--border-subtle)',
+                          }
                     }
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-indigo-900/60 text-indigo-300 border border-indigo-700/50">
+                          <span
+                            className="text-[10px] font-medium px-2 py-0.5 rounded border"
+                            style={{
+                              backgroundColor: 'var(--accent-surface)',
+                              borderColor: 'var(--border-subtle)',
+                              color: 'var(--accent-primary)',
+                            }}
+                          >
                             {tech.categoryLabel || '文学技法'}
                           </span>
                           <span className="text-sm font-semibold" style={{ color: 'var(--text-main)' }}>
@@ -289,14 +302,14 @@ export const TechniqueRepositoryModal: React.FC<TechniqueRepositoryModalProps> =
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-300 border border-emerald-800/50 flex items-center gap-1">
-                            <Flame className="w-3 h-3 text-emerald-400" />
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                            <Flame className="w-3 h-3 text-emerald-500" />
                             <span>已合入 {tech.appliedCount || 1} 次</span>
                           </span>
 
-                          <div className="text-indigo-400">
+                          <div>
                             {isSelected ? (
-                              <CheckSquare className="w-4 h-4 text-emerald-400" />
+                              <CheckSquare className="w-4 h-4 text-emerald-500" />
                             ) : (
                               <Square className="w-4 h-4 opacity-40" />
                             )}

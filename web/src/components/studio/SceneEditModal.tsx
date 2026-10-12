@@ -114,7 +114,14 @@ export const SceneEditModal: React.FC<SceneEditModalProps> = ({
             <div>
               <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
                 <span>编辑分镜节拍卡</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-950 border border-indigo-700/50 text-indigo-300">
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full border font-mono font-medium"
+                  style={{
+                    backgroundColor: 'var(--accent-surface)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--accent-primary)',
+                  }}
+                >
                   第 {scene.sceneIndex} 幕
                 </span>
               </h3>
@@ -130,13 +137,18 @@ export const SceneEditModal: React.FC<SceneEditModalProps> = ({
                 type="button"
                 onClick={handleAiSuggest}
                 disabled={isAiGenerating}
-                className="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-200 text-xs font-medium flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
+                className="px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer shadow-xs hover:opacity-90"
+                style={{
+                  backgroundColor: 'var(--accent-surface)',
+                  borderColor: 'color-mix(in srgb, var(--accent-primary) 30%, var(--border-subtle))',
+                  color: 'var(--accent-primary)',
+                }}
                 title="根据前文大纲与因果关系让AI自动推演节拍"
               >
                 {isAiGenerating ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                 )}
                 <span>AI 智能推演节拍</span>
               </button>
@@ -301,15 +313,23 @@ export const SceneEditModal: React.FC<SceneEditModalProps> = ({
                         type="button"
                         key={c.id}
                         onClick={() => handleToggleChar(c.id)}
-                        className={`px-2 py-1 rounded text-[11px] font-medium border transition cursor-pointer ${
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition cursor-pointer ${
                           checked
-                            ? 'bg-indigo-950/80 border-indigo-500 text-indigo-200'
-                            : 'border-transparent hover:opacity-80'
+                            ? 'shadow-xs font-semibold'
+                            : 'hover:opacity-80'
                         }`}
                         style={
-                          !checked
-                            ? { backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
-                            : undefined
+                          checked
+                            ? {
+                                backgroundColor: 'var(--accent-surface)',
+                                borderColor: 'var(--accent-primary)',
+                                color: 'var(--accent-primary)',
+                              }
+                            : {
+                                backgroundColor: 'var(--bg-surface)',
+                                borderColor: 'var(--border-subtle)',
+                                color: 'var(--text-muted)',
+                              }
                         }
                       >
                         {c.name}

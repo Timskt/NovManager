@@ -232,14 +232,21 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-slate-100 font-serif">
+                <h2 className="text-base font-bold font-serif" style={{ color: 'var(--text-main)' }}>
                   全景大纲与分镜架构总览
                 </h2>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800/60 font-mono">
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full border font-mono font-medium"
+                  style={{
+                    backgroundColor: 'var(--accent-surface)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--accent-primary)',
+                  }}
+                >
                   {volumes.length} 卷 · {totalChapters} 章 · {totalWords.toLocaleString()} 字
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
                 分卷主线与阶段防早现约束 ➔ 章节目标与POV ➔ 分镜戏剧节拍对抗链
               </p>
             </div>
@@ -388,13 +395,19 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                         </div>
                       )}
                       {vol.boundaryConstraints && (
-                        <div className="p-2.5 rounded-xl bg-amber-950/20 border border-amber-800/40 text-amber-200/90 leading-relaxed flex items-start gap-2">
-                          <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                        <div
+                          className="p-2.5 rounded-xl border leading-relaxed flex items-start gap-2"
+                          style={{
+                            backgroundColor: 'color-mix(in srgb, #f59e0b 8%, var(--bg-surface))',
+                            borderColor: 'color-mix(in srgb, #f59e0b 25%, var(--border-subtle))',
+                          }}
+                        >
+                          <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                           <div className="space-y-1">
-                            <span className="font-semibold text-amber-300 block">
+                            <span className="font-semibold text-amber-600 dark:text-amber-400 block text-xs">
                               出场边界与防早现约束（AI 强约束）：
                             </span>
-                            <p className="text-amber-200/80 text-[11px] leading-relaxed whitespace-pre-line">
+                            <p className="text-[11px] leading-relaxed whitespace-pre-line" style={{ color: 'var(--text-muted)' }}>
                               {vol.boundaryConstraints}
                             </p>
                           </div>
@@ -545,14 +558,14 @@ export const FullOutlineModal: React.FC<FullOutlineModalProps> = ({
                                         <span>第 {sc.sceneIndex} 幕</span>
                                       </span>
                                       {sc.draftContent ? (
-                                        <span className="text-[9px] text-emerald-400 bg-emerald-950/60 px-1 rounded">
+                                        <span className="text-[9px] px-1.5 py-0.5 rounded font-medium bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                                           已起草 ({sc.draftContent.length}字)
                                         </span>
                                       ) : (
-                                        <span className="text-[9px] text-slate-500">待起草</span>
+                                        <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>待起草</span>
                                       )}
                                     </div>
-                                    <p className="text-slate-400 text-[11px] line-clamp-2 leading-snug">
+                                    <p className="text-[11px] line-clamp-2 leading-snug" style={{ color: 'var(--text-muted)' }}>
                                       {sc.sceneGoal || '未规划'}
                                     </p>
                                   </div>

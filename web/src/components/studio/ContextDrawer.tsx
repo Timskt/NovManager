@@ -533,9 +533,9 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
       {drawerTab === 'tree' && (
         <div className="space-y-3 flex-1">
           {/* 快捷新建与统计指示 */}
-          <div className="flex items-center justify-between text-[11px] text-slate-400 px-1">
-            <span className="flex items-center gap-1 text-slate-400 truncate">
-              <BookOpen className="w-3 h-3 text-indigo-400 shrink-0" />
+          <div className="flex items-center justify-between text-[11px] px-1" style={{ color: 'var(--text-muted)' }}>
+            <span className="flex items-center gap-1.5 truncate" style={{ color: 'var(--text-muted)' }}>
+              <BookOpen className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
               <span>
                 全书共 {totalWordsCount > 0 ? totalWordsCount.toLocaleString() : 0} 字
               </span>
@@ -550,13 +550,14 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                   setVolBoundary('');
                   setIsAddVolumeModalOpen(true);
                 }}
-                className="flex items-center gap-1 text-slate-400 hover:text-indigo-300 font-medium hover:underline cursor-pointer"
+                className="flex items-center gap-1 font-medium hover:underline cursor-pointer transition hover:opacity-80"
+                style={{ color: 'var(--text-muted)' }}
                 title="新建分卷"
               >
-                <FolderPlus className="w-3 h-3 text-indigo-400" />
-                <span>新建分卷</span>
+                <FolderPlus className="w-3 h-3" style={{ color: 'var(--accent-primary)' }} />
+                <span>新建卷</span>
               </button>
-              <span className="text-slate-700">|</span>
+              <span style={{ color: 'var(--border-strong)' }}>|</span>
               <button
                 onClick={() => {
                   setTargetVolumeId(activeChapter?.volumeId || volumes[0]?.id || '');
@@ -565,11 +566,12 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                   setTitleCandidates([]);
                   setIsAddChapterModalOpen(true);
                 }}
-                className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300 font-medium hover:underline cursor-pointer"
+                className="flex items-center gap-1 font-medium hover:underline cursor-pointer transition hover:opacity-80"
+                style={{ color: 'var(--accent-primary)' }}
                 title="新建章节"
               >
                 <Plus className="w-3 h-3" />
-                <span>新建章节</span>
+                <span>新建章</span>
               </button>
             </div>
           </div>
@@ -642,10 +644,11 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                           setTitleCandidates([]);
                           setIsAddChapterModalOpen(true);
                         }}
-                        className="p-1 rounded text-slate-400 hover:text-indigo-400 transition cursor-pointer hover:opacity-80"
+                        className="p-1 rounded transition cursor-pointer hover:opacity-80"
+                        style={{ color: 'var(--text-muted)' }}
                         title={`在第 ${vol.volumeIndex} 卷快速新建章节`}
                       >
-                        <Plus className="w-3 h-3" />
+                        <Plus className="w-3.5 h-3.5" />
                       </button>
 
                       {/* 编辑卷大纲与出场约束 */}
@@ -658,10 +661,11 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                           setEditVolClimax(vol.targetClimax || '');
                           setEditVolBoundary(vol.boundaryConstraints || '');
                         }}
-                        className="p-1 rounded text-slate-400 hover:text-indigo-400 transition cursor-pointer hover:opacity-80"
+                        className="p-1 rounded transition cursor-pointer hover:opacity-80"
+                        style={{ color: 'var(--text-muted)' }}
                         title="编辑该卷的故事概要与出场边界约束"
                       >
-                        <Edit className="w-3 h-3" />
+                        <Edit className="w-3.5 h-3.5" />
                       </button>
 
                       {/* 删除卷 */}
@@ -670,10 +674,11 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                           onClick={() =>
                             handleDeleteVolume(vol.id, vol.title, vol.volumeIndex)
                           }
-                          className="p-1 rounded text-slate-500 hover:text-red-400 transition cursor-pointer hover:opacity-80"
+                          className="p-1 rounded transition cursor-pointer hover:text-rose-500"
+                          style={{ color: 'var(--text-faint)' }}
                           title="删除此卷"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       )}
                     </div>
@@ -747,7 +752,8 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                               setEditVolClimax(vol.targetClimax || '');
                               setEditVolBoundary(vol.boundaryConstraints || '');
                             }}
-                            className="text-indigo-400 hover:text-indigo-300 hover:underline cursor-pointer"
+                            className="hover:underline cursor-pointer font-medium"
+                            style={{ color: 'var(--accent-primary)' }}
                           >
                             + 设置
                           </button>
@@ -756,7 +762,7 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
 
                       {/* 章节列表 */}
                       {vol.chapters.length === 0 ? (
-                        <div className="text-center py-3 text-xs text-slate-500">
+                        <div className="text-center py-3 text-xs" style={{ color: 'var(--text-muted)' }}>
                           暂无章节，点击右上角「+」快速创建
                         </div>
                       ) : (
@@ -1274,24 +1280,24 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                 />
               </div>
 
-              <div className="text-slate-400 space-y-1 leading-snug">
+              <div className="space-y-1.5 leading-snug" style={{ color: 'var(--text-muted)' }}>
                 {prevScene ? (
-                  <div className="flex items-start gap-1">
-                    <span className="text-slate-500 shrink-0">前幕承接：</span>
-                    <span className="text-slate-300 line-clamp-1">
+                  <div className="flex items-start gap-1.5">
+                    <span className="shrink-0 font-medium" style={{ color: 'var(--accent-primary)' }}>前幕承接：</span>
+                    <span className="line-clamp-1" style={{ color: 'var(--text-main)' }}>
                       {prevScene.outcome || '暂未定义前幕结局'}
                     </span>
                   </div>
                 ) : (
-                  <div className="text-slate-500">
+                  <div style={{ color: 'var(--text-muted)' }}>
                     📍 本章开篇第一幕：奠定核心驱动力与初始环境。
                   </div>
                 )}
 
                 {nextScene && (
-                  <div className="flex items-start gap-1 text-[10px] text-slate-500 pt-0.5 border-t border-slate-900">
-                    <span className="shrink-0">后幕走向：</span>
-                    <span className="line-clamp-1 text-slate-400">
+                  <div className="flex items-start gap-1.5 text-[10px] pt-1.5 border-t" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}>
+                    <span className="shrink-0 font-medium" style={{ color: 'var(--accent-primary)' }}>后幕走向：</span>
+                    <span className="line-clamp-1" style={{ color: 'var(--text-muted)' }}>
                       本幕结局将直接决定第 {nextScene.sceneIndex} 幕的危机起点
                     </span>
                   </div>
@@ -1301,9 +1307,18 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
 
             {/* 节拍详细字段展示 */}
             <div className="space-y-2 text-xs">
-              <div>
-                <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  <span>场景目标 (Goal)</span>
+              <div
+                className="p-2.5 rounded-lg border space-y-1"
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  borderColor: 'var(--border-subtle)',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--accent-primary)' }}>
+                    <Target className="w-3 h-3" />
+                    <span>场景目标 (Goal)</span>
+                  </div>
                   <FieldExplainer
                     title="场景目标 (Scene Goal)"
                     what="主角在本幕想要达成的具体、可见的即时行动目标（不可泛化）。"
@@ -1312,15 +1327,24 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                     position="right"
                   />
                 </div>
-                <p className="text-slate-300 mt-0.5 leading-relaxed">
+                <p className="mt-0.5 leading-relaxed font-literary-sans" style={{ color: 'var(--text-main)' }}>
                   {activeScene?.sceneGoal ||
                     '暂无明确目标，点击上方【编辑节拍】或右侧分镜导演规划'}
                 </p>
               </div>
 
-              <div>
-                <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-red-400/80">
-                  <span>阻碍与冲突 (Conflict)</span>
+              <div
+                className="p-2.5 rounded-lg border space-y-1"
+                style={{
+                  backgroundColor: 'color-mix(in srgb, #ef4444 4%, var(--bg-surface))',
+                  borderColor: 'color-mix(in srgb, #ef4444 20%, var(--border-subtle))',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-rose-500">
+                    <ShieldAlert className="w-3 h-3" />
+                    <span>阻碍与冲突 (Conflict)</span>
+                  </div>
                   <FieldExplainer
                     title="阻碍与冲突 (Conflict)"
                     what="阻止主角顺利达成目标的敌对力量、险恶环境、时间限制或内在心魔。"
@@ -1329,14 +1353,23 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                     position="right"
                   />
                 </div>
-                <p className="text-slate-300 mt-0.5 leading-relaxed">
+                <p className="mt-0.5 leading-relaxed font-literary-sans" style={{ color: 'var(--text-main)' }}>
                   {activeScene?.conflict || '暂未设定'}
                 </p>
               </div>
 
-              <div>
-                <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-400/80">
-                  <span>核心转折点 (Turn Point)</span>
+              <div
+                className="p-2.5 rounded-lg border space-y-1"
+                style={{
+                  backgroundColor: 'color-mix(in srgb, #f59e0b 4%, var(--bg-surface))',
+                  borderColor: 'color-mix(in srgb, #f59e0b 20%, var(--border-subtle))',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-500">
+                    <Sparkles className="w-3 h-3" />
+                    <span>核心转折点 (Turn Point)</span>
+                  </div>
                   <FieldExplainer
                     title="核心转折点 (Turn Point)"
                     what="打破原本预期、让局面突然反向或异化的意外变数（戏剧节拍）。"
@@ -1345,14 +1378,23 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                     position="right"
                   />
                 </div>
-                <p className="text-slate-300 mt-0.5 leading-relaxed">
+                <p className="mt-0.5 leading-relaxed font-literary-sans" style={{ color: 'var(--text-main)' }}>
                   {activeScene?.turnPoint || '暂未设定'}
                 </p>
               </div>
 
-              <div>
-                <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-400/80">
-                  <span>场景结果 (Outcome)</span>
+              <div
+                className="p-2.5 rounded-lg border space-y-1"
+                style={{
+                  backgroundColor: 'color-mix(in srgb, #10b981 4%, var(--bg-surface))',
+                  borderColor: 'color-mix(in srgb, #10b981 20%, var(--border-subtle))',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-500">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>场景结果 (Outcome)</span>
+                  </div>
                   <FieldExplainer
                     title="场景结果与后果 (Outcome)"
                     what="本幕对抗尘埃落定后的实质改变，直接成为下一幕的原因（因果闭环）。"
@@ -1361,7 +1403,7 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                     position="right"
                   />
                 </div>
-                <p className="text-slate-300 mt-0.5 leading-relaxed">
+                <p className="mt-0.5 leading-relaxed font-literary-sans" style={{ color: 'var(--text-main)' }}>
                   {activeScene?.outcome || '暂未设定'}
                 </p>
               </div>
@@ -1493,7 +1535,12 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                           {state.statusTags.map((tag, i) => (
                             <span
                               key={i}
-                              className="text-[9px] px-1.5 py-0.5 rounded bg-red-950/60 border border-red-800/40 text-red-300"
+                              className="text-[9px] px-1.5 py-0.5 rounded border font-medium"
+                              style={{
+                                backgroundColor: 'color-mix(in srgb, #ef4444 12%, var(--bg-surface))',
+                                borderColor: 'color-mix(in srgb, #ef4444 25%, var(--border-subtle))',
+                                color: '#ef4444',
+                              }}
                             >
                               {tag}
                             </span>
@@ -1502,7 +1549,7 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                       )}
 
                       {char.profile?.voiceAndTone && (
-                        <div className="text-[10px] text-slate-500 border-t border-slate-900 pt-1">
+                        <div className="text-[10px] pt-1.5 border-t" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}>
                           <span>
                             语气：{char.profile.voiceAndTone.slice(0, 24)}...
                           </span>
@@ -1516,9 +1563,9 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
           </div>
 
           {/* 4. 活跃伏笔关联 */}
-          <div className="border rounded-xl p-3 space-y-2" style={{ backgroundColor: 'var(--bg-canvas)', borderColor: 'var(--border-subtle)' }}>
+          <div className="border rounded-xl p-3 space-y-2" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}>
             <div className="flex items-center justify-between text-xs font-semibold" style={{ color: 'var(--text-main)' }}>
-              <span className="flex items-center gap-1.5 text-amber-400">
+              <span className="flex items-center gap-1.5 text-amber-500">
                 <Zap className="w-3.5 h-3.5" />
                 <span>本章待呼应伏笔</span>
               </span>
@@ -1539,16 +1586,16 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                 .map((f) => (
                   <div
                     key={f.id}
-                    className="border rounded p-2 text-xs space-y-0.5"
-                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)' }}
+                    className="border rounded-lg p-2 text-xs space-y-1"
+                    style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
                   >
-                    <div className="flex items-center justify-between text-[11px] font-medium text-amber-300">
-                      <span>{f.title}</span>
-                      <span className="text-[9px] text-slate-500">
+                    <div className="flex items-center justify-between text-[11px] font-medium" style={{ color: 'var(--text-main)' }}>
+                      <span className="truncate">{f.title}</span>
+                      <span className="text-[9px] shrink-0" style={{ color: 'var(--text-muted)' }}>
                         计划第 {f.plannedResolveChapterIndex || '?'} 章解开
                       </span>
                     </div>
-                    <p className="text-[10px] text-slate-400 leading-snug line-clamp-2">
+                    <p className="text-[10px] leading-snug line-clamp-2" style={{ color: 'var(--text-muted)' }}>
                       {f.clueDescription}
                     </p>
                   </div>
@@ -1653,7 +1700,12 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                               cand.replace(/^第\s*\d+\s*章\s*[:：]?\s*/, '').trim()
                             )
                           }
-                          className="px-2 py-1 bg-indigo-950/60 hover:bg-indigo-900 border border-indigo-800/40 text-indigo-200 rounded text-[11px] transition text-left cursor-pointer"
+                          className="px-2.5 py-1 rounded-lg border text-[11px] transition text-left cursor-pointer hover:opacity-85 shadow-2xs"
+                          style={{
+                            backgroundColor: 'var(--accent-surface)',
+                            borderColor: 'color-mix(in srgb, var(--accent-primary) 30%, var(--border-subtle))',
+                            color: 'var(--text-main)',
+                          }}
                         >
                           {cand}
                         </button>
@@ -2084,7 +2136,12 @@ export const ContextDrawer: React.FC<ContextDrawerProps> = ({
                           key={idx}
                           type="button"
                           onClick={() => setEditChapTitle(cleanCandidateTitle(cand))}
-                          className="px-2 py-1 bg-indigo-950/60 hover:bg-indigo-900 border border-indigo-800/40 text-indigo-200 rounded text-[11px] transition text-left cursor-pointer"
+                          className="px-2.5 py-1 rounded-lg border text-[11px] transition text-left cursor-pointer hover:opacity-85 shadow-2xs"
+                          style={{
+                            backgroundColor: 'var(--accent-surface)',
+                            borderColor: 'color-mix(in srgb, var(--accent-primary) 30%, var(--border-subtle))',
+                            color: 'var(--text-main)',
+                          }}
                         >
                           {cand}
                         </button>

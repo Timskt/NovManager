@@ -306,7 +306,12 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
                     <div className="flex items-center gap-2 text-[10px] px-1 pt-0.5">
                       <button
                         onClick={() => handleSendToPendingDraft(msg.content)}
-                        className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1 bg-indigo-950/40 hover:bg-indigo-950/80 px-2 py-0.5 rounded border border-indigo-800/40 transition"
+                        className="flex items-center gap-1 px-2 py-0.5 rounded border transition cursor-pointer hover:opacity-85 shadow-2xs font-medium"
+                        style={{
+                          backgroundColor: 'var(--accent-surface)',
+                          borderColor: 'color-mix(in srgb, var(--accent-primary) 35%, var(--border-subtle))',
+                          color: 'var(--accent-primary)',
+                        }}
                         title="送入编辑区进行Diff对比采纳"
                       >
                         <FileDiff className="w-3 h-3" />
@@ -551,38 +556,45 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
 
           {/* 2. 动态状态机跃迁提示 (State Machine Feedback) */}
           {suggestedStateUpdate && (
-            <div className="bg-amber-950/30 border border-amber-600/50 rounded-xl p-3.5 space-y-2 animate-in slide-in-from-top-2">
-              <div className="flex items-center gap-2 text-amber-300 text-xs font-semibold">
-                <Activity className="w-4 h-4 text-amber-400 animate-pulse" />
-                <span>检测到角色状态跃迁！</span>
+            <div
+              className="rounded-xl p-3.5 space-y-2.5 animate-in slide-in-from-top-2 border shadow-xs"
+              style={{
+                backgroundColor: 'color-mix(in srgb, #f59e0b 8%, var(--bg-card))',
+                borderColor: 'color-mix(in srgb, #f59e0b 30%, var(--border-subtle))',
+              }}
+            >
+              <div className="flex items-center gap-2 text-xs font-semibold">
+                <Activity className="w-4 h-4 text-amber-500 animate-pulse" />
+                <span style={{ color: 'var(--text-main)' }}>检测到角色状态跃迁！</span>
               </div>
-              <p className="text-xs text-amber-200/90 leading-relaxed">
-                正文激战完毕，建议同步将【{affectedChar?.name || '主角'}】的即时状态更新为：
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                正文推演完毕，建议同步将【{affectedChar?.name || '主角'}】的即时状态更新为：
               </p>
               <div
-                className="rounded p-2 text-[11px] space-y-1 border"
+                className="rounded-lg p-2.5 text-[11px] space-y-1.5 border"
                 style={{
-                  backgroundColor: 'var(--bg-card)',
+                  backgroundColor: 'var(--bg-surface)',
                   borderColor: 'var(--border-subtle)',
                   color: 'var(--text-main)',
                 }}
               >
-                <div>
-                  <span style={{ color: 'var(--text-muted)' }}>最新战力：</span>
-                  <span className="font-medium" style={{ color: 'var(--accent-primary)' }}>{suggestedStateUpdate.combatPower}</span>
+                <div className="flex items-center justify-between">
+                  <span style={{ color: 'var(--text-muted)' }}>最新战力</span>
+                  <span className="font-semibold" style={{ color: 'var(--accent-primary)' }}>{suggestedStateUpdate.combatPower}</span>
                 </div>
-                <div>
-                  <span style={{ color: 'var(--text-muted)' }}>所在地点：</span>
-                  <span style={{ color: 'var(--text-main)' }}>{suggestedStateUpdate.location}</span>
+                <div className="flex items-center justify-between">
+                  <span style={{ color: 'var(--text-muted)' }}>所在地点</span>
+                  <span className="font-medium" style={{ color: 'var(--text-main)' }}>{suggestedStateUpdate.location}</span>
                 </div>
-                <div>
-                  <span style={{ color: 'var(--text-muted)' }}>标签变动：</span>
-                  <span className="text-red-400">{suggestedStateUpdate.statusTags?.join('、')}</span>
+                <div className="flex items-center justify-between">
+                  <span style={{ color: 'var(--text-muted)' }}>状态变动</span>
+                  <span className="text-rose-500 font-medium">{suggestedStateUpdate.statusTags?.join('、')}</span>
                 </div>
               </div>
               <button
                 onClick={applySuggestedStateUpdate}
-                className="w-full py-1.5 px-3 bg-amber-600 hover:bg-amber-500 text-slate-950 font-semibold text-xs rounded-lg shadow-md transition flex items-center justify-center gap-1.5"
+                className="w-full py-2 px-3 text-white font-semibold text-xs rounded-lg shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer hover:opacity-90 active:scale-[0.99]"
+                style={{ backgroundColor: '#d97706' }}
               >
                 <UserCheck className="w-3.5 h-3.5" />
                 <span>一键同步更新人物状态机</span>
@@ -675,42 +687,56 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
               </span>
             </div>
 
-            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+            <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
               {inspectionIssues.length === 0 ? (
-                <div className="text-center py-5 text-slate-500 text-xs">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500/50 mx-auto mb-1" />
-                  <span>暂未发现战力崩坏或吃设定违规</span>
+                <div className="text-center py-6 text-xs space-y-1.5" style={{ color: 'var(--text-muted)' }}>
+                  <CheckCircle2 className="w-6 h-6 text-emerald-500/70 mx-auto" />
+                  <span className="font-medium">设定严谨，未发现逻辑冲突或战力崩坏</span>
                 </div>
               ) : (
                 inspectionIssues.map((issue) => (
                   <div
                     key={issue.id}
-                    className={`p-2.5 rounded-lg border text-xs space-y-1.5 ${
-                      issue.severity === 'CRITICAL'
-                        ? 'bg-red-950/30 border-red-800/50 text-red-200'
-                        : issue.severity === 'WARNING'
-                        ? 'bg-amber-950/30 border-amber-800/50 text-amber-200'
-                        : 'bg-indigo-950/30 border-indigo-800/50 text-indigo-200'
-                    }`}
+                    className="p-3 rounded-xl border text-xs space-y-2 shadow-2xs"
+                    style={{
+                      backgroundColor:
+                        issue.severity === 'CRITICAL'
+                          ? 'color-mix(in srgb, #ef4444 6%, var(--bg-card))'
+                          : issue.severity === 'WARNING'
+                          ? 'color-mix(in srgb, #f59e0b 6%, var(--bg-card))'
+                          : 'color-mix(in srgb, var(--accent-primary) 6%, var(--bg-card))',
+                      borderColor:
+                        issue.severity === 'CRITICAL'
+                          ? 'color-mix(in srgb, #ef4444 26%, var(--border-subtle))'
+                          : issue.severity === 'WARNING'
+                          ? 'color-mix(in srgb, #f59e0b 26%, var(--border-subtle))'
+                          : 'color-mix(in srgb, var(--accent-primary) 26%, var(--border-subtle))',
+                    }}
                   >
                     <div className="flex items-center justify-between font-semibold">
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
                         {issue.severity === 'CRITICAL' ? (
-                          <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+                          <ShieldAlert className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                         ) : issue.severity === 'WARNING' ? (
-                          <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                          <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                         ) : (
-                          <Lightbulb className="w-3.5 h-3.5 text-indigo-400" />
+                          <Lightbulb className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
                         )}
-                        <span className="uppercase text-[10px] tracking-wider">
+                        <span className="text-xs tracking-tight">
                           {issue.issueType}
                         </span>
                       </span>
                       <span
-                        className="text-[9px] px-1.5 py-0.2 rounded border"
+                        className="text-[9px] px-1.5 py-0.5 rounded font-mono font-medium border"
                         style={{
                           backgroundColor: 'var(--bg-surface)',
                           borderColor: 'var(--border-subtle)',
+                          color:
+                            issue.severity === 'CRITICAL'
+                              ? '#ef4444'
+                              : issue.severity === 'WARNING'
+                              ? '#f59e0b'
+                              : 'var(--accent-primary)',
                         }}
                       >
                         {issue.severity}
@@ -718,22 +744,32 @@ export const AgentDock: React.FC<AgentDockProps> = ({ isMobile }) => {
                     </div>
 
                     <div
-                      className="p-1.5 rounded text-[11px] font-mono border"
+                      className="p-2 rounded-lg text-[11px] font-mono border"
                       style={{
-                        backgroundColor: 'var(--bg-card)',
+                        backgroundColor: 'var(--bg-surface)',
                         borderColor: 'var(--border-subtle)',
                         color: 'var(--text-main)',
                       }}
                     >
-                      <span style={{ color: 'var(--text-muted)' }}>触碰点：</span>"{issue.locationSnippet}"
+                      <span style={{ color: 'var(--text-muted)' }}>违规切片：</span>"{issue.locationSnippet}"
                     </div>
 
-                    <p className="text-[11px] leading-relaxed opacity-90">
+                    <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                       {issue.explanation}
                     </p>
 
-                    <div className="text-[11px] text-emerald-400 bg-emerald-950/30 p-1.5 rounded border border-emerald-900/30">
-                      <span className="font-semibold">建议：</span>{issue.fixAdvice}
+                    <div
+                      className="text-[11px] p-2 rounded-lg border flex items-start gap-1.5 leading-relaxed"
+                      style={{
+                        backgroundColor: 'color-mix(in srgb, #10b981 10%, var(--bg-surface))',
+                        borderColor: 'color-mix(in srgb, #10b981 25%, var(--border-subtle))',
+                      }}
+                    >
+                      <Lightbulb className="w-3.5 h-3.5 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+                      <div>
+                        <span className="font-semibold text-emerald-700 dark:text-emerald-400">自愈建议：</span>
+                        <span style={{ color: 'var(--text-main)' }}>{issue.fixAdvice}</span>
+                      </div>
                     </div>
                   </div>
                 ))
