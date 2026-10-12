@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <defs>
+    <linearGradient id="inkverse-bg" x1="120" y1="36" x2="392" y2="476" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#212433" />
+      <stop offset="55%" stop-color="#12151F" />
+      <stop offset="100%" stop-color="#0A0C14" />
+    </linearGradient>
+    <radialGradient id="warm-glow" cx="155" cy="142" r="240" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#EB7A29" stop-opacity="0.26" />
+      <stop offset="100%" stop-color="#EB7A29" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="cyan-glow" cx="360" cy="362" r="230" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#29B8E6" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#29B8E6" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="left-wing" x1="104" y1="180" x2="242" y2="376" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FCBC42" />
+      <stop offset="100%" stop-color="#D95C1F" />
+    </linearGradient>
+    <linearGradient id="right-wing" x1="408" y1="180" x2="270" y2="376" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3DD6F2" />
+      <stop offset="100%" stop-color="#5C66F0" />
+    </linearGradient>
+    <linearGradient id="nib-left" x1="256" y1="88" x2="180" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFF0BD" />
+      <stop offset="55%" stop-color="#F7A333" />
+      <stop offset="100%" stop-color="#CC471F" />
+    </linearGradient>
+    <linearGradient id="nib-right" x1="256" y1="88" x2="332" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F2D68C" />
+      <stop offset="55%" stop-color="#D67026" />
+      <stop offset="100%" stop-color="#94301F" />
+    </linearGradient>
+    <linearGradient id="cinnabar-seal" x1="212" y1="342" x2="300" y2="430" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E3302B" />
+      <stop offset="100%" stop-color="#A31414" />
+    </linearGradient>
+    <filter id="drop-shadow" x="0" y="0" width="512" height="512" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#000000" flood-opacity="0.48" />
+    </filter>
+  </defs>
+
+  <rect x="36" y="36" width="440" height="440" rx="104" fill="url(#inkverse-bg)" filter="url(#drop-shadow)" />
+  <rect x="36" y="36" width="440" height="440" rx="104" fill="url(#warm-glow)" />
+  <rect x="36" y="36" width="440" height="440" rx="104" fill="url(#cyan-glow)" />
+
+  <rect x="64" y="64" width="384" height="384" rx="80" stroke="#F5C77A" stroke-opacity="0.09" stroke-width="1.5" />
+  <rect x="36" y="36" width="440" height="440" rx="104" stroke="#F5C273" stroke-opacity="0.32" stroke-width="2.5" />
+
+  <path d="M242 376 L104 316 L122 180 L242 238 Z" fill="url(#left-wing)" />
+  <path d="M270 376 L408 316 L390 180 L270 238 Z" fill="url(#right-wing)" />
+
+  <path d="M256 88 L164 232 L202 360 L256 326 Z" fill="url(#nib-left)" />
+  <path d="M256 88 L348 232 L310 360 L256 326 Z" fill="url(#nib-right)" />
+
+  <line x1="256" y1="96" x2="256" y2="230" stroke="#0F111A" stroke-width="6.5" stroke-linecap="round" />
+  <polygon points="256,214 234,240 256,266 278,240" fill="#0F111A" stroke="#FFE094" stroke-width="2.5" />
+
+  <rect x="212" y="342" width="88" height="88" rx="20" fill="url(#cinnabar-seal)" stroke="#FFE0A3" stroke-width="2.5" />
+  <rect x="221" y="351" width="70" height="70" rx="12" stroke="#FFEBCC" stroke-opacity="0.45" stroke-width="1.5" />
+
+  <rect x="236" y="363" width="40" height="22" rx="4" stroke="#FFF2DB" stroke-width="3.8" />
+  <line x1="236" y1="374" x2="276" y2="374" stroke="#FFF2DB" stroke-width="3.8" stroke-linecap="round" />
+  <line x1="256" y1="363" x2="256" y2="409" stroke="#FFF2DB" stroke-width="3.8" stroke-linecap="round" />
+  <line x1="240" y1="397" x2="272" y2="397" stroke="#FFF2DB" stroke-width="3.8" stroke-linecap="round" />
+  <line x1="233" y1="409" x2="279" y2="409" stroke="#FFF2DB" stroke-width="3.8" stroke-linecap="round" />
+</svg>

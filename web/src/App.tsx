@@ -7,6 +7,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { NovelProvider, useNovel } from './context/NovelContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { BrandProvider } from './components/BrandLogo';
 import { Header, NavTab, DOMAIN_GROUPS, getNavItemMeta } from './components/Header';
 import { WorkspaceTabBar, WORKSPACE_PRESETS } from './components/common/WorkspaceTabBar';
 import { CrossViewTeleportPayload, WorkspacePresetId } from './types/novel';
@@ -379,9 +380,11 @@ const AppContent: React.FC = () => {
 export function App() {
   return (
     <ThemeProvider>
-      <NovelProvider>
-        <AppContent />
-      </NovelProvider>
+      <BrandProvider>
+        <NovelProvider>
+          <AppContent />
+        </NovelProvider>
+      </BrandProvider>
     </ThemeProvider>
   );
 }

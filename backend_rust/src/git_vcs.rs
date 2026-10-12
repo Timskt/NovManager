@@ -59,8 +59,8 @@ impl GitVcsManager {
         if !ok {
             info!("Initializing Git repo at {:?}", self.repo_dir);
             self.run_git(&["init"]);
-            self.run_git(&["config", "user.name", "NovManager Bot"]);
-            self.run_git(&["config", "user.email", "bot@novmanager.local"]);
+            self.run_git(&["config", "user.name", "Timskt (墨枢 InkVerse)"]);
+            self.run_git(&["config", "user.email", "1149177967@qq.com"]);
         }
     }
 

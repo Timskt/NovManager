@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { useNovel } from '../../context/NovelContext';
 import { NavTab } from '../Header';
+import { BrandLogo, BrandSealBadge, useBrand } from '../BrandLogo';
 import {
   Library,
   BookOpen,
@@ -23,6 +24,7 @@ import {
   Copy,
   FolderPlus,
   BarChart3,
+  Award,
 } from 'lucide-react';
 
 interface LibraryViewProps {
@@ -39,6 +41,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ onNavigateTab }) => {
     exportProjectJson,
     importProjectJson,
   } = useNovel();
+  const { brand, setIsBrandModalOpen } = useBrand();
 
   const [showCreateBlank, setShowCreateBlank] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -98,26 +101,41 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ onNavigateTab }) => {
       style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-main)' }}
     >
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* 顶部横幅概览 */}
+        {/* 顶部专属品牌横幅概览 */}
         <div
           className="relative overflow-hidden rounded-2xl border p-6 sm:p-8 shadow-sm"
           style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
         >
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 font-medium text-xs tracking-wider uppercase" style={{ color: 'var(--accent-primary)' }}>
-                <Library className="w-4 h-4" />
-                <span>作品库中心 / Novel Studio Hub</span>
+            <div className="space-y-2.5">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <BrandLogo size={46} />
+                <div>
+                  <div
+                    className="flex items-center gap-2 font-bold text-xs tracking-wider uppercase"
+                    style={{ color: 'var(--accent-primary)' }}
+                  >
+                    <Library className="w-3.5 h-3.5" />
+                    <span>{brand.brandSubtitle}</span>
+                    <BrandSealBadge />
+                  </div>
+                  <h2
+                    className="text-2xl sm:text-3xl font-extrabold tracking-tight font-literary-serif mt-0.5"
+                    style={{ color: 'var(--text-main)' }}
+                  >
+                    {brand.brandName} · 藏书阁与长篇企划总枢
+                  </h2>
+                </div>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>
-                我的小说作品书架
-              </h2>
-              <p className="text-xs sm:text-sm max-w-2xl leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                管理您的所有长篇企划。每部小说拥有独立隔绝的世界观法则、人物卡与动态状态机、卷章大纲与伏笔线索。
+              <p
+                className="text-xs sm:text-sm max-w-2xl leading-relaxed"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                {brand.brandSlogan}。每部作品均具备独立隔绝的世界观法则、L1-L4 防幻觉记忆锁、多模型接力路由与静默 Git 链上存证。
               </p>
 
-              {/* 统计指标 */}
-              <div className="flex flex-wrap items-center gap-4 pt-2 text-xs">
+              {/* 统计指标 + 品牌定制入口 */}
+              <div className="flex flex-wrap items-center gap-3 pt-2 text-xs">
                 <div
                   className="flex items-center gap-1.5 px-3 py-1 rounded-lg border"
                   style={{
@@ -127,8 +145,18 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ onNavigateTab }) => {
                   }}
                 >
                   <BookOpen className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
-                  <span>已入库作品：<strong>{novelList.length}</strong> 部</span>
+                  <span>
+                    已入库作品：<strong>{novelList.length}</strong> 部
+                  </span>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setIsBrandModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-semibold transition cursor-pointer"
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  <span>定制个人品牌 VI 与朱砂印 ({brand.brandAuthor})</span>
+                </button>
                 <div
                   className="flex items-center gap-1.5 px-3 py-1 rounded-lg border"
                   style={{

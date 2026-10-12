@@ -1,7 +1,10 @@
 [package]
 name = "nov-server"
-version = "0.1.0"
+version = "2.0.0"
 edition = "2024"
+authors = ["Timskt <1149177967@qq.com>"]
+description = "墨枢 · InkVerse (By Timskt) — High-Performance Rust Literary Creation & Multi-Agent Engine"
+repository = "https://github.com/Timskt/NovManager"
 
 [dependencies]
 axum = "0.8"

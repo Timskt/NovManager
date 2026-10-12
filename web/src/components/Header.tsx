@@ -7,6 +7,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNovel } from '../context/NovelContext';
 import { useTheme, AppTheme, FontFamily } from '../context/ThemeContext';
+import { BrandLogo, BrandSealBadge, useBrand } from './BrandLogo';
 import {
   BookOpen,
   Sparkles,
@@ -459,6 +460,8 @@ export const Header: React.FC<HeaderProps> = ({
   const currentThemeObj =
     themes.find((t) => t.key === themeSettings.theme) || themes[0];
 
+  const { brand, setIsBrandModalOpen } = useBrand();
+
   const progressPercent = Math.min(
     100,
     Math.round((novel.currentWordCount / (novel.targetWordCount || 1)) * 100)
@@ -476,19 +479,19 @@ export const Header: React.FC<HeaderProps> = ({
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
         {/* ====================================================================
-            1. 左侧：文人印章 Logo 与书名信息
+            1. 左侧：专属品牌几何徽标 + 朱砂文人印章 + 作品与主理人信息
         ==================================================================== */}
         <div className="flex items-center gap-3 shrink-0">
           <div
             onClick={() => setActiveTab('LIBRARY')}
-            className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition transform hover:scale-105 shadow-sm"
-            style={{
-              backgroundColor: 'var(--accent-primary)',
-              color: '#ffffff',
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setIsBrandModalOpen(true);
             }}
-            title="点击切换小说或查看作品库"
+            className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition transform hover:scale-105 shadow-md"
+            title="左键返回【作品库】 | 右键或点击右侧印章打开【品牌视觉 VI 定制中心】"
           >
-            <BookOpen className="w-5 h-5" />
+            <BrandLogo size={38} />
           </div>
 
           <div>
@@ -496,18 +499,24 @@ export const Header: React.FC<HeaderProps> = ({
               <h1
                 onClick={() => setActiveTab('LIBRARY')}
                 className="text-base font-bold tracking-wide cursor-pointer font-literary-serif hover:opacity-80 transition"
+                title="点击查看作品库与品牌工作台"
               >
-                NovManager
+                {brand.brandName}
               </h1>
-              <span
-                className="text-xs px-2 py-0.5 rounded-md font-literary-sans font-medium"
+              <BrandSealBadge />
+              <button
+                type="button"
+                onClick={() => setIsBrandModalOpen(true)}
+                className="hidden sm:inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-mono font-bold tracking-wider transition hover:opacity-90 cursor-pointer border"
                 style={{
                   backgroundColor: 'var(--bg-card)',
+                  borderColor: 'var(--border-subtle)',
                   color: 'var(--accent-primary)',
                 }}
+                title="点击定制您的专属品牌 Logo、朱砂印章、Slogan 与版权署名"
               >
-                {novel.genre || '仙侠修真'}
-              </span>
+                <span>BY {brand.brandAuthor.toUpperCase()}</span>
+              </button>
             </div>
 
             <p

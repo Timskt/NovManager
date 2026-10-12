@@ -1,20 +1,28 @@
 {
-  "name": "nov-manager",
-  "version": "0.1.0",
+  "name": "inkverse-studio",
+  "productName": "墨枢 · InkVerse",
+  "version": "2.0.0",
   "private": true,
-  "description": "AI 辅助小说结构化管理与 Multi-Agent 协同创作平台",
+  "description": "墨枢 · InkVerse (By Timskt) — 原创长篇文学智能体造物矩阵与防幻觉巡航工作台",
+  "author": "Timskt <1149177967@qq.com>",
+  "homepage": "https://github.com/Timskt/NovManager",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Timskt/NovManager.git"
+  },
   "scripts": {
     "dev": "pnpm --prefix web dev",
     "build": "pnpm --prefix web build",
-    "preview": "pnpm --prefix web preview"
+    "preview": "pnpm --prefix web preview",
+    "logo:gen": "swift scripts/generate_brand_assets.swift web/public/logo.png docs/images/logo.png web/public/icon-512.png"
   },
   "keywords": [
-    "novel-management",
-    "agent",
+    "inkverse",
+    "timskt",
+    "novel-studio",
+    "multi-agent",
     "mcp",
-    "langgraph",
-    "writing-assistant"
+    "literary-workstation"
   ],
-  "author": "",
   "license": "MIT"
 }

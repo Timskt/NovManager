@@ -1,7 +1,7 @@
 {
-  "name": "NovManager - AI 辅助小说创作",
-  "short_name": "NovManager",
-  "description": "全流程结构化小说管理与智能体协同创作工作台",
+  "name": "墨枢 · InkVerse (By Timskt) — 长篇文学智能体造物矩阵",
+  "short_name": "墨枢 InkVerse",
+  "description": "执墨为枢，万界成书 —— Timskt 原创长篇文学智能体协同创作与 L1-L4 零幻觉巡航工作台",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0b0f19",
@@ -10,8 +10,20 @@
   "icons": [
     {
       "src": "/favicon.svg",
-      "sizes": "192x192 512x512",
+      "sizes": "any",
       "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

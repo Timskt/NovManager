@@ -5,6 +5,7 @@
 
 import React, { useState } from 'react';
 import { useNovel } from '../../context/NovelContext';
+import { useBrand } from '../BrandLogo';
 import { FileDown, Copy, Check, X, BookOpen, FileText, Download } from 'lucide-react';
 
 interface PublishingStudioModalProps {
@@ -14,6 +15,7 @@ interface PublishingStudioModalProps {
 
 export const PublishingStudioModal: React.FC<PublishingStudioModalProps> = ({ isOpen, onClose }) => {
   const { novel, volumes } = useNovel();
+  const { brand } = useBrand();
   const [selectedFormat, setSelectedFormat] = useState<'txt' | 'markdown' | 'summary'>('txt');
   const [copied, setCopied] = useState(false);
 
@@ -25,6 +27,8 @@ export const PublishingStudioModal: React.FC<PublishingStudioModalProps> = ({ is
     if (selectedFormat === 'txt') {
       output += `书名：《${novel.title}》\n`;
       if (novel.subtitle) output += `副标题：${novel.subtitle}\n`;
+      output += `作者 / 品牌主理人：${brand.brandAuthor} (「${brand.sealText}」藏书印)\n`;
+      output += `出品平台：${brand.brandName} (${brand.brandSubtitle})\n`;
       output += `题材：${novel.genre}\n`;
       output += `视角：${novel.defaultPov}\n`;
       output += `----------------------------------------\n\n`;
@@ -51,9 +55,12 @@ export const PublishingStudioModal: React.FC<PublishingStudioModalProps> = ({ is
           output += '\n';
         });
       });
+      if (brand.exportWatermark) {
+        output += `----------------------------------------\n${brand.exportWatermark}\n`;
+      }
     } else if (selectedFormat === 'markdown') {
       output += `# ${novel.title}\n\n`;
-      output += `> 题材：${novel.genre} | 视角：${novel.defaultPov}\n\n---\n\n`;
+      output += `> **作者**：${brand.brandAuthor} (「${brand.sealText}」印) | **出品**：${brand.brandName} | **题材**：${novel.genre} | **视角**：${novel.defaultPov}\n\n---\n\n`;
 
       volumes.forEach((v) => {
         output += `## ${v.title}\n\n`;
@@ -67,9 +74,13 @@ export const PublishingStudioModal: React.FC<PublishingStudioModalProps> = ({ is
           });
         });
       });
+      if (brand.exportWatermark) {
+        output += `\n---\n> ${brand.exportWatermark}\n`;
+      }
     } else {
       // 全书大纲与设定白皮书
       output += `# 《${novel.title}》创世设定与架构全书白皮书\n\n`;
+      output += `> 品牌出品：**${brand.brandName}** · 主理人：**${brand.brandAuthor}** (「${brand.sealText}」印)\n\n`;
       output += `## 核心文风指南\n`;
       output += `- 基调：${novel.styleGuide?.tone || '严谨'}\n`;
       output += `- 节奏：${novel.styleGuide?.pacing || '紧凑'}\n`;
@@ -85,10 +96,13 @@ export const PublishingStudioModal: React.FC<PublishingStudioModalProps> = ({ is
         });
         output += '\n';
       });
+      if (brand.exportWatermark) {
+        output += `\n---\n> ${brand.exportWatermark}\n`;
+      }
     }
 
     return output;
-  }, [novel, volumes, selectedFormat]);
+  }, [novel, volumes, selectedFormat, brand]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(compiledText);

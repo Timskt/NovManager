@@ -243,7 +243,7 @@ impl AnalyticsCalculator {
     }
 
     pub fn typeset_novel(novel_title: &str, volumes: &[Volume], format: &str) -> Value {
-        let author = "NovManager Author";
+        let author = "Timskt · 墨枢 InkVerse";
         let mut chapters_output = Vec::new();
         let mut total_words = 0;
 

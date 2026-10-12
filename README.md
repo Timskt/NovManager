@@ -1,29 +1,33 @@
-# NovManager - 文人工作台与超高性能小说创作管理系统
+<p align="center">
+  <img src="docs/images/logo.png" alt="墨枢 · InkVerse Logo (By Timskt)" width="116" height="116" />
+</p>
+
+<h1 align="center">墨枢 · InkVerse (By Timskt)</h1>
 
 <p align="center">
-  <img src="web/public/seal-logo.svg" alt="NovManager 印章 Logo" width="96" height="96" />
+  <b>执墨为枢，万界成书 —— Timskt 原创长篇文学智能体造物矩阵与 L1-L4 零幻觉巡航工作台</b>
 </p>
 
 <p align="center">
-  <b>面向长篇网络小说、经典文学与宏大叙事的文人审美创作工作台与自主进化系统</b>
-</p>
-
-<p align="center">
-  <a href="#"><img src="https://img.shields.io/badge/前端审美-纯正文人工作台-b25d25?style=flat-square" alt="文人审美" /></a>
+  <a href="https://github.com/Timskt"><img src="https://img.shields.io/badge/Brand_Owner-Timskt-dc2626?style=flat-square" alt="Brand Owner Timskt" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/前端审美-墨枢东方文人工作台-b25d25?style=flat-square" alt="文人审美" /></a>
   <a href="#"><img src="https://img.shields.io/badge/后端底座-Rust_Axum_+_Python双引擎-dea584?logo=rust&style=flat-square" alt="Rust 后端" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/防幻觉记忆-L1~L4四级漏斗脱水-10b981?style=flat-square" alt="L1-L4 防幻觉" /></a>
   <a href="#"><img src="https://img.shields.io/badge/版本控制-静默_Git_SoT-f05032?logo=git&style=flat-square" alt="Git SoT" /></a>
   <a href="#"><img src="https://img.shields.io/badge/存储底座-SQLite_WAL_+_PostgreSQL-003B57?logo=sqlite&style=flat-square" alt="SQLite WAL" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/核心机制-自我迭代反思闭环-4a6b58?style=flat-square" alt="自我迭代" /></a>
   <a href="#"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="MIT License" /></a>
 </p>
 
 ---
 
-## 📖 重新定义 AI 创作：告别“AI 廉价感”，回归文人风骨
+## 🏛️ 品牌起源与核心哲学：墨枢 · InkVerse (Crafted by Timskt)
 
 市面上绝大多数 AI 写作工具充满浓烈的“AI 工业模板味”——暗黑紫饱和度渐变、高对比度霓虹按钮、生硬机械的 Prompt 调试框，充斥着冷冰冰的代码与生成片段感。
 
-**NovManager** 进行了**彻底的美学与架构重构**，将创作者从生硬的提示词拼接中解放出来，置身于如同文人书斋般雅致、沉浸、纯净的创作心流工作台。
+由 **Timskt** 独立设计与架构的旗舰级文学造物品牌 **「墨枢 · InkVerse」**，将现代多智能体工程（Multi-Model Relay、L1-L4 四级记忆脱水与事实锁、跨书技能资产库、整小时全自动巡航）与东方文人书斋审美（古意宣纸、黑曜冷萃、秘色青釉、北欧素雅、朱砂藏书印）融为一体。
+
+- **品牌标识 (Origami Quill Prism & Cinnabar Seal)**：左侧鎏金书卷象征传统文学底蕴，右侧天青矩阵象征多模型协同演化，中央拔地而起的鎏金钢笔尖棱镜与底部小篆朱砂藏书印（`「墨枢」印`），代表创作者对百万字宏大宇宙的绝对掌控权。
+- **内置品牌视觉 VI 定制中心 (`BrandLogo.tsx`)**：点击顶部导航栏的 `「墨枢」印` 或 `BY TIMSKT` 徽章，即可随时切换 4 套旗舰品牌预设、3 种几何徽标形态，或自定义您的专属藏书印篆字与出版防伪尾注。
 
 ### 🎨 典雅人文美学四大设计主题
 - 📜 **古意宣纸 (Ink Paper)**：暖玉温润，墨韵入纸。专为长久凝神创作调校的暖米色底调，朱砂印章点缀，彻底告别视觉疲劳。
@@ -282,14 +286,22 @@ NovManager/
 │   │   │   ├── evolution/SelfIterationView.tsx   # 自我迭代雷达面板
 │   │   │   ├── characters/CharacterRelationGraph.tsx # 人物关系网
 │   │   │   └── timeline/TimelineMatrixView.tsx   # 时空泳道矩阵
-│   │   └── App.tsx           # 主工作台容器
-│   └── public/seal-logo.svg  # 文人朱砂印章标识
+│   │   └── App.tsx           # 主工作台容器 (搭载 BrandProvider 全局品牌引擎)
+│   └── public/
+│       ├── logo.png          # 1024x1024 True 32-bit RGBA (ColorType 6) 原生品牌图标
+│       ├── AppIcon.icns      # macOS 多分辨率原生应用图标包
+│       ├── favicon.svg       # 墨枢 · InkVerse 矢量几何金尖朱砂印徽标
+│       └── seal-logo.svg     # 高清矢量品牌印章
 └── scripts/
+    ├── generate_brand_assets.swift # 原生 Swift + CoreGraphics 零白边品牌图标渲染管线
     ├── start_rust.sh         # Rust 原生全栈一键启动
     └── start_all.sh          # Python 全栈一键启动
 ```
 
 ---
 
-## 📄 开源许可证
-本项目遵循 [MIT License](LICENSE) 协议。
+## 🖋️ 品牌归属与开源许可证 (Brand & License)
+- **品牌名称**：墨枢 · InkVerse (`InkVerse Studio`)
+- **品牌主理人 / 创作者**：[**Timskt**](https://github.com/Timskt)
+- **开源协议**：本项目遵循 [MIT License](LICENSE) 协议。Copyright © 2026 **Timskt**. All Rights Reserved.
+
