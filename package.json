@@ -3,7 +3,7 @@
   "productName": "墨枢 · InkVerse",
   "version": "2.0.0",
   "private": true,
-  "description": "墨枢 · InkVerse (By Timskt) — 原创长篇文学智能体造物矩阵与防幻觉巡航工作台",
+  "description": "墨枢 · InkVerse (By Timskt) — 原创长篇文学智能体造物矩阵与防幻觉巡航工作台 (Rust 2.0 + React 19)",
   "author": "Timskt <1149177967@qq.com>",
   "homepage": "https://github.com/Timskt/NovManager",
   "repository": {
@@ -12,21 +12,24 @@
   },
   "scripts": {
     "dev": "pnpm --prefix web dev",
-    "build": "pnpm --prefix web build",
+    "dev:backend": "cargo run --manifest-path backend_rust/Cargo.toml",
+    "build": "pnpm --prefix web build && cargo build --release --manifest-path backend_rust/Cargo.toml",
+    "build:web": "pnpm --prefix web build",
+    "build:rust": "cargo build --release --manifest-path backend_rust/Cargo.toml",
+    "test": "cargo test --manifest-path backend_rust/Cargo.toml",
     "preview": "pnpm --prefix web preview",
     "logo:gen": "swift scripts/generate_brand_assets.swift web/public/logo.png docs/images/logo.png web/public/icon-512.png",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up -d --build",
     "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f",
-    "docker:full": "docker compose --profile full up -d --build"
+    "docker:logs": "docker compose logs -f"
   },
   "keywords": [
     "inkverse",
     "timskt",
+    "rust-axum",
     "novel-studio",
     "multi-agent",
-    "mcp",
     "literary-workstation"
   ],
   "license": "MIT"

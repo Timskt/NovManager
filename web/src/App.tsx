@@ -1,58 +1,172 @@
 // ==============================================================================
-// NovManager 前端主应用入口 (App Master Component)
-// 搭载人文文学主题引擎、URL Hash 深度路由、多标签工作区导航栏、
-// 四级记忆与防幻觉中枢、全局穿梭 Omnibar 与全链路跨视图跳转体系
+// 墨枢 · InkVerse 前端主应用入口 (App Master Component)
+// 软件工程化架构版：
+// 1. 路由元数据解耦至 src/config/navigation.tsx (SSOT)
+// 2. 采用 React.lazy + Suspense 域级按需代码分割 (Route Code-Splitting)，杜绝单包臃肿
+// 3. 精简默认固定标签栈 (5 个高频核心工坊)，消除横向挤压与原生滚动条
 // ==============================================================================
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { NovelProvider, useNovel } from './context/NovelContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { BrandProvider } from './components/BrandLogo';
 import { Header, NavTab, DOMAIN_GROUPS, getNavItemMeta } from './components/Header';
 import { WorkspaceTabBar, WORKSPACE_PRESETS } from './components/common/WorkspaceTabBar';
 import { CrossViewTeleportPayload, WorkspacePresetId } from './types/novel';
-import { LibraryView } from './components/library/LibraryView';
-import { ArchitectView } from './components/architect/ArchitectView';
-import { StudioView } from './components/studio/StudioView';
-import { CharacterView } from './components/characters/CharacterView';
-import { CharacterRelationGraph } from './components/characters/CharacterRelationGraph';
-import { TimelineMatrixView } from './components/timeline/TimelineMatrixView';
-import { TensionCurveView } from './components/analytics/TensionCurveView';
-import { ForeshadowingRadar } from './components/foreshadowing/ForeshadowingRadar';
-import { WorldMapView } from './components/lore/WorldMapView';
-import { WhatIfSandboxView } from './components/sandbox/WhatIfSandboxView';
-import { SelfIterationView } from './components/evolution/SelfIterationView';
-import { ProductivityHeatmap } from './components/analytics/ProductivityHeatmap';
-import { GoldenThreeChaptersClinic } from './components/analytics/GoldenThreeChaptersClinic';
-import { WorkflowPluginHub } from './components/plugins/WorkflowPluginHub';
-import { LoreView } from './components/lore/LoreView';
-import { McpInspectorView } from './components/mcp/McpInspectorView';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { CommandPalette } from './components/common/CommandPalette';
 import { ZenFocusModal } from './components/studio/ZenFocusModal';
 import { PublishingStudioModal } from './components/export/PublishingStudioModal';
-import { VideoStoryboardStudio } from './components/video/VideoStoryboardStudio';
-import { WorkflowOrchestratorView } from './components/workflow/WorkflowOrchestratorView';
-import { ProgressPulseView } from './components/narrative/ProgressPulseView';
-import { DungeonArcTrajectoryView } from './components/narrative/DungeonArcTrajectoryView';
 import { GodsEyeViewModal } from './components/narrative/GodsEyeViewModal';
 import { InSceneCharactersDrawer } from './components/narrative/InSceneCharactersDrawer';
-import { ModelHubView } from './components/models/ModelHubView';
-import { StyleDnaStudioView } from './components/style/StyleDnaStudioView';
-import { GenesisView } from './components/genesis/GenesisView';
-import { GodsEyeSandboxView } from './components/sandbox/GodsEyeSandboxView';
-import { AutopilotCockpitView } from './components/autopilot/AutopilotCockpitView';
-import { SparkAndReaderHubView } from './components/sparks/SparkAndReaderHubView';
-import { CentralSkillVaultView } from './components/skills/CentralSkillVaultView';
 import { FloatingSparkCapsule } from './components/sparks/FloatingSparkCapsule';
-import { MemoryTokenAntiHallucinationView } from './components/memory/MemoryTokenAntiHallucinationView';
-import { MultiAgentDebateStudioView } from './components/swarm/MultiAgentDebateStudioView';
-import { MultimodalContextStudioView } from './components/multimodal/MultimodalContextStudioView';
 import { FriendlyInteractionHubModal } from './components/common/FriendlyInteractionHub';
 
+// 按需懒加载专业域工作台 (Domain-Level Lazy Chunks)
+const LibraryView = lazy(() =>
+  import('./components/library/LibraryView').then((m) => ({ default: m.LibraryView }))
+);
+const StudioView = lazy(() =>
+  import('./components/studio/StudioView').then((m) => ({ default: m.StudioView }))
+);
+const ArchitectView = lazy(() =>
+  import('./components/architect/ArchitectView').then((m) => ({ default: m.ArchitectView }))
+);
+const MultiAgentDebateStudioView = lazy(() =>
+  import('./components/swarm/MultiAgentDebateStudioView').then((m) => ({
+    default: m.MultiAgentDebateStudioView,
+  }))
+);
+const MultimodalContextStudioView = lazy(() =>
+  import('./components/multimodal/MultimodalContextStudioView').then((m) => ({
+    default: m.MultimodalContextStudioView,
+  }))
+);
+const AutopilotCockpitView = lazy(() =>
+  import('./components/autopilot/AutopilotCockpitView').then((m) => ({
+    default: m.AutopilotCockpitView,
+  }))
+);
+const SparkAndReaderHubView = lazy(() =>
+  import('./components/sparks/SparkAndReaderHubView').then((m) => ({
+    default: m.SparkAndReaderHubView,
+  }))
+);
+const CentralSkillVaultView = lazy(() =>
+  import('./components/skills/CentralSkillVaultView').then((m) => ({
+    default: m.CentralSkillVaultView,
+  }))
+);
+const MemoryTokenAntiHallucinationView = lazy(() =>
+  import('./components/memory/MemoryTokenAntiHallucinationView').then((m) => ({
+    default: m.MemoryTokenAntiHallucinationView,
+  }))
+);
+const GenesisView = lazy(() =>
+  import('./components/genesis/GenesisView').then((m) => ({ default: m.GenesisView }))
+);
+const StyleDnaStudioView = lazy(() =>
+  import('./components/style/StyleDnaStudioView').then((m) => ({
+    default: m.StyleDnaStudioView,
+  }))
+);
+const ModelHubView = lazy(() =>
+  import('./components/models/ModelHubView').then((m) => ({ default: m.ModelHubView }))
+);
+const GodsEyeSandboxView = lazy(() =>
+  import('./components/sandbox/GodsEyeSandboxView').then((m) => ({
+    default: m.GodsEyeSandboxView,
+  }))
+);
+const VideoStoryboardStudio = lazy(() =>
+  import('./components/video/VideoStoryboardStudio').then((m) => ({
+    default: m.VideoStoryboardStudio,
+  }))
+);
+const WorkflowOrchestratorView = lazy(() =>
+  import('./components/workflow/WorkflowOrchestratorView').then((m) => ({
+    default: m.WorkflowOrchestratorView,
+  }))
+);
+const ProgressPulseView = lazy(() =>
+  import('./components/narrative/ProgressPulseView').then((m) => ({
+    default: m.ProgressPulseView,
+  }))
+);
+const DungeonArcTrajectoryView = lazy(() =>
+  import('./components/narrative/DungeonArcTrajectoryView').then((m) => ({
+    default: m.DungeonArcTrajectoryView,
+  }))
+);
+const CharacterView = lazy(() =>
+  import('./components/characters/CharacterView').then((m) => ({
+    default: m.CharacterView,
+  }))
+);
+const CharacterRelationGraph = lazy(() =>
+  import('./components/characters/CharacterRelationGraph').then((m) => ({
+    default: m.CharacterRelationGraph,
+  }))
+);
+const TimelineMatrixView = lazy(() =>
+  import('./components/timeline/TimelineMatrixView').then((m) => ({
+    default: m.TimelineMatrixView,
+  }))
+);
+const TensionCurveView = lazy(() =>
+  import('./components/analytics/TensionCurveView').then((m) => ({
+    default: m.TensionCurveView,
+  }))
+);
+const ForeshadowingRadar = lazy(() =>
+  import('./components/foreshadowing/ForeshadowingRadar').then((m) => ({
+    default: m.ForeshadowingRadar,
+  }))
+);
+const WorldMapView = lazy(() =>
+  import('./components/lore/WorldMapView').then((m) => ({ default: m.WorldMapView }))
+);
+const WhatIfSandboxView = lazy(() =>
+  import('./components/sandbox/WhatIfSandboxView').then((m) => ({
+    default: m.WhatIfSandboxView,
+  }))
+);
+const SelfIterationView = lazy(() =>
+  import('./components/evolution/SelfIterationView').then((m) => ({
+    default: m.SelfIterationView,
+  }))
+);
+const ProductivityHeatmap = lazy(() =>
+  import('./components/analytics/ProductivityHeatmap').then((m) => ({
+    default: m.ProductivityHeatmap,
+  }))
+);
+const GoldenThreeChaptersClinic = lazy(() =>
+  import('./components/analytics/GoldenThreeChaptersClinic').then((m) => ({
+    default: m.GoldenThreeChaptersClinic,
+  }))
+);
+const WorkflowPluginHub = lazy(() =>
+  import('./components/plugins/WorkflowPluginHub').then((m) => ({
+    default: m.WorkflowPluginHub,
+  }))
+);
+const LoreView = lazy(() =>
+  import('./components/lore/LoreView').then((m) => ({ default: m.LoreView }))
+);
+const McpInspectorView = lazy(() =>
+  import('./components/mcp/McpInspectorView').then((m) => ({
+    default: m.McpInspectorView,
+  }))
+);
+
 const ALL_VALID_TABS: Set<string> = new Set(
-  DOMAIN_GROUPS.flatMap((g) => g.items.map((i) => i.id)).concat(['OUTLINES', 'AI_COUNCIL', 'OMNI_CONTEXT'])
+  DOMAIN_GROUPS.flatMap((g) => g.items.map((i) => i.id)).concat([
+    'OUTLINES',
+    'AI_COUNCIL',
+    'OMNI_CONTEXT',
+  ])
 );
 
 function parseTabFromHash(): NavTab {
@@ -68,22 +182,32 @@ function formatTabToHash(tab: NavTab): string {
   return `#${tab.toLowerCase().replace(/_/g, '-')}`;
 }
 
+// 精简默认固定标签为 5 个高频核心工坊，杜绝横向拥挤
 const DEFAULT_PINNED_TABS: NavTab[] = [
   'STUDIO',
   'AI_COUNCIL',
   'OMNI_CONTEXT',
   'AUTOPILOT',
   'SPARK_HUB',
-  'SKILL_VAULT',
-  'MEMORY_GUARD',
 ];
 
+const ViewLoadingFallback: React.FC = () => (
+  <div className="flex-1 flex items-center justify-center p-12">
+    <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border text-xs font-medium opacity-75"
+      style={{
+        backgroundColor: 'var(--bg-surface)',
+        borderColor: 'var(--border-subtle)',
+        color: 'var(--text-muted)',
+      }}
+    >
+      <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+      <span>正在载入墨枢专业工作台模块…</span>
+    </div>
+  </div>
+);
+
 const AppContent: React.FC = () => {
-  const {
-    isSettingsModalOpen,
-    openSettingsModal,
-    closeSettingsModal,
-  } = useNovel();
+  const { isSettingsModalOpen, openSettingsModal, closeSettingsModal } = useNovel();
 
   const initialTab = parseTabFromHash();
   const [activeTab, setActiveTabState] = useState<NavTab>(initialTab);
@@ -105,7 +229,6 @@ const AppContent: React.FC = () => {
   const [isInSceneOpen, setIsInSceneOpen] = useState(false);
   const [isFriendlyHubOpen, setIsFriendlyHubOpen] = useState(false);
 
-  // Unified navigation handler with history stack + open tab dock + URL hash sync + teleport payload
   const navigateToTab = useCallback(
     (
       nextTab: NavTab,
@@ -206,7 +329,6 @@ const AppContent: React.FC = () => {
     );
   }, []);
 
-  // Listen to browser Back/Forward / hashchange
   useEffect(() => {
     const handleHashChange = () => {
       const parsed = parseTabFromHash();
@@ -222,16 +344,21 @@ const AppContent: React.FC = () => {
     };
   }, [activeTab, navigateToTab]);
 
-  // Global keyboard shortcuts: Cmd+K (Command Palette), Cmd+/ or ? (Friendly Hub), Alt+Left (Back), Alt+Right (Forward), Alt+1..9 (Tab Quick-Dial)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const targetTag = (e.target as HTMLElement)?.tagName?.toLowerCase();
-      const isEditing = targetTag === 'input' || targetTag === 'textarea' || (e.target as HTMLElement)?.isContentEditable;
+      const isEditing =
+        targetTag === 'input' ||
+        targetTag === 'textarea' ||
+        (e.target as HTMLElement)?.isContentEditable;
 
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
-      } else if (((e.metaKey || e.ctrlKey) && e.key === '/') || (!isEditing && e.key === '?')) {
+      } else if (
+        ((e.metaKey || e.ctrlKey) && e.key === '/') ||
+        (!isEditing && e.key === '?')
+      ) {
         e.preventDefault();
         setIsFriendlyHubOpen((prev) => !prev);
       } else if (e.altKey && e.key === 'ArrowLeft') {
@@ -279,7 +406,6 @@ const AppContent: React.FC = () => {
         onOpenFriendlyHub={() => setIsFriendlyHubOpen(true)}
       />
 
-      {/* 多标签工作区导航栏 + 历史后退/前进 + 跨视图章节切换面包屑 + 实时记忆防幻觉胶囊 */}
       <WorkspaceTabBar
         activeTab={activeTab}
         openTabs={openTabs}
@@ -299,63 +425,57 @@ const AppContent: React.FC = () => {
       />
 
       <div className="flex-1 flex overflow-hidden pb-16 lg:pb-0">
-        {activeTab === 'LIBRARY' && <LibraryView onNavigateTab={navigateToTab} />}
-        {activeTab === 'ARCHITECT' && <ArchitectView onNavigateTab={navigateToTab} />}
-        {activeTab === 'STUDIO' && <StudioView onNavigateTab={navigateToTab} />}
-        {activeTab === 'AI_COUNCIL' && (
-          <MultiAgentDebateStudioView onNavigateTab={navigateToTab} />
-        )}
-        {activeTab === 'OMNI_CONTEXT' && (
-          <MultimodalContextStudioView onNavigateTab={navigateToTab} />
-        )}
-        {activeTab === 'AUTOPILOT' && <AutopilotCockpitView onNavigateTab={navigateToTab} />}
-        {activeTab === 'SPARK_HUB' && <SparkAndReaderHubView onNavigateTab={navigateToTab} />}
-        {activeTab === 'SKILL_VAULT' && <CentralSkillVaultView onNavigateTab={navigateToTab} />}
-        {activeTab === 'MEMORY_GUARD' && (
-          <MemoryTokenAntiHallucinationView onNavigateTab={navigateToTab} />
-        )}
-        {activeTab === 'OUTLINES' && <StudioView onNavigateTab={navigateToTab} />}
-        {activeTab === 'CANVAS' && (
-          <StudioView onNavigateTab={navigateToTab} defaultStudioTab="canvas" />
-        )}
-        {activeTab === 'GENESIS' && <GenesisView onNavigateTab={navigateToTab} />}
-        {activeTab === 'STYLE_DNA' && <StyleDnaStudioView onNavigateTab={navigateToTab} />}
-        {activeTab === 'MODEL_HUB' && <ModelHubView onNavigateTab={navigateToTab} />}
-        {activeTab === 'GODS_EYE_SANDBOX' && (
-          <GodsEyeSandboxView onNavigateTab={navigateToTab} />
-        )}
-        {activeTab === 'VIDEO_STUDIO' && <VideoStoryboardStudio />}
-        {activeTab === 'WORKFLOW' && <WorkflowOrchestratorView />}
-        {activeTab === 'PROGRESS_PULSE' && <ProgressPulseView onNavigateTab={navigateToTab} />}
-        {activeTab === 'DUNGEONS' && <DungeonArcTrajectoryView />}
-        {activeTab === 'CHARACTERS' && <CharacterView onNavigateTab={navigateToTab} />}
-        {activeTab === 'RELATIONS' && <CharacterRelationGraph />}
-        {activeTab === 'TIMELINE' && <TimelineMatrixView onNavigateTab={navigateToTab} />}
-        {activeTab === 'TENSION' && <TensionCurveView onNavigateTab={navigateToTab} />}
-        {activeTab === 'FORESHADOWING' && <ForeshadowingRadar onNavigateTab={navigateToTab} />}
-        {activeTab === 'MAP' && <WorldMapView />}
-        {activeTab === 'SANDBOX' && <WhatIfSandboxView />}
-        {activeTab === 'EVOLUTION' && <SelfIterationView />}
-        {activeTab === 'PRODUCTIVITY' && <ProductivityHeatmap />}
-        {activeTab === 'CLINIC' && <GoldenThreeChaptersClinic />}
-        {activeTab === 'PLUGINS' && <WorkflowPluginHub />}
-        {activeTab === 'LORE' && <LoreView onNavigateTab={navigateToTab} />}
-        {activeTab === 'MCP' && <McpInspectorView />}
+        <Suspense fallback={<ViewLoadingFallback />}>
+          {activeTab === 'LIBRARY' && <LibraryView onNavigateTab={navigateToTab} />}
+          {activeTab === 'ARCHITECT' && <ArchitectView onNavigateTab={navigateToTab} />}
+          {activeTab === 'STUDIO' && <StudioView onNavigateTab={navigateToTab} />}
+          {activeTab === 'AI_COUNCIL' && (
+            <MultiAgentDebateStudioView onNavigateTab={navigateToTab} />
+          )}
+          {activeTab === 'OMNI_CONTEXT' && (
+            <MultimodalContextStudioView onNavigateTab={navigateToTab} />
+          )}
+          {activeTab === 'AUTOPILOT' && <AutopilotCockpitView onNavigateTab={navigateToTab} />}
+          {activeTab === 'SPARK_HUB' && <SparkAndReaderHubView onNavigateTab={navigateToTab} />}
+          {activeTab === 'SKILL_VAULT' && <CentralSkillVaultView onNavigateTab={navigateToTab} />}
+          {activeTab === 'MEMORY_GUARD' && (
+            <MemoryTokenAntiHallucinationView onNavigateTab={navigateToTab} />
+          )}
+          {activeTab === 'OUTLINES' && <StudioView onNavigateTab={navigateToTab} />}
+          {activeTab === 'CANVAS' && (
+            <StudioView onNavigateTab={navigateToTab} defaultStudioTab="canvas" />
+          )}
+          {activeTab === 'GENESIS' && <GenesisView onNavigateTab={navigateToTab} />}
+          {activeTab === 'STYLE_DNA' && <StyleDnaStudioView onNavigateTab={navigateToTab} />}
+          {activeTab === 'MODEL_HUB' && <ModelHubView onNavigateTab={navigateToTab} />}
+          {activeTab === 'GODS_EYE_SANDBOX' && (
+            <GodsEyeSandboxView onNavigateTab={navigateToTab} />
+          )}
+          {activeTab === 'VIDEO_STUDIO' && <VideoStoryboardStudio />}
+          {activeTab === 'WORKFLOW' && <WorkflowOrchestratorView />}
+          {activeTab === 'PROGRESS_PULSE' && <ProgressPulseView onNavigateTab={navigateToTab} />}
+          {activeTab === 'DUNGEONS' && <DungeonArcTrajectoryView />}
+          {activeTab === 'CHARACTERS' && <CharacterView onNavigateTab={navigateToTab} />}
+          {activeTab === 'RELATIONS' && <CharacterRelationGraph />}
+          {activeTab === 'TIMELINE' && <TimelineMatrixView onNavigateTab={navigateToTab} />}
+          {activeTab === 'TENSION' && <TensionCurveView onNavigateTab={navigateToTab} />}
+          {activeTab === 'FORESHADOWING' && <ForeshadowingRadar onNavigateTab={navigateToTab} />}
+          {activeTab === 'MAP' && <WorldMapView />}
+          {activeTab === 'SANDBOX' && <WhatIfSandboxView />}
+          {activeTab === 'EVOLUTION' && <SelfIterationView />}
+          {activeTab === 'PRODUCTIVITY' && <ProductivityHeatmap />}
+          {activeTab === 'CLINIC' && <GoldenThreeChaptersClinic />}
+          {activeTab === 'PLUGINS' && <WorkflowPluginHub />}
+          {activeTab === 'LORE' && <LoreView onNavigateTab={navigateToTab} />}
+          {activeTab === 'MCP' && <McpInspectorView />}
+        </Suspense>
       </div>
 
-      {/* 全局悬浮灵光一现速记胶囊与技能库/无人巡航快捷入口 */}
       <FloatingSparkCapsule onNavigateTab={navigateToTab} />
-
-      {/* 移动端底部原生触控导航 */}
       <MobileBottomNav activeTab={activeTab} setActiveTab={navigateToTab} />
 
-      {/* 模型配置弹窗 */}
-      <SettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={closeSettingsModal}
-      />
+      <SettingsModal isOpen={isSettingsModalOpen} onClose={closeSettingsModal} />
 
-      {/* 全局穿梭指挥官 (Cmd+K) */}
       <CommandPalette
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
@@ -369,31 +489,23 @@ const AppContent: React.FC = () => {
         onOpenInScene={() => setIsInSceneOpen(true)}
       />
 
-      {/* 作家禅定专注模式 */}
-      <ZenFocusModal
-        isOpen={isZenOpen}
-        onClose={() => setIsZenOpen(false)}
-      />
+      <ZenFocusModal isOpen={isZenOpen} onClose={() => setIsZenOpen(false)} />
 
-      {/* 出版级排版导出工坊 */}
       <PublishingStudioModal
         isOpen={isExportStudioOpen}
         onClose={() => setIsExportStudioOpen(false)}
       />
 
-      {/* 宏观全景上帝视角 HUD */}
       <GodsEyeViewModal
         isOpen={isGodsEyeOpen}
         onClose={() => setIsGodsEyeOpen(false)}
       />
 
-      {/* 当前场次登场人物心境与暗线抽屉 */}
       <InSceneCharactersDrawer
         isOpen={isInSceneOpen}
         onClose={() => setIsInSceneOpen(false)}
       />
 
-      {/* 全局友好交互与东方命名/快捷键/全书体检中枢 (? 或 Cmd+/) */}
       <FriendlyInteractionHubModal
         isOpen={isFriendlyHubOpen}
         onClose={() => setIsFriendlyHubOpen(false)}

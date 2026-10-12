@@ -354,4 +354,13 @@
   background-image: linear-gradient(135deg, #4f46e5 0%, #3730a3 60%, #b45309 100%) !important;
 }
 
-
+/* 4. 隐藏横向标签栏与胶囊容器原生滚动条 (Keep smooth scroll without ugly scrollbar) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

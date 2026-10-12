@@ -45,11 +45,10 @@ impl SqliteStorage {
             return PathBuf::from(p);
         }
 
-        // 候选路径检查
+        // 候选路径检查（统一归口至顶层 ./data 目录）
         let candidates = [
             PathBuf::from("data/novmanager_local.db"),
-            PathBuf::from("../backend/data/novmanager_local.db"),
-            PathBuf::from("backend/data/novmanager_local.db"),
+            PathBuf::from("../data/novmanager_local.db"),
         ];
 
         for c in &candidates {
@@ -58,8 +57,12 @@ impl SqliteStorage {
             }
         }
 
-        // 默认存放到本目录下的 data/novmanager_local.db
-        PathBuf::from("data/novmanager_local.db")
+        // 默认存放到顶层 data/novmanager_local.db
+        if PathBuf::from("../data").exists() {
+            PathBuf::from("../data/novmanager_local.db")
+        } else {
+            PathBuf::from("data/novmanager_local.db")
+        }
     }
 
     fn init_tables(&self) -> Result<(), rusqlite::Error> {
@@ -446,8 +449,7 @@ impl SqliteStorage {
             info!("Database missing seed entities (novels: {}, chars: {}, states: {}). Checking seed sources...", novels_count, chars_count, states_count);
             let candidates = [
                 PathBuf::from("data/novel_store.json"),
-                PathBuf::from("../backend/data/novel_store.json"),
-                PathBuf::from("backend/data/novel_store.json"),
+                PathBuf::from("../data/novel_store.json"),
             ];
 
             let mut imported = false;
